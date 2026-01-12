@@ -258,8 +258,8 @@ class Auto_Crafter(QMainWindow):
     def initalize_config(self):
         global config
 
-        if os.path.exists(f"{current_directory}\\auto_crafter_config.json"):
-            with open(f"{current_directory}\\auto_crafter_config.json", "r") as f:
+        if os.path.exists(f"{current_directory}\\Dark Sol config.json"):
+            with open(f"{current_directory}\\Dark Sol config.json", "r") as f:
                 config = json.load(f)
         else:
             config = {"positions": {
