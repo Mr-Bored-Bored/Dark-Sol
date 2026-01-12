@@ -13,8 +13,8 @@ import numpy as np
 
 mkey = MouseKey()
 mkey.enable_failsafekill('ctrl+e')
-current_directory = pathlib.Path(__file__).resolve().parent
-local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"])
+local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"]) / "Dark Sol"
+CONFIG_PATH = local_appdata_directory / "Dark Sol config.json"
 os.makedirs(local_appdata_directory, exist_ok=True)
 
 # Tasks 
@@ -26,7 +26,6 @@ os.makedirs(local_appdata_directory, exist_ok=True)
 # 1. new auto add button checking logic
 # 2. additional items to add check failure logic)
 # 6. Make auto add checks ignore manual click slots (lucky potions)
-
 
 # Loading Screen
 class loading_thread(QThread):
@@ -118,7 +117,6 @@ class Auto_Crafter(QMainWindow):
         self.worker = None
         self.init_ui()
         
-
     def init_ui(self):
         # Initialize Tabs
         self.setCentralWidget(self.tabs_widget)
@@ -180,7 +178,7 @@ class Auto_Crafter(QMainWindow):
         
         # Button Connectors
         self.calibration_mode_button.clicked.connect(lambda: self.switch_calibaration_mode())
-        self.find_add_button.clicked.connect(lambda: self.auto_find_image("add button.png", True, True))
+        self.find_add_button.clicked.connect(lambda: self.auto_find_image("add button.png", True, True, True))
         self.find_auto_add_button.clicked.connect(lambda: self.auto_find_image("auto add button.png", True, False))
         self.find_craft_button.clicked.connect(lambda: self.auto_find_image("craft button.png", True, False))
         self.find_search_bar.clicked.connect(lambda: self.auto_find_image("cauldren search bar.png", True, False))
@@ -204,6 +202,44 @@ class Auto_Crafter(QMainWindow):
         self.stop_button.clicked.connect(self.stop_macro)
         self.setup_hotkeys()
         
+    def save_config(self, config, ind=4):
+        S = (str, int, float, bool, type(None))
+
+        def d(o, l=0):
+            p = " " * (ind * l)
+            np = " " * (ind * (l + 1))
+            if isinstance(o, dict):
+                if not o:
+                    return "{}"
+                it = list(o.items())
+                if len(it) <= 2 and all(isinstance(k, str) for k, _ in it) and all(
+                    isinstance(v, S)
+                    or (isinstance(v, (list, tuple)) and len(v) <= 6 and all(isinstance(x, S) for x in v))
+                    for _, v in it
+                ):
+                    return "{" + ", ".join(
+                        f"{json.dumps(k)}: {json.dumps(list(v) if isinstance(v, tuple) else v)}" for k, v in it
+                    ) + "}"
+                return "{\n" + "\n".join(
+                    f"{np}{json.dumps(k)}: {d(v, l + 1)}{',' if i < len(it) - 1 else ''}" for i, (k, v) in enumerate(it)
+                ) + f"\n{p}}}"
+            if isinstance(o, (list, tuple)):
+                a = list(o)
+                if len(a) <= 6 and all(isinstance(x, S) for x in a):
+                    return json.dumps(a)
+                if not a:
+                    return "[]"
+                return "[\n" + "\n".join(
+                    f"{np}{d(v, l + 1)}{',' if i < len(a) - 1 else ''}" for i, v in enumerate(a)
+                ) + f"\n{p}]"
+            return json.dumps(o)
+
+        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            f.write(d(config) + "\n")
+    
+    def update_config(self, key, new_value):
+        config[key] = new_value
+        self.save_config(config)
 
     def switch_calibaration_mode(self):
 
@@ -258,8 +294,8 @@ class Auto_Crafter(QMainWindow):
     def initalize_config(self):
         global config
 
-        if os.path.exists(f"{current_directory}\\Dark Sol config.json"):
-            with open(f"{current_directory}\\Dark Sol config.json", "r") as f:
+        if CONFIG_PATH.exists():
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
                 config = json.load(f)
         else:
             config = {"positions": {
@@ -299,12 +335,8 @@ class Auto_Crafter(QMainWindow):
                                         "instant craft": False      
                                             },
                                         }}
-        
-        json.dump(config, open(f"{current_directory}\\auto_crafter_config.json", "w"), indent=4)
 
-    def update_config(self, key, new_value):
-        config[key] = new_value
-        json.dump(config, open(f"{current_directory}\\auto_crafter_config.json", "w"), indent=4)
+        self.save_config(config)
 
     def main_macro_loop(self, slowdown=0.1):
         global auto_add_waitlist
@@ -344,15 +376,15 @@ class Auto_Crafter(QMainWindow):
             print("Checking:", button_to_check)
             if int(button_to_check[-1]) < 4:
                 print("Button is less than 4:")
-                mkey.move_to_natural(*config["positions"][button_to_check]["amount box"])
+                mkey.move_to_natural(*config["positions"][f"amount box {int(button_to_check[-1])}"])
                 pyautogui.scroll(2000)
                 print("Scrolled up:")
                 time.sleep(0.01)
-                img = ImageGrab.grab(config["positions"][button_to_check]["bbox"])
+                img = ImageGrab.grab(tuple(config["positions"][button_to_check]["bbox"]))
                 print("Button image captured")
             elif int(button_to_check[-1]) >= 4:
                 print("Button is 4 or greater:")
-                mkey.move_to_natural(*config["positions"]["add button 4"]["amount box"])
+                mkey.move_to_natural(*config["positions"]["amount box 4"])
                 pyautogui.scroll(2000)
                 print("Scrolled up:")
                 time.sleep(0.01)
@@ -363,7 +395,7 @@ class Auto_Crafter(QMainWindow):
                     pyautogui.scroll(-46)
                     print("Scrolled down to button: ", x + 1)
                 time.sleep(0.01)
-                img = ImageGrab.grab(config["positions"]["add button 4"]["bbox"])
+                img = ImageGrab.grab(tuple(config["positions"]["add button 4"]["bbox"]))
                 print(button_to_check, "image captured")
             for t in reader.readtext(np.array(img), detail=0):
                 print(f"Detected text for {button_to_check}:", t)
@@ -421,7 +453,10 @@ class Auto_Crafter(QMainWindow):
                     mkey.left_click_xy_natural(*config["positions"]["craft button"])
                     if len(auto_add_waitlist) > 0:
                         item = auto_add_waitlist[0]
-                        mkey.left_click_xy_natural(*config["positions"][config["item_presets"][item]["name to search"]])
+                        mkey.left_click_xy_natural(*config["positions"]["search bar"])
+                        pyautogui.hotkey('ctrl', 'a')
+                        pyautogui.press('backspace')
+                        keyboard.Controller().type(config["item_presets"][item]["name to search"])
                         mkey.move_to_natural(*config["positions"]["potion selection button"])
                         pyautogui.scroll(2000)
                         time.sleep(slowdown)
@@ -435,8 +470,9 @@ class Auto_Crafter(QMainWindow):
         macro_loop_iteration("zeus godly")
         macro_loop_iteration("warp")
         
-    def auto_find_image(self, template, save=False, multiple=False):
-        template_path = f"{current_directory}\\{template}"
+    def auto_find_image(self, template, save=False, multiple=False, bbox_required=False):
+        template_path = f"{local_appdata_directory}\\Lib\\Images\\{template}"
+        add_start_index = None
         data = {"img_scales": {"add button.png": {"scale": 1.25, "resolution": (1920, 1080), "position_name": ["add button 1", "add button 2", "add button 3", "add button 4"]},
                                "auto add button.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": ["auto add button"]},
                                "craft button.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": ["craft button"]},
@@ -471,15 +507,18 @@ class Auto_Crafter(QMainWindow):
             template_scaled.show()
             return template_scaled
 
-        def save_position(position_name, bbox, center):
+        def save_position(position_name, center, bbox):
             if not save:
                 return
             if QMessageBox.information(self, "Template Found", "Would you like to save the found coordinates", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
                 return
-            print(position_name)
-            config["positions"][position_name] = {"bbox": bbox, "center": center}
-            json.dump(config, open(f"{current_directory}\\auto_crafter_config.json", "w"), indent=4)
-
+            if bbox != None:
+                config["positions"][position_name] = {"bbox": bbox, "center": center}
+                self.save_config(config)
+            else:
+                config["positions"][position_name] = center
+                self.save_config(config)
+                
         def find_template():
             nonlocal add_start_index
             count = 0
@@ -499,7 +538,7 @@ class Auto_Crafter(QMainWindow):
                         print(f"  bbox : {bbox}, center: {center}")
                         ImageDraw.Draw(all_matches_screen).rectangle(((match.left, match.top), (match.left + match.width, match.top + match.height)), outline='lime')
                         all_matches_screen.show()
-                        save_position(template, bbox, center)
+                        save_position(template, center, bbox if bbox_required else None)
                     else:
                         print(f"No match found for template: {template_path}")
 
@@ -523,7 +562,7 @@ class Auto_Crafter(QMainWindow):
                             print(count)
                             multi_image_template_find(match)
                             single_match_screen.show()
-                            save_position(data["img_scales"][template]["position_name"][count], bbox, center)
+                            save_position(data["img_scales"][template]["position_name"][count], center, bbox if bbox_required else None)
                             
                     elif add_start_index != None:
                         for count, match in enumerate(sorted_matches, start=add_start_index[0]):
@@ -532,7 +571,7 @@ class Auto_Crafter(QMainWindow):
                             multi_image_template_find(match)
                             if count in add_start_index[1]:
                                 single_match_screen.show()
-                                save_position(data["img_scales"][template]["position_name"][count], bbox, center)
+                                save_position(data["img_scales"][template]["position_name"][count], center, bbox if bbox_required else None)
                     
             except (pyscreeze_ImageNotFoundException, pyautogui.ImageNotFoundException):
                 print(f"No matches found for template: {template_path}")
