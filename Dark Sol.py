@@ -258,7 +258,57 @@ class Dark_Sol(QMainWindow):
                         "auto add button": [707, 618],
                         "craft button": [573, 618]
                     },
-                    "item_presets": {
+                }
+            
+    def save_config(self, config, ind=4):
+        S = (str, int, float, bool, type(None))
+
+        def d(o, l=0):
+            p = " " * (ind * l)
+            np = " " * (ind * (l + 1))
+            if isinstance(o, dict):
+                if not o:
+                    return "{}"
+                it = list(o.items())
+                if len(it) <= 2 and all(isinstance(k, str) for k, _ in it) and all(
+                    isinstance(v, S)
+                    or (isinstance(v, (list, tuple)) and len(v) <= 6 and all(isinstance(x, S) for x in v))
+                    for _, v in it
+                ):
+                    return "{" + ", ".join(
+                        f"{json.dumps(k)}: {json.dumps(list(v) if isinstance(v, tuple) else v)}" for k, v in it
+                    ) + "}"
+                return "{\n" + "\n".join(
+                    f"{np}{json.dumps(k)}: {d(v, l + 1)}{',' if i < len(it) - 1 else ''}" for i, (k, v) in enumerate(it)
+                ) + f"\n{p}}}"
+            if isinstance(o, (list, tuple)):
+                a = list(o)
+                if len(a) <= 6 and all(isinstance(x, S) for x in a):
+                    return json.dumps(a)
+                if not a:
+                    return "[]"
+                return "[\n" + "\n".join(
+                    f"{np}{d(v, l + 1)}{',' if i < len(a) - 1 else ''}" for i, v in enumerate(a)
+                ) + f"\n{p}]"
+            return json.dumps(o)
+
+        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            f.write(d(config) + "\n")
+    
+    def update_config(self, key, new_value):
+        config[key] = new_value
+        self.save_config(config)
+
+    global data
+    data = {
+            "img_scales": {"add button.png": {"scale": 1.25, "resolution": (1920, 1080), "position_name": ["add button 1", "add button 2", "add button 3", "add button 4"]},
+                                "amount box.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": ["amount box 1", "amount box 2", "amount box 3", "amount box 4"]},
+                                "auto add button.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": "auto add button"},
+                                "craft button.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": "craft button"},
+                                "cauldren search bar.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": "search bar"},
+                                    "heavenly potion potion selector button.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": "potion selection button"},
+                            },
+            "item_presets": {
                         "bound": {
                             "name to search": "bound",
                             "buttons to check": ["add button 1", "add button 2"],
@@ -303,45 +353,6 @@ class Dark_Sol(QMainWindow):
                         }
                     }
                 }
-            
-    def save_config(self, config, ind=4):
-        S = (str, int, float, bool, type(None))
-
-        def d(o, l=0):
-            p = " " * (ind * l)
-            np = " " * (ind * (l + 1))
-            if isinstance(o, dict):
-                if not o:
-                    return "{}"
-                it = list(o.items())
-                if len(it) <= 2 and all(isinstance(k, str) for k, _ in it) and all(
-                    isinstance(v, S)
-                    or (isinstance(v, (list, tuple)) and len(v) <= 6 and all(isinstance(x, S) for x in v))
-                    for _, v in it
-                ):
-                    return "{" + ", ".join(
-                        f"{json.dumps(k)}: {json.dumps(list(v) if isinstance(v, tuple) else v)}" for k, v in it
-                    ) + "}"
-                return "{\n" + "\n".join(
-                    f"{np}{json.dumps(k)}: {d(v, l + 1)}{',' if i < len(it) - 1 else ''}" for i, (k, v) in enumerate(it)
-                ) + f"\n{p}}}"
-            if isinstance(o, (list, tuple)):
-                a = list(o)
-                if len(a) <= 6 and all(isinstance(x, S) for x in a):
-                    return json.dumps(a)
-                if not a:
-                    return "[]"
-                return "[\n" + "\n".join(
-                    f"{np}{d(v, l + 1)}{',' if i < len(a) - 1 else ''}" for i, v in enumerate(a)
-                ) + f"\n{p}]"
-            return json.dumps(o)
-
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-            f.write(d(config) + "\n")
-    
-    def update_config(self, key, new_value):
-        config[key] = new_value
-        self.save_config(config)
 
     def show_add_button_coordinates_selector(self, show=True):
         self.add_button_coordinates_selector.setVisible(show)
@@ -379,6 +390,138 @@ class Dark_Sol(QMainWindow):
         self.start_macro_signal.connect(self.start_macro)
         self.stop_macro_signal.connect(self.stop_macro)
         threading.Thread(target=self.hotkey_listener, daemon=True).start()
+
+    def auto_find_image(self, template, save=False, multiple=False, bbox_required=False):
+            add_start_index = None
+            template_path = f"{local_appdata_directory}\\Lib\\Images\\{template}"
+             
+
+            def save_position(position_name, center, bbox):
+                if not save:
+                    return
+                if QMessageBox.information(self, "Template Found", "Would you like to save the found coordinates", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+                    return
+                if bbox != None:
+                    config["positions"][position_name] = {"bbox": bbox, "center": center}
+                    self.save_config(config)
+                else:
+                    config["positions"][position_name] = center
+                    self.save_config(config)
+
+            def rescale_template(template):
+                base_scale = data["img_scales"][template]["scale"]   
+                base_resolution =data["img_scales"][template]["resolution"]
+
+                user32 = ctypes.windll.user32
+                gdi32 = ctypes.windll.gdi32
+                hdc = user32.GetDC(0)
+                scale_dpi = gdi32.GetDeviceCaps(hdc, 88)  # Returns 96, 120, 144, etc.
+                user32.ReleaseDC(0, hdc)
+                px_width, px_height = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+                current_scale = scale_dpi / 96.0
+                scale_ratio = current_scale / base_scale
+                res_ratio_x = px_width / base_resolution[0]
+                res_ratio_y = px_height / base_resolution[1]
+                total_scale_x = scale_ratio * res_ratio_x
+                total_scale_y = scale_ratio * res_ratio_y
+                self.log(f"Total Scale X: {total_scale_x}, Total Scale Y: {total_scale_y}")
+                self.log(f"Screen Resolution: {px_width}x{px_height}, DPI Scale: {current_scale*100:.2f}%")
+                self.log(f"Base Scale: {base_scale}, Base Resolution: {base_resolution}")
+                self.log(f"Scale Ratio: {scale_ratio}, Resolution Ratio X: {res_ratio_x}, Resolution Ratio Y: {res_ratio_y}")
+
+                template_img = Image.open(template_path)
+                template_scaled = template_img.resize((int(template_img.width * total_scale_x), int(template_img.height * total_scale_y)), Image.Resampling.LANCZOS)
+                template_scaled.show()
+                return template_scaled
+                    
+            def find_template():
+                count = 0
+                screen = ImageGrab.grab()
+                single_match_screen = screen.copy()
+                all_matches_screen = screen.copy()
+                bbox, center = None, None
+            
+                try:
+                    if not multiple:
+                        match = pyautogui.locateOnScreen(template_scaled, confidence=.70)
+                        if match:
+                            bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))
+                            center = (int(match.left + match.width // 2), int(match.top + match.height // 2))
+                            self.log(f"  bbox : {bbox}, center: {center}")
+                            ImageDraw.Draw(all_matches_screen).rectangle(((match.left, match.top), (match.left + match.width, match.top + match.height)), outline='lime')
+                            all_matches_screen.show()
+                            save_position(data["img_scales"][template]["position_name"], center, bbox if bbox_required else None)
+                        else:
+                            self.log(f"No match found for template: {template_path}")
+
+                    elif multiple:
+                        self.log("Searching for multiple matches...")
+                        matches = list(pyautogui.locateAllOnScreen(template_scaled, confidence=.85))
+                        sorted_matches = sorted(matches, key=lambda box: (box.top))
+
+                        def multi_image_template_find(match):
+                            nonlocal single_match_screen, bbox, center
+                            bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))
+                            center = (int(match.left + match.width // 2), int(match.top + match.height // 2))
+                            self.log(f"  bbox : {bbox}, center: {center}")
+                            single_match_screen = screen.copy()
+                            ImageDraw.Draw(all_matches_screen).rectangle(((match.left, match.top), (match.left + match.width, match.top + match.height)), outline='lime')
+                            ImageDraw.Draw(single_match_screen).rectangle(((match.left, match.top), (match.left + match.width, match.top + match.height)), outline='lime')
+                            
+                        if add_start_index == None:
+                            for count, match in enumerate(sorted_matches):
+                                self.log("1st to 3rd button logic")
+                                self.log(count)
+                                multi_image_template_find(match)
+                                single_match_screen.show()
+                                save_position(data["img_scales"][template]["position_name"][count], center, bbox if bbox_required else None)
+                                
+                        elif add_start_index != None:
+                            for count, match in enumerate(sorted_matches, start=add_start_index[0]):
+                                self.log("4th button and up logic")
+                                self.log(count)
+                                multi_image_template_find(match)
+                                if count in add_start_index[1]:
+                                    single_match_screen.show()
+                                    save_position(data["img_scales"][template]["position_name"][count], center, bbox if bbox_required else None)
+                        
+                except (pyscreeze_ImageNotFoundException, pyautogui.ImageNotFoundException):
+                    self.log(f"No matches found for template: {template_path}")
+                    screen.show()
+
+                except Exception as e:
+                    self.log(f"Error finding matches: {e}")
+                    screen.show()
+                count = 0
+
+            if template == "add button.png":
+                what_add_buttons = QMessageBox(self)
+                what_add_buttons.setWindowTitle("Add Button Selector")
+                what_add_buttons.setText("Are the add button(s) 1–3 or 4?")
+                btn_1_3 = what_add_buttons.addButton("1–3", QMessageBox.ButtonRole.AcceptRole)
+                btn_4  = what_add_buttons.addButton("4",   QMessageBox.ButtonRole.AcceptRole)
+                what_add_buttons.exec()
+
+                if what_add_buttons.clickedButton() == btn_4:
+                    add_start_index = 1, (3,)
+                else :
+                    add_start_index = None
+
+            elif template == "amount box.png":
+                what_amount_boxes = QMessageBox(self)
+                what_amount_boxes.setWindowTitle("Amount Box Selector")
+                what_amount_boxes.setText("Are the amount box(es) 1–3 or 4?")
+                btn_1_3 = what_amount_boxes.addButton("1–3", QMessageBox.ButtonRole.AcceptRole)
+                btn_4  = what_amount_boxes.addButton("4",   QMessageBox.ButtonRole.AcceptRole)
+                what_amount_boxes.exec()
+
+                if what_amount_boxes.clickedButton() == btn_4:
+                    add_start_index = 1, (3,)
+                else:
+                    add_start_index = None
+
+            template_scaled = rescale_template(template)
+            find_template()
 
     def start_macro(self):
         if self.worker is not None and self.worker.is_alive():
@@ -498,8 +641,8 @@ class Dark_Sol(QMainWindow):
                 self.move_and_click(config["positions"]["search bar"])
                 self.log("Search bar clicked")
                 time.sleep(slowdown)
-                keyboard.Controller().type(config["item_presets"][item]["name to search"])
-                self.log("Item searched:", config["item_presets"][item]["name to search"].capitalize())
+                keyboard.Controller().type(data["item_presets"][item]["name to search"])
+                self.log("Item searched:", data["item_presets"][item]["name to search"].capitalize())
                 time.sleep(slowdown)
                 self.move_and_click(config["positions"]["potion selection button"], False)
                 self.log("Moved to potion selection button")
@@ -511,7 +654,7 @@ class Dark_Sol(QMainWindow):
                 self.log("Selection button clicked")
                 time.sleep(slowdown)
 
-                for button_to_add_to in config["item_presets"][item]["buttons to check"]:
+                for button_to_add_to in data["item_presets"][item]["buttons to check"]:
                     add_to_button(button_to_add_to)
                     time.sleep(slowdown)
 
@@ -519,7 +662,7 @@ class Dark_Sol(QMainWindow):
                 self.log(f"{item} set to ready")
                 time.sleep(slowdown)
                 
-                for button_to_check in config["item_presets"][item]["buttons to check"]:
+                for button_to_check in data["item_presets"][item]["buttons to check"]:
                     item_ready = check_button(button_to_check)
                     time.sleep(slowdown)
                     if not item_ready:
@@ -529,11 +672,11 @@ class Dark_Sol(QMainWindow):
                 if item_ready:
                     self.log(f"Clicking additional buttons for {item}")
                     time.sleep(slowdown)
-                    for button_to_click in config["item_presets"][item]["additional buttons to click"]:
+                    for button_to_click in data["item_presets"][item]["additional buttons to click"]:
                         add_to_button(button_to_click)
                         time.sleep(slowdown)
 
-                    if not config["item_presets"][item]["instant craft"]:
+                    if not data["item_presets"][item]["instant craft"]:
                         if self.current_auto_add_potion == None:
                             self.move_and_click(config["positions"]["auto add button"])
                             self.current_auto_add_potion = item
@@ -552,8 +695,8 @@ class Dark_Sol(QMainWindow):
                 self.move_and_click(config["positions"]["search bar"])
                 self.log("Search bar clicked")
                 time.sleep(slowdown)
-                keyboard.Controller().type(config["item_presets"][item]["name to search"])
-                self.log("Item searched:", config["item_presets"][item]["name to search"].capitalize())
+                keyboard.Controller().type(data["item_presets"][item]["name to search"])
+                self.log("Item searched:", data["item_presets"][item]["name to search"].capitalize())
                 time.sleep(slowdown)
                 self.move_and_click(config["positions"]["potion selection button"], False)
                 self.log("Moved to potion selection button")
@@ -571,7 +714,7 @@ class Dark_Sol(QMainWindow):
                 self.log("Checking All Buttons")
                 time.sleep(slowdown)
 
-                for slot in range(1, config["item_presets"][item]["crafting slots"] + 1):  # ignore manual click slots
+                for slot in range(1, data["item_presets"][item]["crafting slots"] + 1):  # ignore manual click slots
                     if not check_button("add button " + str(slot)):
                         time.sleep(slowdown)
                         item_ready = False
@@ -585,7 +728,7 @@ class Dark_Sol(QMainWindow):
                         self.move_and_click(config["positions"]["search bar"])
                         self.log("Search bar clicked")
                         time.sleep(slowdown)
-                        keyboard.Controller().type(config["item_presets"][self.auto_add_waitlist[0]]["name to search"])
+                        keyboard.Controller().type(data["item_presets"][self.auto_add_waitlist[0]]["name to search"])
                         self.log(f"Item searched: {self.auto_add_waitlist[0].capitalize()}")
                         time.sleep(slowdown)   
                         self.move_and_click(config["positions"]["potion selection button"], False)
@@ -602,147 +745,9 @@ class Dark_Sol(QMainWindow):
                         time.sleep(slowdown)
                         self.current_auto_add_potion = self.auto_add_waitlist.pop(0)
                            
-        for item in config["item_presets"].keys():
+        for item in data["item_presets"].keys():
             if item != "warp":
                 macro_loop_iteration(item)
-        
-    def auto_find_image(self, template, save=False, multiple=False, bbox_required=False):
-        add_start_index = None
-        template_path = f"{local_appdata_directory}\\Lib\\Images\\{template}"
-        data = {"img_scales": {"add button.png": {"scale": 1.25, "resolution": (1920, 1080), "position_name": ["add button 1", "add button 2", "add button 3", "add button 4"]},
-                               "amount box.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": ["amount box 1", "amount box 2", "amount box 3", "amount box 4"]},
-                               "auto add button.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": "auto add button"},
-                               "craft button.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": "craft button"},
-                               "cauldren search bar.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": "search bar"},
-                                "heavenly potion potion selector button.png": {"scale": 1.25, "resolution": (1920, 1200), "position_name": "potion selection button"},
-                                }} 
-
-        def save_position(position_name, center, bbox):
-            if not save:
-                return
-            if QMessageBox.information(self, "Template Found", "Would you like to save the found coordinates", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
-                return
-            if bbox != None:
-                config["positions"][position_name] = {"bbox": bbox, "center": center}
-                self.save_config(config)
-            else:
-                config["positions"][position_name] = center
-                self.save_config(config)
-
-        def rescale_template(template):
-            base_scale = data["img_scales"][template]["scale"]   
-            base_resolution = data["img_scales"][template]["resolution"]
-
-            user32 = ctypes.windll.user32
-            gdi32 = ctypes.windll.gdi32
-            hdc = user32.GetDC(0)
-            scale_dpi = gdi32.GetDeviceCaps(hdc, 88)  # Returns 96, 120, 144, etc.
-            user32.ReleaseDC(0, hdc)
-            px_width, px_height = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
-            current_scale = scale_dpi / 96.0
-            scale_ratio = current_scale / base_scale
-            res_ratio_x = px_width / base_resolution[0]
-            res_ratio_y = px_height / base_resolution[1]
-            total_scale_x = scale_ratio * res_ratio_x
-            total_scale_y = scale_ratio * res_ratio_y
-            self.log(f"Total Scale X: {total_scale_x}, Total Scale Y: {total_scale_y}")
-            self.log(f"Screen Resolution: {px_width}x{px_height}, DPI Scale: {current_scale*100:.2f}%")
-            self.log(f"Base Scale: {base_scale}, Base Resolution: {base_resolution}")
-            self.log(f"Scale Ratio: {scale_ratio}, Resolution Ratio X: {res_ratio_x}, Resolution Ratio Y: {res_ratio_y}")
-
-            template_img = Image.open(template_path)
-            template_scaled = template_img.resize((int(template_img.width * total_scale_x), int(template_img.height * total_scale_y)), Image.Resampling.LANCZOS)
-            template_scaled.show()
-            return template_scaled
-                
-        def find_template():
-            count = 0
-            screen = ImageGrab.grab()
-            single_match_screen = screen.copy()
-            all_matches_screen = screen.copy()
-            bbox, center = None, None
-        
-            try:
-                if not multiple:
-                    match = pyautogui.locateOnScreen(template_scaled, confidence=.70)
-                    if match:
-                        bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))
-                        center = (int(match.left + match.width // 2), int(match.top + match.height // 2))
-                        self.log(f"  bbox : {bbox}, center: {center}")
-                        ImageDraw.Draw(all_matches_screen).rectangle(((match.left, match.top), (match.left + match.width, match.top + match.height)), outline='lime')
-                        all_matches_screen.show()
-                        save_position(data["img_scales"][template]["position_name"], center, bbox if bbox_required else None)
-                    else:
-                        self.log(f"No match found for template: {template_path}")
-
-                elif multiple:
-                    self.log("Searching for multiple matches...")
-                    matches = list(pyautogui.locateAllOnScreen(template_scaled, confidence=.85))
-                    sorted_matches = sorted(matches, key=lambda box: (box.top))
-
-                    def multi_image_template_find(match):
-                        nonlocal single_match_screen, bbox, center
-                        bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))
-                        center = (int(match.left + match.width // 2), int(match.top + match.height // 2))
-                        self.log(f"  bbox : {bbox}, center: {center}")
-                        single_match_screen = screen.copy()
-                        ImageDraw.Draw(all_matches_screen).rectangle(((match.left, match.top), (match.left + match.width, match.top + match.height)), outline='lime')
-                        ImageDraw.Draw(single_match_screen).rectangle(((match.left, match.top), (match.left + match.width, match.top + match.height)), outline='lime')
-                        
-                    if add_start_index == None:
-                        for count, match in enumerate(sorted_matches):
-                            self.log("1st to 3rd button logic")
-                            self.log(count)
-                            multi_image_template_find(match)
-                            single_match_screen.show()
-                            save_position(data["img_scales"][template]["position_name"][count], center, bbox if bbox_required else None)
-                            
-                    elif add_start_index != None:
-                        for count, match in enumerate(sorted_matches, start=add_start_index[0]):
-                            self.log("4th button and up logic")
-                            self.log(count)
-                            multi_image_template_find(match)
-                            if count in add_start_index[1]:
-                                single_match_screen.show()
-                                save_position(data["img_scales"][template]["position_name"][count], center, bbox if bbox_required else None)
-                    
-            except (pyscreeze_ImageNotFoundException, pyautogui.ImageNotFoundException):
-                self.log(f"No matches found for template: {template_path}")
-                screen.show()
-
-            except Exception as e:
-                self.log(f"Error finding matches: {e}")
-                screen.show()
-            count = 0
-
-        if template == "add button.png":
-            what_add_buttons = QMessageBox(self)
-            what_add_buttons.setWindowTitle("Add Button Selector")
-            what_add_buttons.setText("Are the add button(s) 1–3 or 4?")
-            btn_1_3 = what_add_buttons.addButton("1–3", QMessageBox.ButtonRole.AcceptRole)
-            btn_4  = what_add_buttons.addButton("4",   QMessageBox.ButtonRole.AcceptRole)
-            what_add_buttons.exec()
-
-            if what_add_buttons.clickedButton() == btn_4:
-                add_start_index = 1, (3,)
-            else :
-                add_start_index = None
-
-        elif template == "amount box.png":
-            what_amount_boxes = QMessageBox(self)
-            what_amount_boxes.setWindowTitle("Amount Box Selector")
-            what_amount_boxes.setText("Are the amount box(es) 1–3 or 4?")
-            btn_1_3 = what_amount_boxes.addButton("1–3", QMessageBox.ButtonRole.AcceptRole)
-            btn_4  = what_amount_boxes.addButton("4",   QMessageBox.ButtonRole.AcceptRole)
-            what_amount_boxes.exec()
-
-            if what_amount_boxes.clickedButton() == btn_4:
-                add_start_index = 1, (3,)
-            else:
-                add_start_index = None
-
-        template_scaled = rescale_template(template)
-        find_template()
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
