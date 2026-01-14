@@ -209,7 +209,7 @@ class Dark_Sol(QMainWindow):
         self.find_search_bar.clicked.connect(lambda: self.auto_find_image("cauldren search bar.png", True, False))
         self.find_potion_selection_button.clicked.connect(lambda: self.auto_find_image("heavenly potion potion selector button.png", True, False))
         #Status Label Setup
-        self.mini_status_widget.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
+        self.mini_status_widget.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowTransparentForInput)
         self.mini_status_widget.setStyleSheet("background-color: black; border: 2px solid cyan; border-radius: 6px;")
         self.mini_status_label.setStyleSheet("color: cyan; font-size: 20px;")
         self.mini_status_qv = QVBoxLayout(self.mini_status_widget)
@@ -262,7 +262,7 @@ class Dark_Sol(QMainWindow):
                         "bound": {
                             "name to search": "bound",
                             "buttons to check": ["add button 1", "add button 2"],
-                            "additional buttons to click": ["add button 4"],
+                            "additional buttons to click": ["add button 4",],
                             "crafting slots": 4,
                             "instant craft": False
                         },
@@ -273,11 +273,25 @@ class Dark_Sol(QMainWindow):
                             "crafting slots": 5,
                             "instant craft": False
                         },
-                        "zeus godly": {
+                        "zeus": {
                             "name to search": "zeus",
-                            "buttons to check": ["add button 3", "add button 4"],
+                            "buttons to check": ["add button 3",],
                             "additional buttons to click": ["add button 1", "add button 2"],
                             "crafting slots": 5,
+                            "instant craft": False
+                        },
+                        "poseidon": {
+                            "name to search": "poseidon",
+                            "buttons to check": ["add button 2",],
+                            "additional buttons to click": ["add button 1",],
+                            "crafting slots": 4,
+                            "instant craft": False
+                        },
+                        "hades": {
+                            "name to search": "hades",
+                            "buttons to check": ["add button 2",],
+                            "additional buttons to click": ["add button 1",],
+                            "crafting slots": 4,
                             "instant craft": False
                         },
                         "warp": {
@@ -384,31 +398,43 @@ class Dark_Sol(QMainWindow):
             if not self.run_event.wait(0.1):
                 self.update_status("Stopped")
                 self.mini_status_widget.hide()
-                break
 
     def log(self, *args):
         self.update_status(" ".join(str(a) for a in args))
 
     def update_status(self, status_text):
+        print("Status:", status_text)
         self.status_label.setText(f"Status: {status_text}")
         if self.mini_status_label != None:
             self.mini_status_label.setText(status_text)
             self.mini_status_label.adjustSize()
             self.mini_status_widget.adjustSize()
 
-    def main_macro_loop(self, slowdown=0.1):
+    def move_and_click(self, position, click=True):
+        try:
+            if click:
+                mkey.left_click_xy_natural(*position)
+            elif not click:
+                mkey.move_to_natural(*position)
+        except Exception:
+            if click:
+                mkey.left_click_xy(*position)
+            elif not click:
+                mkey.move_to(*position)
+
+    def main_macro_loop(self, slowdown=0.01):
         def add_to_button(button_to_add_to):
             time.sleep(slowdown)
             if int(button_to_add_to[-1]) < 4:
-                mkey.move_to_natural(*config["positions"][button_to_add_to]["center"])
+                self.move_and_click(config["positions"][button_to_add_to]["center"], False)
                 self.log("Moved to", button_to_add_to, "center")
                 time.sleep(slowdown)
                 pyautogui.scroll(2000)
-                self.log("Scrolled up:")
+                self.log("Scrolled up")
                 time.sleep(slowdown)
                 mkey.left_click()
             elif int(button_to_add_to[-1]) >= 4:
-                mkey.move_to_natural(*config["positions"]["add button 4"]["center"])
+                self.move_and_click(config["positions"]["add button 4"]["center"], False)
                 self.log("Moved to add button ((4)) center")
                 time.sleep(slowdown)
                 pyautogui.scroll(2000)
@@ -429,7 +455,7 @@ class Dark_Sol(QMainWindow):
             img = None
             time.sleep(slowdown)
             if int(button_to_check[-1]) < 4:
-                mkey.move_to_natural(*config["positions"][f"amount box {int(button_to_check[-1])}"])
+                self.move_and_click(config["positions"][f"amount box {int(button_to_check[-1])}"], False)
                 self.log(f"Moved to amount box {int(button_to_check[-1])}")
                 time.sleep(slowdown)
                 pyautogui.scroll(2000)
@@ -439,7 +465,7 @@ class Dark_Sol(QMainWindow):
                 self.log(button_to_check, "image captured")
                 time.sleep(slowdown)
             elif int(button_to_check[-1]) >= 4:
-                mkey.move_to_natural(*config["positions"]["amount box 4"])
+                self.move_and_click(config["positions"]["amount box 4"], False)
                 self.log("Moved to amount box ((4))")
                 time.sleep(slowdown)
                 pyautogui.scroll(2000)
@@ -469,13 +495,13 @@ class Dark_Sol(QMainWindow):
             
         def macro_loop_iteration(item):
             if item not in self.auto_add_waitlist and self.current_auto_add_potion != item:
-                mkey.left_click_xy_natural(*config["positions"]["search bar"])
+                self.move_and_click(config["positions"]["search bar"])
                 self.log("Search bar clicked")
                 time.sleep(slowdown)
                 keyboard.Controller().type(config["item_presets"][item]["name to search"])
                 self.log("Item searched:", config["item_presets"][item]["name to search"].capitalize())
                 time.sleep(slowdown)
-                mkey.move_to_natural(*config["positions"]["potion selection button"])
+                self.move_and_click(config["positions"]["potion selection button"], False)
                 self.log("Moved to potion selection button")
                 time.sleep(slowdown)
                 pyautogui.scroll(2000)
@@ -501,7 +527,7 @@ class Dark_Sol(QMainWindow):
 
                 time.sleep(slowdown)
                 if item_ready:
-                    self.log(f"{item.capitalize()} is ready, proceeding to craft.")
+                    self.log(f"Clicking additional buttons for {item}")
                     time.sleep(slowdown)
                     for button_to_click in config["item_presets"][item]["additional buttons to click"]:
                         add_to_button(button_to_click)
@@ -509,7 +535,7 @@ class Dark_Sol(QMainWindow):
 
                     if not config["item_presets"][item]["instant craft"]:
                         if self.current_auto_add_potion == None:
-                            mkey.left_click_xy_natural(*config["positions"]["auto add button"])
+                            self.move_and_click(config["positions"]["auto add button"])
                             self.current_auto_add_potion = item
                             self.log("Clicked auto add button")
                             time.sleep(slowdown)
@@ -518,14 +544,33 @@ class Dark_Sol(QMainWindow):
                             self.log(f"{item.capitalize()} added to auto add waitlist")
                             time.sleep(slowdown)
                     else:
-                        mkey.left_click_xy_natural(*config["positions"]["craft button"])
+                        self.move_and_click(config["positions"]["craft button"])
                         self.log("Clicked craft button")
                         time.sleep(slowdown)
 
             elif item == self.current_auto_add_potion:
+                self.move_and_click(config["positions"]["search bar"])
+                self.log("Search bar clicked")
+                time.sleep(slowdown)
+                keyboard.Controller().type(config["item_presets"][item]["name to search"])
+                self.log("Item searched:", config["item_presets"][item]["name to search"].capitalize())
+                time.sleep(slowdown)
+                self.move_and_click(config["positions"]["potion selection button"], False)
+                self.log("Moved to potion selection button")
+                time.sleep(slowdown)
+                pyautogui.scroll(2000)
+                self.log("Scrolled up")
+                time.sleep(slowdown)
+                mkey.left_click()
+                self.log("Selection button clicked")
+                time.sleep(slowdown)
+
                 item_ready = True
                 self.log(f"{item.capitalize()} set to ready")
                 time.sleep(slowdown)
+                self.log("Checking All Buttons")
+                time.sleep(slowdown)
+
                 for slot in range(1, config["item_presets"][item]["crafting slots"] + 1):  # ignore manual click slots
                     if not check_button("add button " + str(slot)):
                         time.sleep(slowdown)
@@ -533,16 +578,17 @@ class Dark_Sol(QMainWindow):
                         break
 
                 if item_ready:
-                    mkey.left_click_xy_natural(*config["positions"]["craft button"])
+                    self.move_and_click(config["positions"]["craft button"])
                     self.log("Clicked craft button")
                     time.sleep(slowdown)
                     if len(self.auto_add_waitlist) > 0:
-                        mkey.left_click_xy_natural(*config["positions"]["search bar"])
+                        self.move_and_click(config["positions"]["search bar"])
                         self.log("Search bar clicked")
                         time.sleep(slowdown)
-                        keyboard.Controller().type(self.auto_add_waitlist[0].capitalize())
-                        self.log(f"Item searched: {self.auto_add_waitlist[0].capitalize()}")
-                        mkey.move_to_natural(*config["positions"]["potion selection button"])
+                        keyboard.Controller().type(config["item_presets"][self.current_auto_add_potion]["name to search"])
+                        self.log(f"Item searched: {self.current_auto_add_potion.capitalize()}")
+                        time.sleep(slowdown)   
+                        self.move_and_click(config["positions"]["potion selection button"], False)
                         self.log("Moved to potion selection button")
                         time.sleep(slowdown)
                         pyautogui.scroll(2000)
@@ -551,18 +597,15 @@ class Dark_Sol(QMainWindow):
                         mkey.left_click()
                         self.log("Selection button clicked")
                         time.sleep(slowdown)
-                        mkey.left_click_xy_natural(*config["positions"]["auto add button"])
+                        self.move_and_click(config["positions"]["auto add button"])
                         self.log("Clicked auto add button")
                         time.sleep(slowdown)
                         self.current_auto_add_potion = self.auto_add_waitlist.pop(0)
-                        time.sleep(slowdown)
-        #macro_loop_iteration("bound")
-        for potion in config["item_presets"].keys():
-            if potion != "warp":
-                macro_loop_iteration(potion)
-
-
-
+                           
+        for item in config["item_presets"].keys():
+            if item != "warp":
+                macro_loop_iteration(item)
+        
     def auto_find_image(self, template, save=False, multiple=False, bbox_required=False):
         add_start_index = None
         template_path = f"{local_appdata_directory}\\Lib\\Images\\{template}"
