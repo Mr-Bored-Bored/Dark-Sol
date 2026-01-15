@@ -3,9 +3,8 @@
 *
 !.gitignore
 !Dark Sol.py
+
 !Appdata/
-Appdata/*
 !Appdata/Lib/
 !Appdata/Lib/**
 
-# i want the entire lib folder to be included
