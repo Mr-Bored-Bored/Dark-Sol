@@ -4,6 +4,7 @@
 !.gitignore
 !Dark Sol.py
 !Appdata/
+Appdata/*
 !Appdata/Lib/
 !Appdata/Lib/**
 
