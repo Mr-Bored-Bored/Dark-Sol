@@ -743,7 +743,9 @@ class Dark_Sol(QMainWindow):
                         search_for_potion(self.auto_add_waitlist[0])
                         if self.find_pixels_with_color("#C2FFA6", "#C1FEA5") == 0:
                                 self.move_and_click(config["positions"]["auto add button"])
-                        self.log("Clicked auto add button")
+                                self.log("Clicked auto add button")
+                        else:
+                            self.log("Auto add button already active")
                         time.sleep(slowdown)
                         self.current_auto_add_potion = self.auto_add_waitlist.pop(0)
                            
