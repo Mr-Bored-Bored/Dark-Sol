@@ -24,8 +24,13 @@ os.makedirs(local_appdata_directory, exist_ok=True)
 # 4. Add additional buttons to click check to prevent softlock 
 # 5. Make auto add checks ignore manual click slots (lucky potions)
 # 6. Fix other widgets not closing properly
-# 7. Add auto add button checking
-# 8. Implement Semi-Auto and Manual Calibration modes
+# 7. Implement Semi-Auto and Manual Calibration modes
+# 8. Add multi template for single location
+# 9. Add actual logger
+# 10. Make confidence for template find be specific per template
+# 11. Make plugins system
+# 12. Add theme tab functionality
+# 13. Add settings tab functionality
 
 # Loading Screen
 class loading_thread(QThread):
@@ -206,10 +211,10 @@ class Dark_Sol(QMainWindow):
         self.set_amount_box_coordinates.clicked.connect(lambda: self.show_amount_box_coordinates_selector())
         self.find_add_button.clicked.connect(lambda: self.auto_find_image("add button.png", True, True, True))
         self.find_amount_box.clicked.connect(lambda: self.auto_find_image("amount box.png", True, True))
-        self.find_auto_add_button.clicked.connect(lambda: self.auto_find_image("auto add button.png", True, False))
-        self.find_craft_button.clicked.connect(lambda: self.auto_find_image("craft button.png", True, False))
-        self.find_search_bar.clicked.connect(lambda: self.auto_find_image("cauldren search bar.png", True, False))
-        self.find_potion_selection_button.clicked.connect(lambda: self.auto_find_image("heavenly potion potion selector button.png", True, False))
+        self.find_auto_add_button.clicked.connect(lambda: self.auto_find_image("auto add button.png", True, bbox_required=True))
+        self.find_craft_button.clicked.connect(lambda: self.auto_find_image("craft button.png", True))
+        self.find_search_bar.clicked.connect(lambda: self.auto_find_image("cauldren search bar.png", True))
+        self.find_potion_selection_button.clicked.connect(lambda: self.auto_find_image("heavenly potion potion selector button.png", True))
         #Status Label Setup
         self.mini_status_widget.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowTransparentForInput)
         self.mini_status_widget.setStyleSheet("background-color: black; border: 2px solid cyan; border-radius: 6px;")
@@ -394,11 +399,14 @@ class Dark_Sol(QMainWindow):
         self.stop_macro_signal.connect(self.stop_macro)
         threading.Thread(target=self.hotkey_listener, daemon=True).start()
 
-    def find_pixels_with_color(self, *targets):
-        img = ImageGrab.grab()
+    def find_pixels_with_color(self, *targets, bbox=None):
+        if bbox == None:
+            img = ImageGrab.grab()
+        else:
+            img = ImageGrab.grab(*bbox)
+
         pixels = np.asarray(img, dtype=np.uint8)
         mask = np.zeros((pixels.shape[0], pixels.shape[1]), dtype=bool)
-        print(mask)
         # For each target, parse it into (r,g,b) and OR its matches into the mask.
         for target in targets:
             if isinstance(target, str):
@@ -660,23 +668,23 @@ class Dark_Sol(QMainWindow):
             self.log("No 'Add' detected. for", button_to_check)
             time.sleep(slowdown)
             return True
-
+            
         def search_for_potion(potion):
-            self.move_and_click(config["positions"]["search bar"])
-            self.log("Search bar clicked")
-            time.sleep(slowdown)
-            keyboard.Controller().type(data["item_presets"][potion]["name to search"])
-            self.log("Item searched:", data["item_presets"][potion]["name to search"].capitalize())
-            time.sleep(slowdown)
-            self.move_and_click(config["positions"]["potion selection button"], False)
-            self.log("Moved to potion selection button")
-            time.sleep(slowdown)
-            pyautogui.scroll(2000)
-            self.log("Scrolled up")
-            time.sleep(slowdown)
-            mkey.left_click()
-            self.log("Selection button clicked")
-            time.sleep(slowdown)
+                self.move_and_click(config["positions"]["search bar"])
+                self.log("Search bar clicked")
+                time.sleep(slowdown)
+                keyboard.Controller().type(data["item_presets"][potion]["name to search"])
+                self.log("Item searched:", data["item_presets"][potion]["name to search"].capitalize())
+                time.sleep(slowdown)
+                self.move_and_click(config["positions"]["potion selection button"], False)
+                self.log("Moved to potion selection button")
+                time.sleep(slowdown)
+                pyautogui.scroll(2000)
+                self.log("Scrolled up")
+                time.sleep(slowdown)
+                mkey.left_click()
+                self.log("Selection button clicked")
+                time.sleep(slowdown)
 
         def macro_loop_iteration(item):
             if item not in self.auto_add_waitlist and self.current_auto_add_potion != item:
@@ -706,8 +714,8 @@ class Dark_Sol(QMainWindow):
 
                     if not data["item_presets"][item]["instant craft"]:
                         if self.current_auto_add_potion == None:
-                            if self.find_pixels_with_color("#C2FFA6", "#C1FEA5") == 0:
-                                self.move_and_click(config["positions"]["auto add button"])
+                            if self.find_pixels_with_color("#C2FFA6", "#C1FEA5" ,bbox=config["positions"]["auto add button"]["bbox"]) == 0:
+                                self.move_and_click(config["positions"]["auto add button"]["center"])
                             self.current_auto_add_potion = item
                             self.log("Clicked auto add button")
                             time.sleep(slowdown)
@@ -722,7 +730,6 @@ class Dark_Sol(QMainWindow):
 
             elif item == self.current_auto_add_potion:
                 search_for_potion(item)
-
                 item_ready = True
                 self.log(f"{item.capitalize()} set to ready")
                 time.sleep(slowdown)
@@ -741,9 +748,9 @@ class Dark_Sol(QMainWindow):
                     time.sleep(slowdown)
                     if len(self.auto_add_waitlist) > 0:
                         search_for_potion(self.auto_add_waitlist[0])
-                        if self.find_pixels_with_color("#C2FFA6", "#C1FEA5") == 0:
-                                self.move_and_click(config["positions"]["auto add button"])
-                                self.log("Clicked auto add button")
+                        if self.find_pixels_with_color("#C2FFA6", "#C1FEA5" ,bbox=config["positions"]["auto add button"]["bbox"]) == 0:
+                            self.move_and_click(config["positions"]["auto add button"]["center"])
+                            self.log("Clicked auto add button")
                         else:
                             self.log("Auto add button already active")
                         time.sleep(slowdown)
