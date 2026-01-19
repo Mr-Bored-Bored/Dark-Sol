@@ -27,6 +27,7 @@ os.makedirs(local_appdata_directory, exist_ok=True)
 3. Make auto add checks ignore manual click slots (lucky potions) (Necessary for release)
 4. Implement Semi-Auto and Manual Calibration modes (Necessary for release)
 5. Make confidence for template find be specific per template (Necessary for release)
+6. Implement semi-auto and manual calibrations (Necessary for release)
 
 # Might be added for Release:
 6. Add settings tab functionality (Might be added by release)
@@ -180,13 +181,8 @@ class Dark_Sol(QMainWindow):
         self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
         self.preset_selector.setStyleSheet("color: cyan; background: #111; font-size: 24px; padding: 6px;")
         self.preset_selector.setMinimumHeight(52)
-
-        self.rename_preset_button.setMinimumHeight(52)
         self.rename_preset_button.setStyleSheet("color: cyan; background: #111; font-size: 24px; padding: 6px;")
-
-        self.delete_preset_button.setMinimumHeight(52)
         self.delete_preset_button.setStyleSheet("color: red; background: #111; font-size: 24px; padding: 6px; border: 1px solid red;")
-
         self.preset_selector.blockSignals(True)
         self.preset_selector.setCurrentText(self.current_preset)
         self.preset_selector.blockSignals(False)
@@ -290,6 +286,10 @@ class Dark_Sol(QMainWindow):
         self.mini_status_widget.adjustSize()
         self.mini_status_widget.move(600, 75)
         # Set Ui Theme
+        self.status_label.setObjectName("status_label")
+        self.start_button.setObjectName("start_button")
+        self.stop_button.setObjectName("stop_button")
+        self.calibrations_tab.setObjectName("calibrations_tab")
         self.setStyleSheet("""
             QMainWindow {background-color: black; }
             QTabWidget::pane { border: 0px; padding: 0px; margin: 0px; }
@@ -297,8 +297,12 @@ class Dark_Sol(QMainWindow):
             QTabBar::tab:selected { background-color: black; }
             QTabBar {color: cyan;}
             QWidget {background-color: black;}
-            QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 30px;}
-            QLabel {color: cyan; font-size: 50px;}
+            QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 20px;}
+            QPushButton#start_button {font-size: 30px;}
+            QPushButton#stop_button {font-size: 30px;}
+            QWidget#calibrations_tab QPushButton {font-size: 30px;}
+            QLabel {color: cyan; font-size: 18px;}
+            QLabel#status_label {color: cyan; font-size: 50px;}
         """)
         # Setup  Hotkeys
         self.start_button.clicked.connect(self.start_macro)
@@ -668,7 +672,12 @@ class Dark_Sol(QMainWindow):
             next_preset = next_selector.currentText()
 
             if next_preset == "-- Select preset --":
-                QMessageBox.warning(self, "Select Preset", "Select the preset you want to switch to first.")
+                msg = QMessageBox(self)
+                msg.setIcon(QMessageBox.Icon.Warning)
+                msg.setWindowTitle("Select Preset")
+                msg.setText("Select the preset you want to switch to first.")
+                msg.setStyleSheet("QLabel{font-size: 12px;}")
+                msg.exec()
                 continue
 
             config["current_preset"] = next_preset
