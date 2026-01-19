@@ -91,6 +91,8 @@ class loading_screen(QWidget):
 class Dark_Sol(QMainWindow):
     start_macro_signal = pyqtSignal()
     stop_macro_signal = pyqtSignal()
+    status_signal = pyqtSignal(str)
+    macro_stopped_signal = pyqtSignal()
 
     def __init__(self):
         # Create main window
@@ -159,6 +161,8 @@ class Dark_Sol(QMainWindow):
         self.run_event = threading.Event()
         self.worker = None
         self.init_ui()
+        self.status_signal.connect(self.update_status)
+        self.macro_stopped_signal.connect(self._on_macro_stopped)
         
     def init_ui(self):
         # Initialize Tabs
@@ -323,7 +327,7 @@ class Dark_Sol(QMainWindow):
                         "amount box 4": [715, 810],
                         "potion selection button": [1146, 460],
                         "search bar": [1137, 381],
-                        "auto add button": [707, 618],
+                        "auto add button": {"bbox": [646, 600, 768, 636], "center": [707, 618]},
                         "craft button": [573, 618],
                     },
                     "current_preset": "Preset 1",
@@ -333,7 +337,6 @@ class Dark_Sol(QMainWindow):
                             "bound": {
                                 "buttons to check": ["add button 1", "add button 2"],
                                 "additional buttons to click": ["add button 4"],
-                                "crafting slots": 4,
                                 "instant craft": False,
                                 "enabled": True,
                                 "collapsed": True
@@ -341,7 +344,6 @@ class Dark_Sol(QMainWindow):
                             "heavenly": {
                                 "buttons to check": ["add button 2", "add button 3"],
                                 "additional buttons to click": ["add button 1"],
-                                "crafting slots": 5,
                                 "instant craft": False,
                                 "enabled": True,
                                 "collapsed": True
@@ -349,7 +351,6 @@ class Dark_Sol(QMainWindow):
                             "zeus": {
                                 "buttons to check": ["add button 3"],
                                 "additional buttons to click": ["add button 1", "add button 2"],
-                                "crafting slots": 5,
                                 "instant craft": False,
                                 "enabled": True,
                                 "collapsed": True
@@ -357,7 +358,6 @@ class Dark_Sol(QMainWindow):
                             "poseidon": {
                                 "buttons to check": ["add button 2"],
                                 "additional buttons to click": ["add button 1"],
-                                "crafting slots": 4,
                                 "instant craft": False,
                                 "enabled": True,
                                 "collapsed": True
@@ -365,7 +365,6 @@ class Dark_Sol(QMainWindow):
                             "hades": {
                                 "buttons to check": ["add button 2"],
                                 "additional buttons to click": ["add button 1"],
-                                "crafting slots": 4,
                                 "instant craft": False,
                                 "enabled": True,
                                 "collapsed": True
@@ -373,7 +372,6 @@ class Dark_Sol(QMainWindow):
                             "warp": {
                                 "buttons to check": ["add button 1", "add button 2", "add button 4", "add button 5", "add button 6"],
                                 "additional buttons to click": ["add button 1", "add button 2"],
-                                "crafting slots": 6,
                                 "instant craft": False,
                                 "enabled": False,
                                 "collapsed": False
@@ -936,7 +934,7 @@ class Dark_Sol(QMainWindow):
         if bbox == None:
             img = ImageGrab.grab()
         else:
-            img = ImageGrab.grab(*bbox)
+            img = ImageGrab.grab(bbox)
 
         pixels = np.asarray(img, dtype=np.uint8)
         mask = np.zeros((pixels.shape[0], pixels.shape[1]), dtype=bool)
@@ -1105,12 +1103,12 @@ class Dark_Sol(QMainWindow):
         while self.run_event.is_set():
             self.main_macro_loop()
             if not self.run_event.wait(0.1):
-                self.update_status("Stopped")
-                self.mini_status_widget.hide()
+                self.macro_stopped_signal.emit()
+                break
 
     def log(self, *args):
-        self.update_status(" ".join(str(a) for a in args))
-
+        self.status_signal.emit(" ".join(str(a) for a in args))
+        
     def update_status(self, status_text):
         print("Status:", status_text)
         self.status_label.setText(f"Status: {status_text}")
@@ -1119,6 +1117,10 @@ class Dark_Sol(QMainWindow):
             self.mini_status_label.adjustSize()
             self.mini_status_widget.adjustSize()
 
+    def _on_macro_stopped(self):
+        self.status_signal.emit("Stopped")
+        self.mini_status_widget.hide()
+        
     def move_and_click(self, position, click=True):
         try:
             if click:
@@ -1135,17 +1137,18 @@ class Dark_Sol(QMainWindow):
         def add_to_button(button_to_add_to):
             time.sleep(slowdown)
             if int(button_to_add_to[-1]) < 4:
-                self.move_and_click(config[f"amount box {int(button_to_add_to[-1])}"], False)
+                self.move_and_click(config["positions"][f"amount box {int(button_to_add_to[-1])}"], False)
                 self.log("Moved to", "amount box", button_to_add_to[-1])
                 time.sleep(slowdown)
                 pyautogui.scroll(2000)
                 self.log("Scrolled up")
                 time.sleep(slowdown)
                 mkey.left_click()
+                mkey.left_click()
                 self.log("Amount box clicked to focus")
                 time.sleep(slowdown)
                 if button_to_add_to in data["item data"][item]["amounts to add"]:
-                    keyboard.Controller().type(data["item data"][item]["amounts to add"][button_to_add_to])
+                    keyboard.Controller().type(str(data["item data"][item]["amounts to add"][button_to_add_to]))
                     self.log(f"Typed amount: {data['item data'][item]['amounts to add'][button_to_add_to]}")
                 else:
                     keyboard.Controller().type("1")
@@ -1169,15 +1172,18 @@ class Dark_Sol(QMainWindow):
                     self.log("Scrolled down to slot", x + 1)
                 time.sleep(slowdown)
                 mkey.left_click()
+                mkey.left_click()
                 self.log("Amount box clicked to focus")
                 time.sleep(slowdown)
                 if button_to_add_to in data["item data"][item]["amounts to add"]:
-                    keyboard.Controller().type(data["item data"][item]["amounts to add"][button_to_add_to])
+                    keyboard.Controller().type(str(data["item data"][item]["amounts to add"][button_to_add_to]))
                     self.log(f"Typed amount: {data['item data'][item]['amounts to add'][button_to_add_to]}")
                 else:
                     keyboard.Controller().type("1")
                     self.log("Typed amount: 1")
                 time.sleep(slowdown)
+                self.move_and_click(config["positions"][button_to_add_to]["center"])
+                self.log(f"{button_to_add_to} clicked")
 
         def check_button(button_to_check):
             img = None
@@ -1268,8 +1274,8 @@ class Dark_Sol(QMainWindow):
                         if self.current_auto_add_potion == None:
                             if self.find_pixels_with_color("#C2FFA6", "#C1FEA5" ,bbox=config["positions"]["auto add button"]["bbox"]) == 0:
                                 self.move_and_click(config["positions"]["auto add button"]["center"])
+                                self.log("Clicked auto add button")
                             self.current_auto_add_potion = item
-                            self.log("Clicked auto add button")
                             time.sleep(slowdown)
                         elif not self.current_auto_add_potion == None and item not in self.auto_add_waitlist:
                             self.auto_add_waitlist.append(item)
@@ -1288,7 +1294,7 @@ class Dark_Sol(QMainWindow):
                 self.log("Checking All Buttons")
                 time.sleep(slowdown)
 
-                for slot in range(1, config["item presets"][self.current_preset][item]["crafting slots"] + 1):  # ignore manual click slots
+                for slot in range(1, data["item data"][item]["crafting slots"] + 1):  # ignore manual click slots
                     if not check_button("add button " + str(slot)):
                         time.sleep(slowdown)
                         item_ready = False
