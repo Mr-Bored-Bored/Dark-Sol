@@ -607,7 +607,48 @@ class Dark_Sol(QMainWindow):
             items.sort(key=button_order_key)
             self.nice_config_save()
 
+        def on_potion_collapse_clicked():
+            sender = self.sender()
+            if sender is None or not isinstance(sender, QPushButton):
+                return
+            potion = sender.property("potion")
+            body = sender.property("body")
+            instant = sender.property("instant")
+            cb_enabled = sender.property("cb enabled")
+            potion_config = config["item presets"][self.current_preset][potion]
+
+            if not cb_enabled.isChecked():
+                return
+
+            potion_config["collapsed"] = not potion_config["collapsed"]
+            collapsed = potion_config["collapsed"]
+            body.setVisible(not collapsed)
+            instant.setVisible(not collapsed)
+            sender.setText("▶" if collapsed else "▼")
+
+            self.nice_config_save()
+            self.presets_tab_content.adjustSize()
+
+        def on_enabled_ui_changed(checked: bool):
+            sender = self.sender()
+            if sender is None or not isinstance(sender, QCheckBox):
+                return
+            potion = sender.property("potion")
+            body = sender.property("body")
+            instant = sender.property("instant")
+            collapse_button = sender.property("collapse button")
+            potion_config = config["item presets"][self.current_preset][potion]
+
+            collapsed = potion_config["collapsed"]
+            body.setVisible(checked and not collapsed)
+            instant.setVisible(checked and not collapsed)
+            collapse_button.setEnabled(checked)
+            collapse_button.setText("▼" if checked and not collapsed else "▶")
+            self.nice_config_save()
+            self.presets_tab_content.adjustSize()
+
         for potion in data["item data"].keys():
+            # Data References
             potion_config = config["item presets"][self.current_preset][potion]
             potion_data = data["item data"][potion]
             # Potion Section
@@ -615,34 +656,37 @@ class Dark_Sol(QMainWindow):
             QVLayout = QVBoxLayout(potion_section)
             QVLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
             potion_section.setStyleSheet("QWidget { background: #0b0b0b; border: 1px solid #033; border-radius: 8px; }")
-
-            # Header (match Gui Template)
+            # Header
             potion_header = QWidget()
             potion_header.setStyleSheet("QWidget { background: #111; border: 0px; }")
             QHLayout = QHBoxLayout(potion_header)
             QHLayout.setContentsMargins(0, 0, 0, 0)
-
             title = QLabel(potion.capitalize())
             title.setStyleSheet("color: cyan; font-size: 24px;")
-
+            # Instant Craft Checkbox
             instant_craft_checkbox = QCheckBox("Instant Craft")
             instant_craft_checkbox.setChecked(bool(potion_config["instant craft"]))
             checkbox_into_toggler(instant_craft_checkbox)
             instant_craft_checkbox.setProperty("potion", potion)
             instant_craft_checkbox.setProperty("config_key", "instant craft")
             instant_craft_checkbox.toggled.connect(on_potion_toggle_changed)
-
+            # Enabled Checkbox
             enabled_checkbox = QCheckBox("Enabled")
             enabled_checkbox.setChecked(bool(potion_config["enabled"]))
             checkbox_into_toggler(enabled_checkbox)
             enabled_checkbox.setProperty("potion", potion)
             enabled_checkbox.setProperty("config_key", "enabled")
             enabled_checkbox.toggled.connect(on_potion_toggle_changed)
-
+            # Collapse Button
+            collapse_button = QPushButton("▶" if potion_config["collapsed"] else "▼")
+            collapse_button.setFixedWidth(45)
+            collapse_button.setStyleSheet("color: cyan; background: #111; border: 1px solid cyan; font-size: 22px;")
+            # Header Layout
             QHLayout.addWidget(title)
             QHLayout.addStretch()
             QHLayout.addWidget(instant_craft_checkbox)
             QHLayout.addWidget(enabled_checkbox)
+            QHLayout.addWidget(collapse_button)
             QVLayout.addWidget(potion_header)
             # Body
             body = QWidget()
@@ -651,7 +695,7 @@ class Dark_Sol(QMainWindow):
             columns_QH_Layout.setAlignment(Qt.AlignmentFlag.AlignTop)
             columns_QH_Layout.setContentsMargins(2, 2, 2, 2)
             columns_QH_Layout.setSpacing(10)
-
+            # Buttons To Check Column (Left)
             left_column = QWidget()
             left_column_QV_Layout = QVBoxLayout(left_column)
             left_column_QV_Layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -660,7 +704,7 @@ class Dark_Sol(QMainWindow):
             left_title = QLabel("Buttons To Check")
             left_title.setStyleSheet("color: cyan; font-size: 20px;")
             left_column_QV_Layout.addWidget(left_title)
-
+            # Additional Buttons To Click Column (Right)
             right_column = QWidget()
             right_column_QV_Layout = QVBoxLayout(right_column)
             right_column_QV_Layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -669,12 +713,12 @@ class Dark_Sol(QMainWindow):
             right_title = QLabel("Additional Buttons To Click")
             right_title.setStyleSheet("color: cyan; font-size: 20px;")
             right_column_QV_Layout.addWidget(right_title)
-
+    
             slots = int(potion_config["crafting slots"])
             for i in range(1, slots + 1):
                 btn = f"add button {i}"
                 label = potion_data["button names"][btn]
-
+                # Fill Buttons To Check Column (Left)
                 temp_checkbox1 = QCheckBox(label)
                 temp_checkbox1.setStyleSheet("color: cyan; font-size: 14px;")
                 temp_checkbox1.setChecked(btn in potion_config["buttons to check"])
@@ -683,7 +727,7 @@ class Dark_Sol(QMainWindow):
                 temp_checkbox1.setProperty("btn", btn)
                 temp_checkbox1.toggled.connect(on_potion_list_toggle_changed)
                 left_column_QV_Layout.addWidget(temp_checkbox1)
-
+                # Fill Additional Buttons To Click Column (Right)
                 temp_checkbox2 = QCheckBox(label)
                 temp_checkbox2.setStyleSheet("color: cyan; font-size: 14px;")
                 temp_checkbox2.setChecked(btn in potion_config["additional buttons to click"])
@@ -696,6 +740,24 @@ class Dark_Sol(QMainWindow):
             columns_QH_Layout.addStretch(1)
             columns_QH_Layout.addWidget(right_column)
             QVLayout.addWidget(body)
+
+            # Collapse wiring (hide/show only the selections body)
+            collapsed = potion_config["collapsed"]
+            body.setVisible(potion_config["enabled"] and not collapsed)
+            instant_craft_checkbox.setVisible(potion_config["enabled"] and not collapsed)
+            collapse_button.setProperty("potion", potion)
+            collapse_button.setProperty("body", body)
+            collapse_button.setProperty("instant", instant_craft_checkbox)
+            collapse_button.setProperty("cb enabled", enabled_checkbox)
+            collapse_button.clicked.connect(on_potion_collapse_clicked)
+
+            collapse_button.setEnabled(potion_config["enabled"])
+            collapse_button.setText("▼" if potion_config["enabled"] and not collapsed else "▶")
+
+            enabled_checkbox.setProperty("body", body)
+            enabled_checkbox.setProperty("instant", instant_craft_checkbox)
+            enabled_checkbox.setProperty("collapse button", collapse_button)
+            enabled_checkbox.toggled.connect(on_enabled_ui_changed)
 
             self.presets_tab_content_layout.addWidget(potion_section)
 
@@ -1107,7 +1169,7 @@ class Dark_Sol(QMainWindow):
                         self.current_auto_add_potion = self.auto_add_waitlist.pop(0)
                            
         for item in data["item data"].keys():
-                if config["item presets"][item]["enabled"]:
+                if config["item presets"][self.current_preset][item]["enabled"]:
                     macro_loop_iteration(item)
                 
         
