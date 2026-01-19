@@ -42,7 +42,6 @@ os.makedirs(local_appdata_directory, exist_ok=True)
 14. Add ability to export/import presets
 15. Add ability to change hotkeys
 """
-
 # Loading Screen
 class loading_thread(QThread):
     finished = pyqtSignal()
@@ -179,15 +178,15 @@ class Dark_Sol(QMainWindow):
         self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
         self.preset_selector.setStyleSheet("color: cyan; background: #111; font-size: 24px; padding: 6px;")
         self.preset_selector.setMinimumHeight(52)
-
-        # Presets tab scoped styling (match Gui Template; does not affect other tabs)
+        self.preset_selector.blockSignals(True)
+        self.preset_selector.setCurrentText(self.current_preset)
+        self.preset_selector.blockSignals(False)
         self.presets_tab.setStyleSheet("""
             QWidget { background-color: black; }
             QLabel { color: cyan; font-size: 18px; }
             QCheckBox { color: cyan; font-size: 14px; }
             QScrollArea { border: 0px; }
         """)
-
         self.presets_tab_scroller.setFrameShape(QFrame.Shape.NoFrame)
         self.presets_tab_scroller.setWidgetResizable(True)
         self.presets_tab_scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -564,6 +563,18 @@ class Dark_Sol(QMainWindow):
         self.preset_selector.addItems(list(config.get("item presets", {}).keys()) + ["Create New Preset"])
         self.preset_selector.setCurrentText(preset_name)
         self.preset_selector.blockSignals(False)
+
+        self.rebuild_potions_ui()
+
+    def rebuild_potions_ui(self):
+        while self.presets_tab_content_layout.count():
+            old_preset = self.presets_tab_content_layout.takeAt(0)
+            if old_preset is None:
+                break
+            preset_widget = old_preset.widget()
+            if preset_widget is not None:
+                preset_widget.deleteLater()
+        self.build_potions_ui()
 
     def build_potions_ui(self):
         def checkbox_into_toggler(checkbox: QCheckBox):
@@ -1004,9 +1015,9 @@ class Dark_Sol(QMainWindow):
                 mkey.left_click()
                 self.log("Amount box clicked to focus")
                 time.sleep(slowdown)
-                if button_to_add_to in data["item presets"][item]["amounts to add"]:
-                    keyboard.Controller().type(str(data["item presets"][item]["amounts to add"][button_to_add_to]))
-                    self.log(f"Typed amount: {data['item_presets'][item]['amounts to add'][button_to_add_to]}")
+                if button_to_add_to in data["item data"][item]["amounts to add"]:
+                    keyboard.Controller().type(data["item data"][item]["amounts to add"][button_to_add_to])
+                    self.log(f"Typed amount: {data['item data'][item]['amounts to add'][button_to_add_to]}")
                 else:
                     keyboard.Controller().type("1")
                     self.log("Typed amount: 1")
@@ -1031,9 +1042,9 @@ class Dark_Sol(QMainWindow):
                 mkey.left_click()
                 self.log("Amount box clicked to focus")
                 time.sleep(slowdown)
-                if button_to_add_to in data["item presets"][item]["amounts to add"]:
-                    keyboard.Controller().type(str(data["item presets"][item]["amounts to add"][button_to_add_to]))
-                    self.log(f"Typed amount: {data['item_presets'][item]['amounts to add'][button_to_add_to]}")
+                if button_to_add_to in data["item data"][item]["amounts to add"]:
+                    keyboard.Controller().type(data["item data"][item]["amounts to add"][button_to_add_to])
+                    self.log(f"Typed amount: {data['item data'][item]['amounts to add'][button_to_add_to]}")
                 else:
                     keyboard.Controller().type("1")
                     self.log("Typed amount: 1")
@@ -1085,8 +1096,8 @@ class Dark_Sol(QMainWindow):
                 self.move_and_click(config["positions"]["search bar"])
                 self.log("Search bar clicked")
                 time.sleep(slowdown)
-                keyboard.Controller().type(data["item presets"][potion]["name to search"])
-                self.log("Item searched:", data["item presets"][potion]["name to search"].capitalize())
+                keyboard.Controller().type(data["item data"][potion]["name to search"])
+                self.log("Item searched:", data["item data"][potion]["name to search"].capitalize())
                 time.sleep(slowdown)
                 self.move_and_click(config["positions"]["potion selection button"], False)
                 self.log("Moved to potion selection button")
@@ -1102,7 +1113,7 @@ class Dark_Sol(QMainWindow):
             if item not in self.auto_add_waitlist and self.current_auto_add_potion != item:
                 search_for_potion(item)
 
-                for button_to_add_to in data["item presets"][item]["buttons to check"]:
+                for button_to_add_to in config["item presets"][self.current_preset][item]["buttons to check"]:
                     add_to_button(button_to_add_to)
                     time.sleep(slowdown)
 
@@ -1110,7 +1121,7 @@ class Dark_Sol(QMainWindow):
                 self.log(f"{item} set to ready")
                 time.sleep(slowdown)
                 
-                for button_to_check in data["item presets"][item]["buttons to check"]:
+                for button_to_check in config["item presets"][self.current_preset][item]["buttons to check"]:
                     item_ready = check_button(button_to_check)
                     time.sleep(slowdown)
                     if not item_ready:
@@ -1120,11 +1131,11 @@ class Dark_Sol(QMainWindow):
                 if item_ready:
                     self.log(f"Clicking additional buttons for {item}")
                     time.sleep(slowdown)
-                    for button_to_click in data["item presets"][item]["additional buttons to click"]:
+                    for button_to_click in config["item presets"][self.current_preset][item]["additional buttons to click"]:
                         add_to_button(button_to_click)
                         time.sleep(slowdown)
 
-                    if not data["item presets"][item]["instant craft"]:
+                    if not config["item presets"][self.current_preset][item]["instant craft"]:
                         if self.current_auto_add_potion == None:
                             if self.find_pixels_with_color("#C2FFA6", "#C1FEA5" ,bbox=config["positions"]["auto add button"]["bbox"]) == 0:
                                 self.move_and_click(config["positions"]["auto add button"]["center"])
@@ -1148,7 +1159,7 @@ class Dark_Sol(QMainWindow):
                 self.log("Checking All Buttons")
                 time.sleep(slowdown)
 
-                for slot in range(1, data["item presets"][item]["crafting slots"] + 1):  # ignore manual click slots
+                for slot in range(1, config["item presets"][self.current_preset][item]["crafting slots"] + 1):  # ignore manual click slots
                     if not check_button("add button " + str(slot)):
                         time.sleep(slowdown)
                         item_ready = False
@@ -1172,7 +1183,6 @@ class Dark_Sol(QMainWindow):
                 if config["item presets"][self.current_preset][item]["enabled"]:
                     macro_loop_iteration(item)
                 
-        
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     loader = loading_screen()
