@@ -29,29 +29,32 @@ os.makedirs(local_appdata_directory, exist_ok=True)
 3. Make confidence for template find be specific per template
 4. Seperate log and print statements
 5. Seperate logs(status updates) and print statements
+6. Add auto find template settings
+7. Complete Auto Find Template function
+8. Add scroll calibration
+9. Update calibration switch button tooltip
 #Mini Status Label 
-6. Make Mini Status Label movable (when moving make it show largest size)
-7. Make Mini Status Label centered so it doesnt move as much
-
+10. Make Mini Status Label movable (when moving make it show largest size)
+11. Make Mini Status Label centered so it doesnt move as much
 
 # Might be added for v1 Release:
-8. Add settings tab functionality
+12. Add settings tab functionality
 
 # Optional for v1 Release:
-9. Fix other widgets not closing properly
-10. Add multi template for single location
-11. Add actual logger
-12. Make plugins system
-13. Add theme tab functionality
-14. Able to handle corrupt config
-15. Add config backups
-16. Add ability to export/import presets
-17. Add ability to change hotkeys
-18. Add aura storage checks
-19. Add gui auto resize
-20. Add Logging System
+13. Fix other widgets not closing properly
+14. Add multi template for single location
+15. Add actual logger
+16. Make plugins system
+17. Add theme tab functionality
+18. Able to handle corrupt config
+19. Add config backups
+20. Add ability to export/import presets
+21. Add ability to change hotkeys
+22. Add aura storage checks
+23. Add gui auto resize
+24. Add Logging System
 # Mini Status Label
-21. Make Mini Status Label show auto add waitlist
+25. Make Mini Status Label show auto add waitlist
 """
 # Loading Screen
 class loading_thread(QThread):
@@ -469,7 +472,7 @@ class Dark_Sol(QMainWindow):
                     "add button.png": {
                         "scale": 1.25,
                         "resolution": (1920, 1080),
-                        "confidence": 0.75,
+                        "confidence": 0.7,
                         "config position name": [
                             "add button 1",
                             "add button 2",
@@ -480,7 +483,7 @@ class Dark_Sol(QMainWindow):
                     "amount box.png": {
                         "scale": 1.25,
                         "resolution": (1920, 1200),
-                        "confidence": 0.5,
+                        "confidence": 0.85,
                         "config position name": [
                             "amount box 1",
                             "amount box 2",
@@ -1106,11 +1109,11 @@ class Dark_Sol(QMainWindow):
                         
                 except (pyscreeze_ImageNotFoundException, pyautogui.ImageNotFoundException):
                     self.log(f"No matches found for template: {template_path}")
-                    screen.show()
+                    QMessageBox.information(self, "Dark Sol", "No Matches Found")
 
                 except Exception as e:
                     self.log(f"Error finding matches: {e}")
-                    screen.show()
+                    QMessageBox.warning(self, "Dark Sol", f"Error Finding Matches:   {e}")
                 count = 0
 
             if template == "add button.png":
