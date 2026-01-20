@@ -26,6 +26,7 @@ os.makedirs(local_appdata_directory, exist_ok=True)
 2. Implement Semi-Auto and Manual Calibration modes
 3. Make confidence for template find be specific per template
 4. Seperate log and print statements
+5. Seperate logs(status updates) and print statements
 #Mini Status Label
 5. Add multi layers to mini status (General status / What it is currently doing) 
 6. Make Mini Status Label movable (when moving make it show largest size)
@@ -99,7 +100,7 @@ class loading_screen(QWidget):
 class Dark_Sol(QMainWindow):
     start_macro_signal = pyqtSignal()
     stop_macro_signal = pyqtSignal()
-    status_signal = pyqtSignal(str)
+    status_signal = pyqtSignal([str], [str, bool])
     macro_stopped_signal = pyqtSignal()
 
     def __init__(self):
@@ -1103,7 +1104,7 @@ class Dark_Sol(QMainWindow):
         if self.worker is not None and self.worker.is_alive():
             return
         self.mini_status_widget.show()
-        self.update_status("Running")
+        self.update_status("Running", True)
         self.run_event.set()
         self.worker = threading.Thread(target=self.macro_worker, daemon=True)
         self.worker.start()
@@ -1121,16 +1122,17 @@ class Dark_Sol(QMainWindow):
     def log(self, *args):
         self.status_signal.emit(" ".join(str(a) for a in args))
         
-    def update_status(self, status_text):
+    def update_status(self, status_text, update_general=False):
         print("Status:", status_text)
-        self.status_label.setText(f"Status: {status_text}")
+        if update_general:
+            self.status_label.setText(f"Status: {status_text}")
         if self.mini_status_label != None:
             self.mini_status_label.setText(status_text)
             self.mini_status_label.adjustSize()
             self.mini_status_widget.adjustSize()
 
     def on_macro_stopped(self):
-        self.status_signal.emit("Stopped")
+        self.status_signal.emit("Stopped", True)
         self.mini_status_widget.hide()
         
     def move_and_click(self, position, click=True):
