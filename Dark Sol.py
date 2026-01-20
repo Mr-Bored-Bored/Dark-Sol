@@ -19,27 +19,37 @@ CONFIG_PATH = local_appdata_directory / "Dark Sol config.json"
 os.makedirs(local_appdata_directory, exist_ok=True)
 
 """
-# *Tasks (For Mr. Bored)
+# Tasks (For Mr. Bored)
 
 # Nessesary for Release:
-3. Make auto add checks ignore manual click slots (lucky potions) (Necessary for release)
-4. Implement Semi-Auto and Manual Calibration modes (Necessary for release)
-5. Make confidence for template find be specific per template (Necessary for release)
+1. Make auto add checks ignore manual click slots aka check if they are not added and compensate to prevent softlock(lucky potions)
+2. Implement Semi-Auto and Manual Calibration modes
+3. Make confidence for template find be specific per template
+4. Seperate log and print statements
+#Mini Status Label
+5. Add multi layers to mini status (General status / What it is currently doing) 
+6. Make Mini Status Label movable (when moving make it show largest size)
+7. Make Mini Status Label centered so it doesnt move as much
+
 
 # Might be added for Release:
-6. Add settings tab functionality (Might be added by release)
+8. Add settings tab functionality
 
 # Optional for Release:
-7. Fix other widgets not closing properly
-8. Add multi template for single location
-9. Add actual logger
-10. Make plugins system
-11. Add theme tab functionality
-12. # Able to handle corrupt config
-13. Add config backups
-14. Add ability to export/import presets
-15. Add ability to change hotkeys
-16. Add aura storage checks
+9. Fix other widgets not closing properly
+10. Add multi template for single location
+11. Add actual logger
+12. Make plugins system
+13. Add theme tab functionality
+14. # Able to handle corrupt config
+15. Add config backups
+16. Add ability to export/import presets
+17. Add ability to change hotkeys
+18. Add aura storage checks
+19. Add gui auto resize
+20. Add Logging System
+# Mini Status Label
+21. Make Mini Status Label show auto add waitlist
 """
 # Loading Screen
 class loading_thread(QThread):
