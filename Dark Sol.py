@@ -1,3 +1,36 @@
+"""
+# Tasks (For Mr. Bored)
+
+# Necessary for v1 Release:
+1. Implement Semi-Auto and Manual Calibration modes
+2. Add auto find template settings
+3. Add scroll calibration
+#Mini Status Label 
+4. Make Mini Status Label movable (when moving make it show largest size)
+# Might be added for v1 Release:
+5. Add settings tab functionality
+
+# Optional for v1 Release / Planned for the future:
+6. Fix other widgets not closing properly
+7. Add multi template for single location
+8. Add actual logger
+9. Make plugins system
+10. Add theme tab functionality (Requires style sheet overhaul and compression to allow for user friendly adjustments)
+11. Able to handle corrupt config
+12. Add config backups
+13. Add ability to export/import presets
+14. Add ability to change hotkeys
+15. Add aura storage checks
+16. Add gui auto resize
+17. Add Logging System
+18. Make it so that it can add in 1's instead of just the amount numbers
+19. Complete Auto Find Template function
+# Mini Status Label
+20. Make Mini Status Label show auto add waitlist
+
+# Completed (For commits):
+"""
+
 # Dev Mode
 dev_mode = False
 # DPI Setup
@@ -13,94 +46,13 @@ from mousekey import MouseKey
 from pynput import keyboard
 import numpy as np
 from copy import deepcopy
-
+# Setup Imports
 mkey = MouseKey()
 mkey.enable_failsafekill('ctrl+e')
 local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"]) / "Dark Sol"
 CONFIG_PATH = local_appdata_directory / "Dark Sol config.json"
 os.makedirs(local_appdata_directory, exist_ok=True)
-
-"""
-# Tasks (For Mr. Bored)
-
-# Necessary for v1 Release:
-1. Implement Semi-Auto and Manual Calibration modes
-2. Add auto find template settings
-3. Add scroll calibration
-#Mini Status Label 
-4. Make Mini Status Label movable (when moving make it show largest size)
-
-# Might be added for v1 Release:
-6. Add settings tab functionality
-
-# Optional for v1 Release / Planned for the future:
-7. Fix other widgets not closing properly
-8. Add multi template for single location
-9. Add actual logger
-10. Make plugins system
-11. Add theme tab functionality
-12. Able to handle corrupt config
-13. Add config backups
-14. Add ability to export/import presets
-15. Add ability to change hotkeys
-16. Add aura storage checks
-17. Add gui auto resize
-18. Add Logging System
-19. Make it so that it can add in 1's instead of just the amount numbers
-20. Complete Auto Find Template function
-# Mini Status Label
-21. Make Mini Status Label show auto add waitlist
-
-# Completed:
-1. Updated calibration mode switch button tooltip
-2. Moved Config and Data in script
-3. Made Mini Status Label centered so it doesnt move as much
-"""
-
-# Loading Screen
-class loading_thread(QThread):
-    finished = pyqtSignal()
-    progress = pyqtSignal(str, int)
-    def run(self):
-        self.progress.emit("Settings Import Properties (%p%)", 0)
-        global easyocr, reader
-        self.progress.emit("Import Properties Set (%p%)", 1)
-        self.progress.emit("Importing EasyOCR (%p%)", 1)
-        import easyocr
-        self.progress.emit("EasyOCR Imported (%p%)", 2)
-        self.progress.emit("Initializing EasyOCR (%p%)", 2)
-        reader = easyocr.Reader(['en'])
-        self.progress.emit("EasyOCR Initialized (%p%)", 3)
-        self.finished.emit()
-
-class loading_screen(QWidget):
-    def __init__(self):
-        super().__init__()
-        parts_to_load = 3
-        self.loading_bar = QProgressBar(self)
-        self.setWindowTitle("Loading Dark Sol")
-        self.setStyleSheet(""" QProgressBar {background-color: black; color: white; border-radius: 5px; border: 1px solid black; font-size: 20px; height: 40px;} QProgressBar::chunk {background-color: lime; }""")
-        self.setGeometry(0, 0, 500, 100)
-        self.loading_bar.setGeometry(0, 0, 500, 100)
-        self.loading_bar.setRange(0, parts_to_load)
-        self.loading_bar.setValue(0)
-        self.loading_bar.setFormat("Loading Dark Sol (You should not see this)")
-        self.loading_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.loader_thread = loading_thread()
-        self.loader_thread.progress.connect(self.update_bar)
-        self.loader_thread.finished.connect(self.on_loaded)
-        self.loader_thread.start()
-
-    def update_bar(self, text, value):
-        self.loading_bar.setFormat(text)
-        self.loading_bar.setValue(value)
-
-    def on_loaded(self):
-        self.close()
-        main_window = Dark_Sol()
-        main_window.show()
-
+# Config and Data
 def nice_config_save(ind=4):
         S = (str, int, float, bool, type(None))
 
@@ -360,6 +312,50 @@ data = {
                     },
                 }
             }
+
+# Loading Screen
+class loading_thread(QThread):
+    finished = pyqtSignal()
+    progress = pyqtSignal(str, int)
+    def run(self):
+        self.progress.emit("Settings Import Properties (%p%)", 0)
+        global easyocr, reader
+        self.progress.emit("Import Properties Set (%p%)", 1)
+        self.progress.emit("Importing EasyOCR (%p%)", 1)
+        import easyocr
+        self.progress.emit("EasyOCR Imported (%p%)", 2)
+        self.progress.emit("Initializing EasyOCR (%p%)", 2)
+        reader = easyocr.Reader(['en'])
+        self.progress.emit("EasyOCR Initialized (%p%)", 3)
+        self.finished.emit()
+
+class loading_screen(QWidget):
+    def __init__(self):
+        super().__init__()
+        parts_to_load = 3
+        self.loading_bar = QProgressBar(self)
+        self.setWindowTitle("Loading Dark Sol")
+        self.setStyleSheet(""" QProgressBar {background-color: black; color: white; border-radius: 5px; border: 1px solid black; font-size: 20px; height: 40px;} QProgressBar::chunk {background-color: lime; }""")
+        self.setGeometry(0, 0, 500, 100)
+        self.loading_bar.setGeometry(0, 0, 500, 100)
+        self.loading_bar.setRange(0, parts_to_load)
+        self.loading_bar.setValue(0)
+        self.loading_bar.setFormat("Loading Dark Sol (You should not see this)")
+        self.loading_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.loader_thread = loading_thread()
+        self.loader_thread.progress.connect(self.update_bar)
+        self.loader_thread.finished.connect(self.on_loaded)
+        self.loader_thread.start()
+
+    def update_bar(self, text, value):
+        self.loading_bar.setFormat(text)
+        self.loading_bar.setValue(value)
+
+    def on_loaded(self):
+        self.close()
+        main_window = Dark_Sol()
+        main_window.show()
 
 # Main Dark Sol Script
 class Dark_Sol(QMainWindow):
