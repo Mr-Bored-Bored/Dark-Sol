@@ -1,4 +1,3 @@
-# Added general layer to mini status label and removed extra slowdowns from main macro loop.
 # Dev Mode
 dev_mode = False
 # DPI Setup
@@ -26,34 +25,36 @@ os.makedirs(local_appdata_directory, exist_ok=True)
 
 # Necessary for v1 Release:
 1. Implement Semi-Auto and Manual Calibration modes
-2. Seperate logs(status updates) and print statements
-3. Add auto find template settings
-4. Complete Auto Find Template function
-5. Add scroll calibration
-6. Update calibration switch button tooltip
+2. Add auto find template settings
+3. Add scroll calibration
 #Mini Status Label 
-7. Make Mini Status Label movable (when moving make it show largest size)
-8. Make Mini Status Label centered so it doesnt move as much
+4. Make Mini Status Label movable (when moving make it show largest size)
 
 # Might be added for v1 Release:
-9. Add settings tab functionality
+6. Add settings tab functionality
 
-# Optional for v1 Release:
-10. Fix other widgets not closing properly
-11. Add multi template for single location
-12. Add actual logger
-13. Make plugins system
-14. Add theme tab functionality
-15. Able to handle corrupt config
-16. Add config backups
-17. Add ability to export/import presets
-18. Add ability to change hotkeys
-19. Add aura storage checks
-20. Add gui auto resize
-21. Add Logging System
-22. Make it so that it can add in 1's instead of just the amount numbers
+# Optional for v1 Release / Planned for the future:
+7. Fix other widgets not closing properly
+8. Add multi template for single location
+9. Add actual logger
+10. Make plugins system
+11. Add theme tab functionality
+12. Able to handle corrupt config
+13. Add config backups
+14. Add ability to export/import presets
+15. Add ability to change hotkeys
+16. Add aura storage checks
+17. Add gui auto resize
+18. Add Logging System
+19. Make it so that it can add in 1's instead of just the amount numbers
+20. Complete Auto Find Template function
 # Mini Status Label
-23. Make Mini Status Label show auto add waitlist
+21. Make Mini Status Label show auto add waitlist
+
+# Completed:
+1. Updated calibration mode switch button tooltip
+2. Moved Config and Data in script
+3. Made Mini Status Label centered so it doesnt move as much
 """
 
 # Loading Screen
@@ -100,316 +101,7 @@ class loading_screen(QWidget):
         main_window = Dark_Sol()
         main_window.show()
 
-# Main Dark Sol Script
-class Dark_Sol(QMainWindow):
-    start_macro_signal = pyqtSignal()
-    stop_macro_signal = pyqtSignal()
-    status_signal = pyqtSignal([str], [str, bool])
-    macro_stopped_signal = pyqtSignal()
-
-    def __init__(self):
-        # Create main window
-        super().__init__()
-        self.initalize_config()
-        self.setWindowTitle("Dark Sol")
-        self.setGeometry(100, 100, 400, 100)
-        # Create Tabs
-        self.tabs_widget = QTabWidget()
-        self.main_tab = QWidget()
-        self.presets_tab = QWidget()
-        self.calibrations_tab = QWidget()
-        self.theme_tab = QWidget()
-        self.settings_tab = QWidget()
-        # Create Main Tab Elements
-        self.start_button = QPushButton("Start")
-        self.stop_button = QPushButton("Stop")
-        self.status_label = QLabel("Status: Stopped")
-        # Create Presets Tab Elements
-        self.current_preset = config["current_preset"]
-        self.preset_selector = QComboBox()
-        self.rename_preset_button = QPushButton("Rename")
-        self.delete_preset_button = QPushButton("Delete")
-        self.presets_tab_scroller = QScrollArea()
-        self.presets_tab_content = QWidget()
-        # Create Calibration Tab Elements
-        self.calibration_mode = "auto"
-        self.calibration_mode_button = QPushButton("Current Mode: Automatic Calibration")
-        # Auto Calibration Mode
-        self.find_add_button = QPushButton("Find Add Buttons")
-        self.find_amount_box = QPushButton("Find Amount Boxes")
-        self.find_auto_add_button = QPushButton("Find Auto Add Button")
-        self.find_craft_button = QPushButton("Find Craft Button")
-        self.find_search_bar = QPushButton("Find Search Bar")
-        self.find_potion_selection_button = QPushButton("Find Potion Selection Button")
-        # Semi Auto Calibration Mode
-        self.set_add_button_template = QPushButton("Set Add Button Template")
-        # Manual Calibration Mode
-        self.add_button_coordinates_selector = QWidget()
-        self.add_button_coordinates_selector.setWindowTitle("Set Add Button Coordinates")
-        self.add_button_coordinates_selector_layout = QVBoxLayout(self.add_button_coordinates_selector)
-        self.set_add_button_coordinates = QPushButton("Set Add Button Coordinates", self)
-        self.set_add_button_1_coordinates = QPushButton("Set Add Button 1 Coordinates")
-        self.set_add_button_2_coordinates = QPushButton("Set Add Button 2 Coordinates")
-        self.set_add_button_3_coordinates = QPushButton("Set Add Button 3 Coordinates")
-        self.set_add_button_4_coordinates = QPushButton("Set Add Button 4 Coordinates")
-        self.amount_box_coordinates_selector = QWidget()
-        self.amount_box_coordinates_selector.setWindowTitle("Set Amount Box Coordinates")
-        self.amount_box_coordinates_selector_layout = QVBoxLayout(self.amount_box_coordinates_selector)
-        self.set_amount_box_coordinates = QPushButton("Set Amount Box Coordinates", self)
-        self.set_amount_box_1_coordinates = QPushButton("Set Amount Box 1 Coordinates")
-        self.set_amount_box_2_coordinates = QPushButton("Set Amount Box 2 Coordinates")
-        self.set_amount_box_3_coordinates = QPushButton("Set Amount Box 3 Coordinates")
-        self.set_amount_box_4_coordinates = QPushButton("Set Amount Box 4 Coordinates")
-        self.set_auto_add_button_coordinates = QPushButton("Set Auto Add Button Coordinates")
-        self.set_amount_box_coordinates = QPushButton("Set Amount Box Coordinates")
-        self.set_craft_button_coordinates = QPushButton("Set Craft Button Coordinates")
-        self.set_search_bar_coordinates = QPushButton("Set Search Bar Coordinates")
-        self.set_potion_selection_button_coordinates = QPushButton("Set Potion Selection Button Coordinates")
-        # Mini Status Label 
-        self.mini_status_widget = QWidget()
-        self.general_mini_status_label = QLabel("Stopped")
-        self.mini_status_label = QLabel()
-        # Create Running Variables
-        self.auto_add_waitlist = []
-        self.current_auto_add_potion = None
-        self.macro_timer = QTimer(self)
-        self.run_event = threading.Event()
-        self.worker = None
-        self.init_ui()
-        self.status_signal.connect(self.update_status)
-        self.macro_stopped_signal.connect(self.on_macro_stopped)
-        
-    def init_ui(self):
-        # Initialize Tabs
-        self.setCentralWidget(self.tabs_widget)
-        self.tabs_widget.addTab(self.main_tab, "Main")
-        self.tabs_widget.addTab(self.presets_tab, "Presets")
-        self.tabs_widget.addTab(self.calibrations_tab, "Calibrations")
-        self.tabs_widget.addTab(self.theme_tab, "Theme")
-        self.tabs_widget.addTab(self.settings_tab, "Settings")
-        # Set Main Tab Layout
-        main_tab_vbox = QVBoxLayout()
-        main_tab_hbox = QHBoxLayout()
-        main_tab_hbox.addWidget(self.start_button)
-        main_tab_hbox.addWidget(self.stop_button)
-        main_tab_vbox.addWidget(self.status_label)
-        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_tab_vbox.addLayout(main_tab_hbox)
-        self.main_tab.setLayout(main_tab_vbox)
-        #Set Presets Tab Layout
-        self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
-        self.preset_selector.setStyleSheet("color: cyan; background: #111; font-size: 24px; padding: 6px;")
-        self.preset_selector.setMinimumHeight(52)
-        self.preset_selector.blockSignals(True)
-        self.preset_selector.setCurrentText(self.current_preset)
-        self.preset_selector.blockSignals(False)
-        self.rename_preset_button.setStyleSheet("color: cyan; background: #111; font-size: 24px; padding: 6px;")
-        self.delete_preset_button.setStyleSheet("color: red; background: #111; font-size: 24px; padding: 6px; border: 1px solid red;")
-        presets_header = QWidget()
-        presets_header_layout = QHBoxLayout(presets_header)
-        presets_header_layout.setContentsMargins(0, 0, 0, 0)
-        presets_header_layout.setSpacing(10)
-        presets_header_layout.addWidget(self.preset_selector, 1)
-        presets_header_layout.addWidget(self.rename_preset_button)
-        presets_header_layout.addWidget(self.delete_preset_button)
-        self.presets_tab_scroller.setWidget(self.presets_tab_content)
-        self.presets_tab_scroller.setFrameShape(QFrame.Shape.NoFrame)
-        self.presets_tab_scroller.setWidgetResizable(True)
-        self.presets_tab_scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.presets_tab_scroller.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.presets_tab_content_layout = QVBoxLayout(self.presets_tab_content)
-        self.presets_tab_content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.presets_tab_main_vbox = QVBoxLayout()
-        self.presets_tab_main_vbox.addWidget(presets_header)
-        self.presets_tab_main_vbox.addWidget(self.presets_tab_scroller)
-        self.presets_tab.setStyleSheet("""
-                    QWidget { background-color: black; }
-                    QLabel { color: cyan; font-size: 18px; }
-                    QCheckBox { color: cyan; font-size: 14px; }
-                    QScrollArea { border: 0px; }
-                """)
-        self.presets_tab.setLayout(self.presets_tab_main_vbox)
-        self.build_potions_ui()
-        # Set Calibrations Tab Layout
-        self.calibrations_tab_main_vbox = QVBoxLayout()
-        self.calibrations_stack = QStackedWidget()
-        self.calibration_mode_button.setToolTip("Switch between automatic and manual calibration mode.")
-        # Auto Calibration Page
-        auto_calibration_page = QWidget()
-        auto_layout = QVBoxLayout(auto_calibration_page)
-        auto_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        auto_layout.addWidget(self.find_add_button)
-        auto_layout.addWidget(self.find_amount_box)
-        auto_layout.addWidget(self.find_auto_add_button)
-        auto_layout.addWidget(self.find_craft_button)
-        auto_layout.addWidget(self.find_search_bar)
-        auto_layout.addWidget(self.find_potion_selection_button)
-        # Semi Auto Calibration Page
-        semi_auto_calibration_page = QWidget()
-        semi_auto_layout = QVBoxLayout(semi_auto_calibration_page)
-        semi_auto_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        semi_auto_layout.addWidget(self.set_add_button_template)
-        # Manual Calibration Page
-        manual_calibration_page = QWidget()
-        manual_layout = QVBoxLayout(manual_calibration_page)
-        manual_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_1_coordinates)
-        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_2_coordinates)
-        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_3_coordinates)
-        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_4_coordinates)
-        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_1_coordinates)
-        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_2_coordinates)
-        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_3_coordinates)
-        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_4_coordinates)
-        manual_layout.addWidget(self.set_add_button_coordinates)
-        manual_layout.addWidget(self.set_amount_box_coordinates)
-        manual_layout.addWidget(self.set_auto_add_button_coordinates)
-        manual_layout.addWidget(self.set_craft_button_coordinates)
-        manual_layout.addWidget(self.set_search_bar_coordinates)
-        manual_layout.addWidget(self.set_potion_selection_button_coordinates)
-        self.add_button_coordinates_selector.setStyleSheet("QWidget {background-color: black;} QPushButton {color: cyan;border: 2px solid cyan; border-radius: 6px; font-size: 30px;}")
-        self.amount_box_coordinates_selector.setStyleSheet("QWidget {background-color: black;} QPushButton {color: cyan;border: 2px solid cyan; border-radius: 6px; font-size: 30px;}")
-        self.add_button_coordinates_selector.adjustSize()
-        self.amount_box_coordinates_selector.adjustSize()
-        # Calibration Pages Setup
-        self.calibrations_stack.addWidget(auto_calibration_page)       # index 0
-        self.calibrations_stack.addWidget(semi_auto_calibration_page)  # index 1
-        self.calibrations_stack.addWidget(manual_calibration_page)     # index 2
-        self.calibrations_tab_main_vbox.addWidget(self.calibration_mode_button)
-        self.calibrations_tab_main_vbox.addWidget(self.calibrations_stack)
-        self.calibrations_stack.setCurrentIndex(0)
-        self.calibrations_tab.setLayout(self.calibrations_tab_main_vbox)
-        # Button Connectors
-        self.calibration_mode_button.clicked.connect(lambda: self.switch_calibration_mode())
-        self.set_add_button_coordinates.clicked.connect(lambda: self.add_button_coordinates_selector.show())
-        self.set_amount_box_coordinates.clicked.connect(lambda: self.amount_box_coordinates_selector.show())
-        self.find_add_button.clicked.connect(lambda: self.auto_find_image("add button.png", True, True, True))
-        self.find_amount_box.clicked.connect(lambda: self.auto_find_image("amount box.png", True, True))
-        self.find_auto_add_button.clicked.connect(lambda: self.auto_find_image("auto add button.png", True, bbox_required=True))
-        self.find_craft_button.clicked.connect(lambda: self.auto_find_image("craft button.png", True))
-        self.find_search_bar.clicked.connect(lambda: self.auto_find_image("cauldren search bar.png", True))
-        self.find_potion_selection_button.clicked.connect(lambda: self.auto_find_image("heavenly potion potion selector button.png", True))
-        self.preset_selector.currentTextChanged.connect(lambda: self.switch_preset(self.preset_selector.currentText()) if self.preset_selector.currentText() != "Create New Preset" else self.create_new_preset())
-        self.rename_preset_button.clicked.connect(self.rename_preset)
-        self.delete_preset_button.clicked.connect(self.delete_preset)
-        #Status Label Setup
-        self.mini_status_widget.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowTransparentForInput)
-        self.mini_status_widget.setStyleSheet("background-color: black; border: 2px solid cyan; border-radius: 6px;")
-        self.general_mini_status_label.setStyleSheet("color: cyan; font-size: 20px;")
-        self.mini_status_label.setStyleSheet("color: cyan; font-size: 20px;")
-        self.mini_status_qv = QVBoxLayout(self.mini_status_widget)
-        self.mini_status_qv.setContentsMargins(0, 0, 0, 0)
-        self.mini_status_qv.addWidget(self.general_mini_status_label)
-        self.mini_status_qv.addWidget(self.mini_status_label)
-        self.mini_status_widget.move(600, 75)
-        self.general_mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        # Set Ui Theme
-        self.status_label.setObjectName("status_label")
-        self.start_button.setObjectName("start_button")
-        self.stop_button.setObjectName("stop_button")
-        self.calibrations_tab.setObjectName("calibrations_tab")
-        self.setStyleSheet("""
-            QMainWindow {background-color: black; }
-            QTabWidget::pane { border: 0px; padding: 0px; margin: 0px; }
-            QTabBar::tab { background-color: #222; }
-            QTabBar::tab:selected { background-color: black; }
-            QTabBar {color: cyan;}
-            QWidget {background-color: black;}
-            QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 20px;}
-            QPushButton#start_button {font-size: 30px;}
-            QPushButton#stop_button {font-size: 30px;}
-            QWidget#calibrations_tab QPushButton {font-size: 30px;}
-            QLabel {color: cyan; font-size: 18px;}
-            QLabel#status_label {color: cyan; font-size: 50px;}
-        """)
-        # Setup  Hotkeys
-        self.start_button.clicked.connect(self.start_macro)
-        self.stop_button.clicked.connect(self.stop_macro)
-        self.setup_hotkeys()
-        
-    def initalize_config(self):
-        global config, hidden_config
-        hidden_config = {
-                    "positions": {
-                        "add button 1": {"bbox": [757, 656, 837, 688], "center": [797, 672]},
-                        "add button 2": {"bbox": [757, 711, 837, 743], "center": [797, 727]},
-                        "add button 3": {"bbox": [757, 765, 837, 797], "center": [797, 781]},
-                        "add button 4": {"bbox": [757, 794, 837, 826], "center": [797, 810]},
-                        "amount box 1": [715, 672],
-                        "amount box 2": [715, 726],
-                        "amount box 3": [715, 780],
-                        "amount box 4": [715, 810],
-                        "potion selection button": [1146, 460],
-                        "search bar": [1137, 381],
-                        "auto add button": {"bbox": [646, 600, 768, 636], "center": [707, 618]},
-                        "craft button": [573, 618],
-                    },
-                    "current_preset": "Main",
-
-                    "item presets": {
-                            "Main": {
-                                "bound": {
-                                    "buttons to check": ["add button 1"],
-                                    "additional buttons to click": ["add button 4"],
-                                    "crafting slots": 4,
-                                    "instant craft": False,
-                                    "enabled": True,
-                                    "collapsed": True
-                                },
-                                "heavenly": {
-                                    "buttons to check": ["add button 2"],
-                                    "additional buttons to click": ["add button 1"],
-                                    "crafting slots": 5,
-                                    "instant craft": False,
-                                    "enabled": True,
-                                    "collapsed": True
-                                },
-                                "zeus": {
-                                    "buttons to check": ["add button 3"],
-                                    "additional buttons to click": ["add button 1", "add button 2"],
-                                    "crafting slots": 5,
-                                    "instant craft": False,
-                                    "enabled": True,
-                                    "collapsed": True
-                                },
-                                "poseidon": {
-                                    "buttons to check": ["add button 2"],
-                                    "additional buttons to click": ["add button 1"],
-                                    "crafting slots": 4,
-                                    "instant craft": False,
-                                    "enabled": True,
-                                    "collapsed": True
-                                },
-                                "hades": {
-                                    "buttons to check": ["add button 2"],
-                                    "additional buttons to click": ["add button 1"],
-                                    "crafting slots": 4,
-                                    "instant craft": False,
-                                    "enabled": True,
-                                    "collapsed": True
-                                },
-                                "warp": {
-                                    "buttons to check": ["add button 1", "add button 2", "add button 4", "add button 5", "add button 6"],
-                                    "additional buttons to click": ["add button 1", "add button 2"],
-                                    "crafting slots": 6,
-                                    "instant craft": False,
-                                    "enabled": False,
-                                    "collapsed": False
-                                }
-                            }
-                        }
-                    }
-                    
-        if CONFIG_PATH.exists() and not dev_mode:
-            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                config = json.load(f)
-            
-        else:
-            config = hidden_config
-        self.nice_config_save()
-
-    def nice_config_save(self, ind=4):
+def nice_config_save(ind=4):
         S = (str, int, float, bool, type(None))
 
         stack_ids = set()
@@ -464,13 +156,87 @@ class Dark_Sol(QMainWindow):
         text = d(config) + "\n"
         with open(CONFIG_PATH, "w", encoding="utf-8") as f:
             f.write(text)
-    
-    def update_config(self, key, new_value):
-        config[key] = new_value
-        self.nice_config_save()
 
-    global data
-    data = {
+hidden_config = {
+            "positions": {
+                "add button 1": {"bbox": [757, 656, 837, 688], "center": [797, 672]},
+                "add button 2": {"bbox": [757, 711, 837, 743], "center": [797, 727]},
+                "add button 3": {"bbox": [757, 765, 837, 797], "center": [797, 781]},
+                "add button 4": {"bbox": [757, 794, 837, 826], "center": [797, 810]},
+                "amount box 1": [715, 672],
+                "amount box 2": [715, 726],
+                "amount box 3": [715, 780],
+                "amount box 4": [715, 810],
+                "potion selection button": [1146, 460],
+                "search bar": [1137, 381],
+                "auto add button": {"bbox": [646, 600, 768, 636], "center": [707, 618]},
+                "craft button": [573, 618],
+            },
+            "current_preset": "Main",
+
+            "item presets": {
+                    "Main": {
+                        "bound": {
+                            "buttons to check": ["add button 1"],
+                            "additional buttons to click": ["add button 4"],
+                            "crafting slots": 4,
+                            "instant craft": False,
+                            "enabled": True,
+                            "collapsed": True
+                        },
+                        "heavenly": {
+                            "buttons to check": ["add button 2"],
+                            "additional buttons to click": ["add button 1"],
+                            "crafting slots": 5,
+                            "instant craft": False,
+                            "enabled": True,
+                            "collapsed": True
+                        },
+                        "zeus": {
+                            "buttons to check": ["add button 3"],
+                            "additional buttons to click": ["add button 1", "add button 2"],
+                            "crafting slots": 5,
+                            "instant craft": False,
+                            "enabled": True,
+                            "collapsed": True
+                        },
+                        "poseidon": {
+                            "buttons to check": ["add button 2"],
+                            "additional buttons to click": ["add button 1"],
+                            "crafting slots": 4,
+                            "instant craft": False,
+                            "enabled": True,
+                            "collapsed": True
+                        },
+                        "hades": {
+                            "buttons to check": ["add button 2"],
+                            "additional buttons to click": ["add button 1"],
+                            "crafting slots": 4,
+                            "instant craft": False,
+                            "enabled": True,
+                            "collapsed": True
+                        },
+                        "warp": {
+                            "buttons to check": ["add button 1", "add button 2", "add button 4", "add button 5", "add button 6"],
+                            "additional buttons to click": ["add button 1", "add button 2"],
+                            "crafting slots": 6,
+                            "instant craft": False,
+                            "enabled": False,
+                            "collapsed": False
+                        }
+                    }
+                }
+            }
+            
+if CONFIG_PATH.exists() and not dev_mode:
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+        config = json.load(f)
+    
+else:
+    config = hidden_config
+    nice_config_save()
+
+data = {
             "img data": {
                     "add button.png": {
                         "scale": 1.25,
@@ -593,7 +359,239 @@ class Dark_Sol(QMainWindow):
                         "crafting slots": 6,
                     },
                 }
-                }
+            }
+
+# Main Dark Sol Script
+class Dark_Sol(QMainWindow):
+    start_macro_signal = pyqtSignal()
+    stop_macro_signal = pyqtSignal()
+    status_signal = pyqtSignal([str], [str, bool])
+    macro_stopped_signal = pyqtSignal()
+
+    def __init__(self):
+        # Create main window
+        super().__init__()
+        self.setWindowTitle("Dark Sol")
+        self.setGeometry(100, 100, 400, 100)
+        # Create Tabs
+        self.tabs_widget = QTabWidget()
+        self.main_tab = QWidget()
+        self.presets_tab = QWidget()
+        self.calibrations_tab = QWidget()
+        self.theme_tab = QWidget()
+        self.settings_tab = QWidget()
+        # Create Main Tab Elements
+        self.start_button = QPushButton("Start")
+        self.stop_button = QPushButton("Stop")
+        self.status_label = QLabel("Status: Stopped")
+        # Create Presets Tab Elements
+        self.current_preset = config["current_preset"]
+        self.preset_selector = QComboBox()
+        self.rename_preset_button = QPushButton("Rename")
+        self.delete_preset_button = QPushButton("Delete")
+        self.presets_tab_scroller = QScrollArea()
+        self.presets_tab_content = QWidget()
+        # Create Calibration Tab Elements
+        self.calibration_mode = "auto"
+        self.calibration_mode_button = QPushButton("Current Mode: Automatic Calibration")
+        # Auto Calibration Mode
+        self.find_add_button = QPushButton("Find Add Buttons")
+        self.find_amount_box = QPushButton("Find Amount Boxes")
+        self.find_auto_add_button = QPushButton("Find Auto Add Button")
+        self.find_craft_button = QPushButton("Find Craft Button")
+        self.find_search_bar = QPushButton("Find Search Bar")
+        self.find_potion_selection_button = QPushButton("Find Potion Selection Button")
+        # Semi Auto Calibration Mode
+        self.set_add_button_template = QPushButton("Set Add Button Template")
+        self.set_amount_box_template = QPushButton("Set Amount Box Template")
+        # Manual Calibration Mode
+        self.add_button_coordinates_selector = QWidget()
+        self.add_button_coordinates_selector.setWindowTitle("Set Add Button Coordinates")
+        self.add_button_coordinates_selector_layout = QVBoxLayout(self.add_button_coordinates_selector)
+        self.set_add_button_coordinates = QPushButton("Set Add Button Coordinates", self)
+        self.set_add_button_1_coordinates = QPushButton("Set Add Button 1 Coordinates")
+        self.set_add_button_2_coordinates = QPushButton("Set Add Button 2 Coordinates")
+        self.set_add_button_3_coordinates = QPushButton("Set Add Button 3 Coordinates")
+        self.set_add_button_4_coordinates = QPushButton("Set Add Button 4 Coordinates")
+        self.amount_box_coordinates_selector = QWidget()
+        self.amount_box_coordinates_selector.setWindowTitle("Set Amount Box Coordinates")
+        self.amount_box_coordinates_selector_layout = QVBoxLayout(self.amount_box_coordinates_selector)
+        self.set_amount_box_coordinates = QPushButton("Set Amount Box Coordinates", self)
+        self.set_amount_box_1_coordinates = QPushButton("Set Amount Box 1 Coordinates")
+        self.set_amount_box_2_coordinates = QPushButton("Set Amount Box 2 Coordinates")
+        self.set_amount_box_3_coordinates = QPushButton("Set Amount Box 3 Coordinates")
+        self.set_amount_box_4_coordinates = QPushButton("Set Amount Box 4 Coordinates")
+        self.set_auto_add_button_coordinates = QPushButton("Set Auto Add Button Coordinates")
+        self.set_amount_box_coordinates = QPushButton("Set Amount Box Coordinates")
+        self.set_craft_button_coordinates = QPushButton("Set Craft Button Coordinates")
+        self.set_search_bar_coordinates = QPushButton("Set Search Bar Coordinates")
+        self.set_potion_selection_button_coordinates = QPushButton("Set Potion Selection Button Coordinates")
+        # Mini Status Label 
+        self.mini_status_widget = QWidget()
+        self.general_mini_status_label = QLabel("Stopped")
+        self.mini_status_label = QLabel()
+        # Create Running Variables
+        self.auto_add_waitlist = []
+        self.current_auto_add_potion = None
+        self.macro_timer = QTimer(self)
+        self.run_event = threading.Event()
+        self.worker = None
+        self.init_ui()
+        self.status_signal.connect(self.update_status)
+        self.macro_stopped_signal.connect(self.on_macro_stopped)
+        
+    def init_ui(self):
+        # Initialize Tabs
+        self.setCentralWidget(self.tabs_widget)
+        self.tabs_widget.addTab(self.main_tab, "Main")
+        self.tabs_widget.addTab(self.presets_tab, "Presets")
+        self.tabs_widget.addTab(self.calibrations_tab, "Calibrations")
+        self.tabs_widget.addTab(self.theme_tab, "Theme")
+        self.tabs_widget.addTab(self.settings_tab, "Settings")
+        # Set Main Tab Layout
+        main_tab_vbox = QVBoxLayout()
+        main_tab_hbox = QHBoxLayout()
+        main_tab_hbox.addWidget(self.start_button)
+        main_tab_hbox.addWidget(self.stop_button)
+        main_tab_vbox.addWidget(self.status_label)
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_tab_vbox.addLayout(main_tab_hbox)
+        self.main_tab.setLayout(main_tab_vbox)
+        #Set Presets Tab Layout
+        self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
+        self.preset_selector.setStyleSheet("color: cyan; background: #111; font-size: 24px; padding: 6px;")
+        self.preset_selector.setMinimumHeight(52)
+        self.preset_selector.blockSignals(True)
+        self.preset_selector.setCurrentText(self.current_preset)
+        self.preset_selector.blockSignals(False)
+        self.rename_preset_button.setStyleSheet("color: cyan; background: #111; font-size: 24px; padding: 6px;")
+        self.delete_preset_button.setStyleSheet("color: red; background: #111; font-size: 24px; padding: 6px; border: 1px solid red;")
+        presets_header = QWidget()
+        presets_header_layout = QHBoxLayout(presets_header)
+        presets_header_layout.setContentsMargins(0, 0, 0, 0)
+        presets_header_layout.setSpacing(10)
+        presets_header_layout.addWidget(self.preset_selector, 1)
+        presets_header_layout.addWidget(self.rename_preset_button)
+        presets_header_layout.addWidget(self.delete_preset_button)
+        self.presets_tab_scroller.setWidget(self.presets_tab_content)
+        self.presets_tab_scroller.setFrameShape(QFrame.Shape.NoFrame)
+        self.presets_tab_scroller.setWidgetResizable(True)
+        self.presets_tab_scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.presets_tab_scroller.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.presets_tab_content_layout = QVBoxLayout(self.presets_tab_content)
+        self.presets_tab_content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.presets_tab_main_vbox = QVBoxLayout()
+        self.presets_tab_main_vbox.addWidget(presets_header)
+        self.presets_tab_main_vbox.addWidget(self.presets_tab_scroller)
+        self.presets_tab.setStyleSheet("""
+                    QWidget { background-color: black; }
+                    QLabel { color: cyan; font-size: 18px; }
+                    QCheckBox { color: cyan; font-size: 14px; }
+                    QScrollArea { border: 0px; }
+                """)
+        self.presets_tab.setLayout(self.presets_tab_main_vbox)
+        self.build_potions_ui()
+        # Set Calibrations Tab Layout
+        self.calibrations_tab_main_vbox = QVBoxLayout()
+        self.calibrations_stack = QStackedWidget()
+        self.calibration_mode_button.setToolTip("Switch between automatic, semi-automatic, and manual calibration modes.")
+        # Auto Calibration Page
+        auto_calibration_page = QWidget()
+        auto_layout = QVBoxLayout(auto_calibration_page)
+        auto_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        auto_layout.addWidget(self.find_add_button)
+        auto_layout.addWidget(self.find_amount_box)
+        auto_layout.addWidget(self.find_auto_add_button)
+        auto_layout.addWidget(self.find_craft_button)
+        auto_layout.addWidget(self.find_search_bar)
+        auto_layout.addWidget(self.find_potion_selection_button)
+        # Semi Auto Calibration Page
+        semi_auto_calibration_page = QWidget()
+        semi_auto_layout = QVBoxLayout(semi_auto_calibration_page)
+        semi_auto_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        semi_auto_layout.addWidget(self.set_add_button_template)
+        # Manual Calibration Page
+        manual_calibration_page = QWidget()
+        manual_layout = QVBoxLayout(manual_calibration_page)
+        manual_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_1_coordinates)
+        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_2_coordinates)
+        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_3_coordinates)
+        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_4_coordinates)
+        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_1_coordinates)
+        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_2_coordinates)
+        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_3_coordinates)
+        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_4_coordinates)
+        manual_layout.addWidget(self.set_add_button_coordinates)
+        manual_layout.addWidget(self.set_amount_box_coordinates)
+        manual_layout.addWidget(self.set_auto_add_button_coordinates)
+        manual_layout.addWidget(self.set_craft_button_coordinates)
+        manual_layout.addWidget(self.set_search_bar_coordinates)
+        manual_layout.addWidget(self.set_potion_selection_button_coordinates)
+        self.add_button_coordinates_selector.setStyleSheet("QWidget {background-color: black;} QPushButton {color: cyan;border: 2px solid cyan; border-radius: 6px; font-size: 30px;}")
+        self.amount_box_coordinates_selector.setStyleSheet("QWidget {background-color: black;} QPushButton {color: cyan;border: 2px solid cyan; border-radius: 6px; font-size: 30px;}")
+        self.add_button_coordinates_selector.adjustSize()
+        self.amount_box_coordinates_selector.adjustSize()
+        # Calibration Pages Setup
+        self.calibrations_stack.addWidget(auto_calibration_page)       # index 0
+        self.calibrations_stack.addWidget(semi_auto_calibration_page)  # index 1
+        self.calibrations_stack.addWidget(manual_calibration_page)     # index 2
+        self.calibrations_tab_main_vbox.addWidget(self.calibration_mode_button)
+        self.calibrations_tab_main_vbox.addWidget(self.calibrations_stack)
+        self.calibrations_stack.setCurrentIndex(0)
+        self.calibrations_tab.setLayout(self.calibrations_tab_main_vbox)
+        # Button Connectors
+        self.calibration_mode_button.clicked.connect(lambda: self.switch_calibration_mode())
+        self.set_add_button_coordinates.clicked.connect(lambda: self.add_button_coordinates_selector.show())
+        self.set_amount_box_coordinates.clicked.connect(lambda: self.amount_box_coordinates_selector.show())
+        self.find_add_button.clicked.connect(lambda: self.auto_find_image("add button.png", True, True, True))
+        self.find_amount_box.clicked.connect(lambda: self.auto_find_image("amount box.png", True, True))
+        self.find_auto_add_button.clicked.connect(lambda: self.auto_find_image("auto add button.png", True, bbox_required=True))
+        self.find_craft_button.clicked.connect(lambda: self.auto_find_image("craft button.png", True))
+        self.find_search_bar.clicked.connect(lambda: self.auto_find_image("cauldren search bar.png", True))
+        self.find_potion_selection_button.clicked.connect(lambda: self.auto_find_image("heavenly potion potion selector button.png", True))
+        self.preset_selector.currentTextChanged.connect(lambda: self.switch_preset(self.preset_selector.currentText()) if self.preset_selector.currentText() != "Create New Preset" else self.create_new_preset())
+        self.rename_preset_button.clicked.connect(self.rename_preset)
+        self.delete_preset_button.clicked.connect(self.delete_preset)
+        #Status Label Setup
+        self.mini_status_widget.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowTransparentForInput)
+        self.mini_status_widget.setStyleSheet("background-color: black; border: 2px solid cyan; border-radius: 6px;")
+        self.general_mini_status_label.setStyleSheet("color: cyan; font-size: 20px;")
+        self.mini_status_label.setStyleSheet("color: cyan; font-size: 20px;")
+        self.mini_status_qv = QVBoxLayout(self.mini_status_widget)
+        self.mini_status_qv.setContentsMargins(0, 0, 0, 0)
+        self.mini_status_qv.addWidget(self.general_mini_status_label)
+        self.mini_status_qv.addWidget(self.mini_status_label)
+        self.mini_status_widget.move(600, 75)
+        self.general_mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        # Set Ui Theme
+        self.status_label.setObjectName("status_label")
+        self.start_button.setObjectName("start_button")
+        self.stop_button.setObjectName("stop_button")
+        self.calibrations_tab.setObjectName("calibrations_tab")
+        self.setStyleSheet("""
+            QMainWindow {background-color: black; }
+            QTabWidget::pane { border: 0px; padding: 0px; margin: 0px; }
+            QTabBar::tab { background-color: #222; }
+            QTabBar::tab:selected { background-color: black; }
+            QTabBar {color: cyan;}
+            QWidget {background-color: black;}
+            QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 20px;}
+            QPushButton#start_button {font-size: 30px;}
+            QPushButton#stop_button {font-size: 30px;}
+            QWidget#calibrations_tab QPushButton {font-size: 30px;}
+            QLabel {color: cyan; font-size: 18px;}
+            QLabel#status_label {color: cyan; font-size: 50px;}
+        """)
+        # Setup  Hotkeys
+        self.start_button.clicked.connect(self.start_macro)
+        self.stop_button.clicked.connect(self.stop_macro)
+        self.setup_hotkeys()
+
+    def update_config(self, key, new_value):
+        config[key] = new_value
+        nice_config_save()
 
     def create_new_preset(self):
         dlg = QDialog(self)
@@ -673,7 +671,7 @@ class Dark_Sol(QMainWindow):
         config["current_preset"] = new_name
         self.current_preset = new_name
 
-        self.nice_config_save()
+        nice_config_save()
         self.preset_selector.blockSignals(True)
         self.preset_selector.clear()
         self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
@@ -732,7 +730,7 @@ class Dark_Sol(QMainWindow):
             config["item presets"].pop(preset_name)
             break
 
-        self.nice_config_save()
+        nice_config_save()
         self.preset_selector.blockSignals(True)
         self.preset_selector.clear()
         self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
@@ -745,7 +743,7 @@ class Dark_Sol(QMainWindow):
             return
         config["current_preset"] = preset_name
         self.current_preset = preset_name
-        self.nice_config_save()
+        nice_config_save()
         self.preset_selector.blockSignals(True)
         self.preset_selector.clear()
         self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
@@ -780,7 +778,7 @@ class Dark_Sol(QMainWindow):
             potion = sender.property("potion")
             config_key = sender.property("config_key")
             config["item presets"][self.current_preset][potion][config_key] = bool(checked)
-            self.nice_config_save()
+            nice_config_save()
 
         def on_potion_list_toggle_changed(checked: bool):
             sender = self.sender()
@@ -804,7 +802,7 @@ class Dark_Sol(QMainWindow):
                 return (int(last), name)
             
             items.sort(key=button_order_key)
-            self.nice_config_save()
+            nice_config_save()
 
         def on_potion_collapse_clicked():
             sender = self.sender()
@@ -825,7 +823,7 @@ class Dark_Sol(QMainWindow):
             instant.setVisible(not collapsed)
             sender.setText("▶" if collapsed else "▼")
 
-            self.nice_config_save()
+            nice_config_save()
             self.presets_tab_content.adjustSize()
 
         def on_enabled_ui_changed(checked: bool):
@@ -843,7 +841,7 @@ class Dark_Sol(QMainWindow):
             instant.setVisible(checked and not collapsed)
             collapse_button.setEnabled(checked)
             collapse_button.setText("▼" if checked and not collapsed else "▶")
-            self.nice_config_save()
+            nice_config_save()
             self.presets_tab_content.adjustSize()
 
         for potion in data["item data"].keys():
@@ -1029,10 +1027,10 @@ class Dark_Sol(QMainWindow):
                     return
                 if bbox != None:
                     config["positions"][position_name] = {"bbox": bbox, "center": center}
-                    self.nice_config_save()
+                    nice_config_save()
                 else:
                     config["positions"][position_name] = center
-                    self.nice_config_save()
+                    nice_config_save()
 
             def rescale_template(template):
                 base_scale = data["img data"][template]["scale"]   
