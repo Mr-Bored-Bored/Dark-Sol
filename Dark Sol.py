@@ -1050,23 +1050,7 @@ class Dark_Sol(QMainWindow):
         match_count = int(mask.sum())
         return match_count
 
-    def auto_find_image(self, template, save=False, multiple=False, bbox_required=False, add_start_index=None):
-            add_start_index = None
-            template_path = f"{local_appdata_directory}\\Lib\\Images\\{template}"
-             
-            def save_position(position_name, center, bbox):
-                if not save:
-                    return
-                if QMessageBox.information(self, "Template Found", "Would you like to save the found coordinates", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
-                    return
-                if bbox != None:
-                    config["positions"][position_name] = {"bbox": bbox, "center": center}
-                    nice_config_save()
-                else:
-                    config["positions"][position_name] = center
-                    nice_config_save()
-
-            def rescale_template(template):
+    def rescale_template(self, template, template_path):
                 base_scale = data["img data"][template]["scale"]   
                 base_resolution =data["img data"][template]["resolution"]
 
@@ -1090,6 +1074,22 @@ class Dark_Sol(QMainWindow):
                 template_img = Image.open(template_path)
                 template_scaled = template_img.resize((int(template_img.width * total_scale_x), int(template_img.height * total_scale_y)), Image.Resampling.LANCZOS)
                 return template_scaled
+    
+    def auto_find_image(self, template, save=False, multiple=False, bbox_required=False, add_start_index=None):
+            add_start_index = None
+            template_path = f"{local_appdata_directory}\\Lib\\Images\\{template}"
+             
+            def save_position(position_name, center, bbox):
+                if not save:
+                    return
+                if QMessageBox.information(self, "Template Found", "Would you like to save the found coordinates", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+                    return
+                if bbox != None:
+                    config["positions"][position_name] = {"bbox": bbox, "center": center}
+                    nice_config_save()
+                else:
+                    config["positions"][position_name] = center
+                    nice_config_save()
                     
             def find_template():
                 count = 0
@@ -1116,7 +1116,7 @@ class Dark_Sol(QMainWindow):
                         matches = list(pyautogui.locateAllOnScreen(template_scaled, confidence=data["img data"][template]["confidence"]))
                         sorted_matches = sorted(matches, key=lambda box: (box.top))
 
-                        def multi_image_template_find(match):
+                        def get_image_data(match):
                             nonlocal single_match_screen, bbox, center
                             bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))
                             center = (int(match.left + match.width // 2), int(match.top + match.height // 2))
@@ -1129,7 +1129,7 @@ class Dark_Sol(QMainWindow):
                             for count, match in enumerate(sorted_matches):
                                 print("1st to 3rd button logic")
                                 print(count)
-                                multi_image_template_find(match)
+                                get_image_data(match)
                                 single_match_screen.show()
                                 save_position(data["img data"][template]["config position name"][count], center, bbox if bbox_required else None)
                                 
@@ -1137,7 +1137,7 @@ class Dark_Sol(QMainWindow):
                             for count, match in enumerate(sorted_matches, start=add_start_index[0]):
                                 print("4th button and up logic")
                                 print(count)
-                                multi_image_template_find(match)
+                                get_image_data(match)
                                 if count in add_start_index[1]:
                                     single_match_screen.show()
                                     save_position(data["img data"][template]["config position name"][count], center, bbox if bbox_required else None)
@@ -1151,40 +1151,44 @@ class Dark_Sol(QMainWindow):
                     QMessageBox.warning(self, "Dark Sol", f"Error Finding Matches:   {e}")
                 count = 0
 
-            template_scaled = rescale_template(template)
+            template_scaled = self.rescale_template(template, template_path)
             find_template()
 
     def calibrate_scrolling(self):
+        template = self.rescale_template("add button.png", f"{local_appdata_directory}\\Lib\\Images\\add button.png")
         def count_scrolls(find=True):
             scrolls = 0
             found = False
             gone = False
             while True:
-                img = ImageGrab.grab(config["positions"]["add button 4"]["bbox"])
-                print(f"scroll check add button 4 image captured")
-
-                if img is None:
-                    raise Exception("Image capture failed in check_button")
-                
+                img =ImageGrab.grab(config["positions"]["add button 4"]["bbox"])
                 if find:
-                        if reader.readtext(np.array(img), detail=0).__len__() > 0:
-                            print("'Add' detected saving scroll amount:", scrolls)
-                            found = True
+                    try:
+                        matches = pyautogui.locate(template, img, confidence=data["img data"]["add button.png"]["confidence"])
+                        print("'Add' detected saving scroll amount:", scrolls)
+                        found = True
+                    except pyautogui.ImageNotFoundException:
+                        pass
+                    except Exception as e:
+                        print(e)
 
-                        if found:
-                            return scrolls
+                    if found:
+                        return scrolls
 
-                        pyautogui.scroll(-1)
-                        scrolls += 1
+                    pyautogui.scroll(-1)
+                    scrolls += 1
                 elif not find:
-                        pyautogui.scroll(-1)
-                        if reader.readtext(np.array(img), detail=0).__len__() == 0:
-                            print("'Moved away from previous add button")
-                            gone = True
+                    try:
+                        matches = pyautogui.locate(template, img, confidence=data["img data"]["add button.png"]["confidence"])
+                    except pyautogui.ImageNotFoundException:
+                        print("'Moved away from previous add button")
+                        gone = True
+                    except Exception as e:
+                        print(e)
 
-                        if gone:
-                            hi = []
-                            return
+                    if gone:
+                        return
+                    pyautogui.scroll(-1)
 
         self.mini_status_widget.show()
         self.update_status("Calibrating scrolling")
