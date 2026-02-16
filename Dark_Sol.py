@@ -68,7 +68,11 @@
 57. Add msgbox for when something is being downloaded from the repo
 58. Make requirements file and check what its file type should be 
 59. Add improved logging with log type and log file
-
+60. Improve log statements
+61. Add current auto add potion enablrd chrck
+62. fix scroll calibration status label
+63. Add check for auto add potion to see if a fasle positive happened and remove it from auto add list or current auto add potion if it did
+64. Add amount of crafted potion tracking
 
 - Mini Status Label
 40. Make Mini Status Label movable (when moving make it show largest size)
@@ -158,7 +162,7 @@ add_log("DPI Tools Loaded")
 import os, sys, threading, pyautogui, time, ctypes, pathlib, json, win32gui, win32con, re, requests, io, zipfile
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout,
 QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QStackedWidget, QComboBox, QLineEdit, QDialog,
-QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QLineEdit)
+    QDialogButtonBox, QScrollArea, QCheckBox, QSlider, QRubberBand, QPlainTextEdit, QLineEdit)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl
 from pyscreeze import ImageNotFoundException as pyscreeze_ImageNotFoundException
@@ -658,7 +662,7 @@ class Dark_Sol(QMainWindow):
         # Create main window
         super().__init__()
         self.setWindowTitle("Dark Sol")
-        self.setGeometry(100, 100, 400, 100)
+        self.setGeometry(int(((screen_width / 2) / scale) - (self.width() / 2)), int(((screen_height / 2) / scale) - (self.height() / 2 )), 0, 0) # Make gui as small as possible and appear in the center of the screen
         # Create Tabs
         self.tabs_widget = QTabWidget()
         self.main_tab = QWidget()
@@ -811,20 +815,19 @@ class Dark_Sol(QMainWindow):
         presets_header_layout.addWidget(self.rename_preset_button)
         presets_header_layout.addWidget(self.delete_preset_button)
         self.presets_tab_scroller.setWidget(self.presets_tab_content)
-        self.presets_tab_scroller.setFrameShape(QFrame.Shape.NoFrame)
         self.presets_tab_scroller.setWidgetResizable(True)
         self.presets_tab_scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.presets_tab_scroller.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.presets_tab_scroller.setStyleSheet("QScrollArea { border: 0px; }")
         self.presets_tab_content_layout = QVBoxLayout(self.presets_tab_content)
         self.presets_tab_content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.presets_tab_main_vbox = QVBoxLayout()
         self.presets_tab_main_vbox.addWidget(presets_header)
-        self.presets_tab_main_vbox.addWidget(self.presets_tab_scroller)
+        self.presets_tab_main_vbox.addWidget(self.presets_tab_scroller, 1)
         self.presets_tab.setStyleSheet("""
                     QWidget { background-color: black; }
                     QLabel { color: cyan; font-size: 14pt; }
                     QCheckBox { color: cyan; font-size: 11pt; }
-                    QScrollArea { border: 0px; }
                 """)
         self.presets_tab.setLayout(self.presets_tab_main_vbox)
         self.build_potions_ui()
@@ -1470,7 +1473,7 @@ class Dark_Sol(QMainWindow):
 
             nice_config_save()
             self.presets_tab_content.adjustSize()
-            self.presets_tab_content.updateGeometry()
+            self.presets_tab_scroller.adjustSize()
 
         def potion_enabled(checked: bool):
             sender = self.sender()
@@ -1492,6 +1495,7 @@ class Dark_Sol(QMainWindow):
 
             nice_config_save()
             self.presets_tab_content.adjustSize()
+            self.presets_tab_scroller.adjustSize()
 
         for potion in data["item data"].keys():
             # Data References
@@ -1577,9 +1581,8 @@ class Dark_Sol(QMainWindow):
                 addition_buttons_to_click_checkbox.setProperty("btn", btn)
                 addition_buttons_to_click_checkbox.toggled.connect(change_potion_list)
                 right_column_QV_Layout.addWidget(addition_buttons_to_click_checkbox)
-            columns_QH_Layout.addWidget(left_column)
-            columns_QH_Layout.addStretch(1)
-            columns_QH_Layout.addWidget(right_column)
+            columns_QH_Layout.addWidget(left_column, 1)
+            columns_QH_Layout.addWidget(right_column, 1)
             QVLayout.addWidget(body)
             # Initial Visibility Setup
             collapsed = potion_config["collapsed"]
@@ -2022,7 +2025,7 @@ class Dark_Sol(QMainWindow):
 
         local_x = x_scaled - screen_geo.x()
         local_y = y_scaled - screen_geo.y()
-        outline_frame = QFrame(overlay_window)
+        outline_frame = QWidget(overlay_window)
         outline_frame.setGeometry(QRect(local_x, local_y, w_scaled, h_scaled))
 
         if isinstance(color, tuple):
