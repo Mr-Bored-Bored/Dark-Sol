@@ -18,13 +18,9 @@
 - Logs
 12. Add debug log file
 13. Make config creation be added to log after it is created due to the fact config is made before log is created
-14. Change rescale template logs to be less cluttered
 
 - Random
 15. Add auto updater
-16. Make all msg boxes use the same function if possible
-17. Make create external msg box function also able to create internal msg boxes
-18. Change everything from calibration name to position name (calibration name is confusing since it applies to both calibrations and templates)
 19. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
 20. Make it so that overlays can show individual pixels instead of an area
 21. Add donation stuff
@@ -37,11 +33,9 @@
 28. Make safe image find function have the ability to not save (check if completed)
 29. Add logs where needed (idk check)
 30. Get normal path and set it so that in settings you can choose which path to use
-31. Make private server link line auto fill from config if it exists
 32. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
 33. Add potion gui entered check
 34. Add config corrupted check and fix config
-35. Make private server line edit have a label
 36. Add complete macro exception handling with message box and logging
 37. Add msgbox for when something is being downloaded from the repo
 38. Make requirements file and check what its file type should be 
@@ -66,8 +60,6 @@
 - Mini Status Label
 56. Make Mini Status Label movable (when moving make it show largest size)
 57. make mini status label wrapable
-58. Add private server rejoin for calibrations toggle in settings tab
-59. Fix Status Bar showing general status instead of task
 
 - Final Checks
 60. Remove excess delays / slowdowns (ensure reliability)
@@ -87,7 +79,7 @@
 10. Add the ability to craft a specfic amount of potions and then stop crafting that potion and if all have been crafted then stop
 
 # Planned for the future:
-1. Globalify dpi, resolution, scale stuff, and etc
+1. Make dpi, resolution, scale and etc global
 1. Make all hardcoded resolutions dynamic (aka figure out how scaling works)(just praying current code scales atp)
 2. Add main and auto updater reinstall arguements
 3. Fix multi monitor awareness
@@ -319,7 +311,7 @@ def nice_config_save(ind=4):
 hidden_config = {
     "data": {
         "scroll amounts": {"to_5": 17, "past_5": 51},
-        "calibration data": {
+        "position data": {
             "add button 1": {"confidence": 0.75},
             "add button 2": {"confidence": 0.75},
             "add button 3": {"confidence": 0.75},
@@ -430,13 +422,13 @@ else:
     nice_config_save()
 
 data = {
-            "calibration data": {
+            "position data": {
                     "add button": {
-                        "sub calibrations": ["add button 1", "add button 2", "add button 3", "add button 4", "add button 5"],
+                        "sub positions": ["add button 1", "add button 2", "add button 3", "add button 4", "add button 5"],
                         "image path": "add button.png"
                         },
                     "amount box": {
-                        "sub calibrations": ["amount box 1", "amount box 2", "amount box 3", "amount box 4", "amount box 5"],
+                        "sub positions": ["amount box 1", "amount box 2", "amount box 3", "amount box 4", "amount box 5"],
                         "image path": "amount box.png"
                         },
                     "auto add button": {
@@ -464,7 +456,7 @@ data = {
                         "image path": "hades potion selection button.png"
                         },
                     "add completed checkmark": {
-                        "sub calibrations": ["add completed checkmark 1", "add completed checkmark 2", "add completed checkmark 3", "add completed checkmark 4", "add completed checkmark 5"],
+                        "sub positions": ["add completed checkmark 1", "add completed checkmark 2", "add completed checkmark 3", "add completed checkmark 4", "add completed checkmark 5"],
                         "image path": "add completed checkmark.png"
                         },
                     "play button": {
@@ -719,6 +711,7 @@ class Dark_Sol(QMainWindow):
         self.calibrate_add_completed_checkmarks_button = QPushButton("Manually Calibrate Add Completed Checkmarks")
         self.manually_calibrate_scrolling_button = QPushButton("Manually Calibrate Scroll Amounts")
         # Settings Tab
+        self.ps_link_label = QLabel("Private Server Link:")
         self.ps_link_line = QLineEdit()
         self.ps_link_save_button = QPushButton("Save Private Server Link")
         self.ps_link_join_button = QPushButton("Join Private Server")
@@ -881,9 +874,14 @@ class Dark_Sol(QMainWindow):
         self.calibrations_tab.setLayout(self.calibrations_tab_main_vbox)
         # Settings Tab Layout
         settings_tab_vbox = QVBoxLayout(self.settings_tab)
+        private_server_hbox = QHBoxLayout()
+        self.ps_link_line.setPlaceholderText("Enter private server link here")
+        if config["private server link"] != "":
+            self.ps_link_line.setText(config["private server link"])
+        private_server_hbox.addWidget(self.ps_link_label)
+        private_server_hbox.addWidget(self.ps_link_line)
         settings_tab_vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.ps_link_line.setPlaceholderText("Enter Private Server Link Here")
-        settings_tab_vbox.addWidget(self.ps_link_line)
+        settings_tab_vbox.addLayout(private_server_hbox)
         self.ps_link_save_button
         settings_tab_vbox.addWidget(self.ps_link_save_button)
         self.ps_link_join_button
@@ -974,7 +972,7 @@ class Dark_Sol(QMainWindow):
             self.log(log)
     
     def change_template(self, template_name):
-        image_location = data["calibration data"][template_name]["image path"]
+        image_location = data["position data"][template_name]["image path"]
         image_path = str(local_appdata_directory / "Lib" / "Images" / image_location)
         if not (new_template_bbox := self.select_region()):
             return
@@ -1685,10 +1683,10 @@ class Dark_Sol(QMainWindow):
             if not isinstance(confidence_label, QLabel):
                 return
             if scroll_check:
-                config["data"]["calibration data"][calibration]["scroll check confidence"] = sender.value() / 100.0
+                config["data"]["position data"][calibration]["scroll check confidence"] = sender.value() / 100.0
                 confidence_label.setText(f"Adjust scroll confidence: {sender.value()}%")
             else:
-                config["data"]["calibration data"][calibration]["confidence"] = sender.value() / 100.0
+                config["data"]["position data"][calibration]["confidence"] = sender.value() / 100.0
                 confidence_label.setText(f"Adjust confidence for '{calibration}': {sender.value()}%")
             nice_config_save()
 
@@ -1710,9 +1708,9 @@ class Dark_Sol(QMainWindow):
             slider = QSlider(Qt.Orientation.Horizontal)
             slider.setRange(0, 100)
             if not scroll_check:
-                slider.setValue(int(config["data"]["calibration data"][calibration]["confidence"] * 100))
+                slider.setValue(int(config["data"]["position data"][calibration]["confidence"] * 100))
             else:
-                slider.setValue(int(config["data"]["calibration data"][calibration]["scroll check confidence"] * 100))
+                slider.setValue(int(config["data"]["position data"][calibration]["scroll check confidence"] * 100))
             
 
             confidence_label = QLabel(slider)
@@ -1730,11 +1728,11 @@ class Dark_Sol(QMainWindow):
                 confidence_label.setText(f"Adjust scroll confidence: {slider.value()}%")
                 
         else:
-            for sub_calibration in data["calibration data"][calibration[:-1].strip()]["sub calibrations"]:
+            for sub_calibration in data["position data"][calibration[:-1].strip()]["sub positions"]:
 
                 slider = QSlider(Qt.Orientation.Horizontal)
                 slider.setRange(0, 100)
-                slider.setValue(int(config["data"]["calibration data"][sub_calibration]["confidence"] * 100))
+                slider.setValue(int(config["data"]["position data"][sub_calibration]["confidence"] * 100))
 
                 confidence_label = QLabel(slider)
                 confidence_label.setText(f"Adjust confidence for '{sub_calibration}': {slider.value()}%")
@@ -1804,10 +1802,10 @@ class Dark_Sol(QMainWindow):
             return
         self.move_and_click(config["positions"]["amount box 1"]["center"], False)
         pyautogui.scroll(2000)
-        for count, add_button in enumerate(data["calibration data"]["add button"]["sub calibrations"][:4]):
+        for count, add_button in enumerate(data["position data"]["add button"]["sub positions"][:4]):
             if not self.safe_image_find(add_button, multiple=True, add_start_index=(0, (count,)), stop_index = 4, multi_settings=True):
                 return
-        for count, amount_box in enumerate(data["calibration data"]["amount box"]["sub calibrations"][:4]):
+        for count, amount_box in enumerate(data["position data"]["amount box"]["sub positions"][:4]):
             if not self.safe_image_find(amount_box, multiple=True, add_start_index=(0, (count,)), stop_index = 4, multi_settings=True):
                 return
         self.move_and_click(config["positions"]["add button 1"]["center"], False)
@@ -1856,7 +1854,7 @@ class Dark_Sol(QMainWindow):
             return
         self.move_and_click(config["positions"]["add button 1"]["center"], False)
         pyautogui.scroll(2000)
-        for count, add_button in enumerate(data["calibration data"]["add button"]["sub calibrations"][:4]):
+        for count, add_button in enumerate(data["position data"]["add button"]["sub positions"][:4]):
             if not self.safe_image_find(add_button, multiple=True, add_start_index=(0, (count,)), stop_index = 4, multi_settings=True):
                 return
         pyautogui.scroll(-2000)
@@ -1871,7 +1869,7 @@ class Dark_Sol(QMainWindow):
             return
         self.move_and_click(config["positions"]["amount box 1"]["center"], False)
         pyautogui.scroll(2000)
-        for count, amount_box in enumerate(data["calibration data"]["amount box"]["sub calibrations"][:4]):
+        for count, amount_box in enumerate(data["position data"]["amount box"]["sub positions"][:4]):
             if not self.safe_image_find(amount_box, multiple=True, add_start_index=(0, (count,)), stop_index = 4, multi_settings=True):
                 return
         pyautogui.scroll(-2000)
@@ -2096,7 +2094,7 @@ class Dark_Sol(QMainWindow):
         return template_scaled
     
     def auto_find_image(self, calibration, save=True, multiple=False, bbox_required=True, add_start_index=None, stop_index=None, ignore_match_not_found=False):
-        template_path = f"{local_appdata_directory}\\Lib\\Images\\{data['calibration data'][calibration if calibration in data["calibration data"] else calibration[:-1].strip()]['image path']}"
+        template_path = f"{local_appdata_directory}\\Lib\\Images\\{data['calibration data'][calibration if calibration in data["position data"] else calibration[:-1].strip()]['image path']}"
         return_bool = False
             
         def save_position(position_name, center, bbox):
@@ -2124,7 +2122,7 @@ class Dark_Sol(QMainWindow):
             
             try:
                 if not multiple:
-                    match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["calibration data"][calibration]["confidence"])
+                    match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["position data"][calibration]["confidence"])
                     bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))  # type: ignore[reportOptionalMemberAccess]
                     center = (int(match.left + match.width // 2), int(match.top + match.height // 2))  # type: ignore[reportOptionalMemberAccess]
                     self.log(f"  bbox : {bbox}, center: {center}")
@@ -2139,9 +2137,9 @@ class Dark_Sol(QMainWindow):
                     screen_w, screen_h = pyautogui.size()
                     search_region = (0, 0, screen_w, screen_h)
 
-                    for count, cal in enumerate(data["calibration data"][calibration[:-1].strip()]["sub calibrations"][add_start_index[0] if add_start_index != None else 0:int(calibration[-1])]):
+                    for count, cal in enumerate(data["position data"][calibration[:-1].strip()]["sub positions"][add_start_index[0] if add_start_index != None else 0:int(calibration[-1])]):
                         self.log("Searching for multiple matches...")
-                        match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["calibration data"][cal]["confidence"], region=search_region)
+                        match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["position data"][cal]["confidence"], region=search_region)
                         if count == stop_index:
                             return
                         
@@ -2188,7 +2186,7 @@ class Dark_Sol(QMainWindow):
                     self.create_msg_box("Error Finding Matches", f"Error Finding Matches: {exception}")
                 return_bool = False
 
-        template_scaled = self.rescale_template(data["calibration data"][calibration if calibration in data["calibration data"] else calibration[:-1].strip()]["image path"], template_path)
+        template_scaled = self.rescale_template(data["position data"][calibration if calibration in data["position data"] else calibration[:-1].strip()]["image path"], template_path)
         find_template()
         return return_bool
 
@@ -2205,7 +2203,7 @@ class Dark_Sol(QMainWindow):
                 img =ImageGrab.grab(config["positions"]["add button 5"]["bbox"])
                 if find:
                     try:
-                        pyautogui.locate(template_path, img, confidence=config["data"]["calibration data"]["add button 5"]["scroll check confidence"])
+                        pyautogui.locate(template_path, img, confidence=config["data"]["position data"]["add button 5"]["scroll check confidence"])
                         self.log("'Add' detected saving scroll amount:", scrolls)
                         found = True
                     except pyautogui.ImageNotFoundException:
@@ -2221,7 +2219,7 @@ class Dark_Sol(QMainWindow):
                     scrolls += 1
                 elif not find:
                     try:
-                        pyautogui.locate(template_path, img, confidence=config["data"]["calibration data"]["add button 5"]["scroll check confidence"])
+                        pyautogui.locate(template_path, img, confidence=config["data"]["position data"]["add button 5"]["scroll check confidence"])
                     except pyautogui.ImageNotFoundException:
                         self.log("'Moved away from previous add button")
                         gone = True
