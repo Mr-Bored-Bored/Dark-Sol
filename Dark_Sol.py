@@ -3,88 +3,76 @@
 
 # Necessary for First Release:
 - Calibrations
-1. Implement Semi-Auto Calibration mode
-2. Fix manual scroll calibration
-3. Improve calibration gui / fix it to support new systems
-4. For multi template, template settings only have the previous ones
-5. Fix scroll calibration status bar appearing at the wrong time
-6. Have scroll calibration show calibration amounts if successful
-7. Add scroll calibration template adjustment settings when using calibrate scrolls button
-8. Make it so that macro cant start until calibrations are complete
-9. Make it so that you can close auto calibrate and then resume where you left off
-10. Add verifications before runnning certain calibrations
-11. Rename calibration buttons
-12. make adjust template use multiple variable instead of excess multi settings variable
-13. Make manual calibration have a single position thing instead of a box for some calibrations
-14. Add ability to repull templates from repo
-15. Make a list of features that show if the repo cannot be reached
+1. Fix manual scroll calibration
+2. Improve calibration gui / fix it to support new systems
+3. For multi template, template settings only have the previous ones
+4. Add scroll calibration template adjustment settings when using calibrate scrolls button
+5. Make it so that macro cant start until calibrations are complete
+6. Make it so that you can close auto calibrate and then resume where you left off
+7. Add verifications before runnning certain calibrations
+8. Rename calibration buttons
+9. make adjust template use multiple variable instead of excess multi settings variable
+10. Make manual calibration have a single position thing instead of a box for some calibrations
+11. Make a list of features that show if the repo cannot be reached
 
 - Logs
-14. Add debug log file
-15. Make config creation be added to log after it is created due to the fact config is made before log is created
-16. Change rescale template logs to be less cluttered
+12. Add debug log file
+13. Make config creation be added to log after it is created due to the fact config is made before log is created
+14. Change rescale template logs to be less cluttered
 
 - Random
-17. Add auto updater
-18. Pull lib from repo
-19. Make skip loading debug skip creating the loading screen at all
-20. Make all msg boxes use the same function if possible
-21. Make create external msg box function also able to create internal msg boxes
-22. Change everything from calibration name to position name (calibration name is confusing since it applies to both calibrations and templates)
-23. Make scroll calibration slightly automatic using pixel detection for new item detection
-24. Add donation stuff
-25. Add paths for auto rejoin and auto calibrations
-26. Add roblox detected check if using for sols check
-27. Add roblox windows selector
-28. Add complete exception handling(message box that handles all exceptions and logs them)
-29. Add macro pause and unpause auto add button check
-30. Add crafted detection
-31. For manual craft potions add a counter
-32. Add ability to craft Limbo potions
-33. Make ps join button check for ps link
-34. Add collection camera reset for pathing to cauldron
-35. Make calibration stuff for play button and update auto calibrate to support it
-36. Make reload config gui check for button instead of using manual timer
-37. Add play button to auto calibrate
-38. Make safe image find function have the ability to not save
-39. Make reload potion gui function wait for roblox to close 
-40. Add logs to startup
-41. Add logs to calibrations (if needed idk check)
-42. Make it so that there is a setting so that on start it doenst path to the potion gui and just starts
-43. Get normal path and set it so that in settings you can choose which path to use
-44. Make private server link line auto fill from config if it exists and save to config when changed (idk if it already saves)
-45. Check for roblox window and that sols rng is open by checking the logs for "place 15532962292" if not found rejoin sols rng with the ps if it exists and path to the potion gui if enabled
-46. Add a way to detect if sols rng is open (mainly if sols rng was the last game and the user left (use kicked log))
-47. Add potion gui entered check
-48. Make it so that the newest log is used (mainly for when a new log is created if you leave and join)(you can use the leave / disconnect codes to detect and then keep checking for the newest log and to make sure you dont join the old one at a timestamp check or something else like the file ID)
-49. Make it check if roblox is open and check the latest place so you have to get the join thing before the place if 
-50. Make it so that if you leave and join while the macro is running it detects the new log and rejoins the private server if the setting is enabled
-51. Concise all this stuff
-52. Add config corrupted check and fix config
-53. Make private server line edit have a label
-54. Add complete macro exception handling with message box and logging
-55. Add log file
-56. Make log wrapping better
-57. Add msgbox for when something is being downloaded from the repo
-58. Make requirements file and check what its file type should be 
-59. Add improved logging with log type and log file
-60. Improve log statements
-61. Add current auto add potion enablrd chrck
-62. fix scroll calibration status label
-63. Add check for auto add potion to see if a fasle positive happened and remove it from auto add list or current auto add potion if it did
-64. Add amount of crafted potion tracking
-
+15. Add auto updater
+16. Make all msg boxes use the same function if possible
+17. Make create external msg box function also able to create internal msg boxes
+18. Change everything from calibration name to position name (calibration name is confusing since it applies to both calibrations and templates)
+19. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
+20. Make it so that overlays can show individual pixels instead of an area
+21. Add donation stuff
+22. Add paths for auto rejoin and auto calibrations
+23. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
+24. Add crafted potion detection / stats
+25. Make ps join button check for valid ps link and save private server link button
+26. Add collection buttons to calibrations (exit button may not be added)
+27. Add play button to calibrations
+28. Make safe image find function have the ability to not save (check if completed)
+29. Add logs where needed (idk check)
+30. Get normal path and set it so that in settings you can choose which path to use
+31. Make private server link line auto fill from config if it exists
+32. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
+33. Add potion gui entered check
+34. Add config corrupted check and fix config
+35. Make private server line edit have a label
+36. Add complete macro exception handling with message box and logging
+37. Add msgbox for when something is being downloaded from the repo
+38. Make requirements file and check what its file type should be 
+39. Improve logging by adding log type, log file, and better wrapping
+40. Add current auto add potion enabled check
+41. fix scroll calibration status label
+42. Add check for auto add potion to see if a false positive happened and remove it from auto add list or current auto add potion if it did
+43. Add stuff for potions that have only requires manual crafting
+44. Make potion menu item button be clicked with search for potion function
+45. Fix skip already added and checked buttons not setting range correctly
+46. Add extra slowdown then set it for check button function (because it is incorrectly getting the button if it still is happening however it is most likely not a timing issue but slow it down much more and if it happens again then it is definately not a timing issue)
+47. Add checks if current auto add potion was disabled after pause
+48. Add macro pause and unpause auto add button check
+49. Add, add button check improvements (to auto image find aka yk what to do i just cant explain it)(use regions from previous founds instead of remaking regions each time also make 5th add button search from bottom)
+50. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
+51. Add manual checkmark calibration failsafe (if calibration was not done to not contine)
+52. Make remove overlay possible for specific overlays instead of just all overlays
+53. Seperate auto add checks to detect false positives (and remove from auto add list or current auto add potion if they happen and add logging for it)
+54. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
+55. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
+    
 - Mini Status Label
-40. Make Mini Status Label movable (when moving make it show largest size)
-41. make mini status label wrapable
-42. Add private server rejoin for calibrations toggle in settings tab
-43. Fix Status Bar showing general status instead of task
+56. Make Mini Status Label movable (when moving make it show largest size)
+57. make mini status label wrapable
+58. Add private server rejoin for calibrations toggle in settings tab
+59. Fix Status Bar showing general status instead of task
 
 - Final Checks
-44. Remove excess delays / slowdowns (ensure reliability)
-45. Check print statements and remove unnecessary ones
-46. Verify macro can handle everything after entering potion craft gui
-47. Verify roblox detected check works and prevents macro from running if not detected
+60. Remove excess delays / slowdowns (ensure reliability)
+61. Check print statements and remove unnecessary ones
+62. Verify macro can handle everything after entering potion craft gui
 
 # Might be added for First Release:
 1. Add multi template for single calibration
@@ -96,14 +84,14 @@
 7. Always on top setting
 8. Make calibration checks not need manual scrolling to verify calibrations
 9. Add the ability to reset templates to default by pulling from the repo
+10. Add the ability to craft a specfic amount of potions and then stop crafting that potion and if all have been crafted then stop
 
 # Planned for the future:
-1. Global dpi, resolution, scale stuff, and etc
+1. Globalify dpi, resolution, scale stuff, and etc
 1. Make all hardcoded resolutions dynamic (aka figure out how scaling works)(just praying current code scales atp)
 2. Add main and auto updater reinstall arguements
 3. Fix multi monitor awareness
 4. Fix other widgets not closing properly
-5. Add actual logger
 6. Make plugins system
 7. Add theme tab functionality (Requires style sheet overhaul and compression to allow for user friendly adjustments)
 8. Able to handle corrupt config
@@ -111,19 +99,18 @@
 10. Add importing / exporting presets
 11. Add importing / exporting themes
 12. Add ability to change hotkeys
-13. Add Logging System
 14. Make it so that it can add in 1's instead of just the amount numbers
 15. Complete auto find template function
 16. Add custom log messages (ability for certain logs to not show)
 17. Add complete calibration (paths needed)
 18. Add private server reconnects (paths needed)
 19. Make macro full screen compatible (only needs template rescaling adjustment(i think))
-20. Improve logs
 21. Complete overhall and  usage of multi classes
 21. Auto Quest Plugin Depending on what cresqnt says
 22. Make auto rare biome popping plugin
 23. Make it so that you can adjust wait time after reset in settings
 24. Make it so that rescaled templates are saved so the function doesnt have to be called every time
+32. Add ability to craft Limbo potions (aka enter limbo for easier aura gathering)
 - Mini Status Label
 21. Make mini status label show auto add waitlist and add setting for it 
 
@@ -135,7 +122,7 @@
 """
 # Logs Backlog
 log_backlog = []
-def add_log(*args):
+def add_to_backlog(*args):
     message = " ".join(str(arg) for arg in args)
     print(message)
     log_backlog.append(message)
@@ -144,7 +131,7 @@ def add_log(*args):
 use_built_in_config = False
 skip_loading = True
 create_debug_test_buttons = True
-add_log("Dev Tools Loaded")
+add_to_backlog("Dev Tools Loaded")
 
 # DPI Setup
 import ctypes
@@ -156,13 +143,13 @@ LOGPIXELSX = 88
 dpi = gdi32.GetDeviceCaps(hdc, LOGPIXELSX)
 scale = dpi / 96.0
 screen_width, screen_height = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
-add_log("DPI Tools Loaded")
+add_to_backlog("DPI Tools Loaded")
 
 # Imports
 import os, sys, threading, pyautogui, time, ctypes, pathlib, json, win32gui, win32con, re, requests, io, zipfile
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout,
 QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QStackedWidget, QComboBox, QLineEdit, QDialog,
-    QDialogButtonBox, QScrollArea, QCheckBox, QSlider, QRubberBand, QPlainTextEdit, QLineEdit)
+    QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QLineEdit)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl
 from pyscreeze import ImageNotFoundException as pyscreeze_ImageNotFoundException
@@ -171,14 +158,14 @@ from pynput import keyboard, mouse
 from mousekey import MouseKey
 from copy import deepcopy
 import numpy as np
-add_log("Imports Loaded")
+add_to_backlog("Imports Loaded")
                    
 # Setup Imports
 mkey = MouseKey()
 local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"]) / "Dark Sol"
 config_path = local_appdata_directory / "Dark Sol config.json"
 os.makedirs(local_appdata_directory, exist_ok=True)
-add_log("Imports Initalized")
+add_to_backlog("Imports Initalized")
 
 # Constants
 current_version = "0.0.0.0"
@@ -188,48 +175,48 @@ images_to_check = ("add button.png", "amount box.png", "auto add button.png", "c
                     "potion menu item button.png", "zeus potion selection button.png",
                     "poseidon potion selection button.png","hades potion selection button.png",
                     "add completed checkmark.png","play button.png")
-add_log("Constants Loaded")
+add_to_backlog("Constants Loaded")
 
 # File Verification
 def download_from_repo(file, output_directory, tag=f"v{current_version}", folder=False, inner_folder_location=None):
     if inner_folder_location == None:
-        add_log(f"Downloading {file} from repo...")
-        add_log(f"URL: https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(file).replace(' ', '%20')}{".zip" if folder else ""}")
+        add_to_backlog(f"Downloading {file} from repo...")
+        add_to_backlog(f"URL: https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(file).replace(' ', '%20')}{".zip" if folder else ""}")
         github_file = requests.get(f"https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(file).replace(' ', '%20')}{".zip" if folder else ""}", timeout=20)
-        add_log(f"Finished downloading {file} from repo")
+        add_to_backlog(f"Finished downloading {file} from repo")
         file_content = github_file.content
-        add_log("Get file content")
-        add_log(file_content)
-        add_log("File Response Code:", github_file.status_code)
+        add_to_backlog("Get file content")
+        add_to_backlog(file_content)
+        add_to_backlog("File Response Code:", github_file.status_code)
         if github_file.status_code != 200:
             raise Exception(f"Failed to download {file} from repo, status code: {github_file.status_code}")
         output_directory.mkdir(parents=True, exist_ok=True)
-        add_log("Created output directory if it did not exist")
+        add_to_backlog("Created output directory if it did not exist")
         if folder:
-            add_log(f"Extracting {file} to {output_directory}...")
+            add_to_backlog(f"Extracting {file} to {output_directory}...")
             with zipfile.ZipFile(io.BytesIO(file_content)) as zip_extractor:
                 zip_extractor.extractall(output_directory)
-            add_log(f"Finished extracting {file} to {output_directory}")
+            add_to_backlog(f"Finished extracting {file} to {output_directory}")
         else:
-            add_log(f"Saving {file} to {output_directory}...")
+            add_to_backlog(f"Saving {file} to {output_directory}...")
             out_path = output_directory / str(file)
             with open(out_path, "wb") as f:
                 f.write(file_content)
-            add_log(f"Finished saving {file} to {out_path}")
+            add_to_backlog(f"Finished saving {file} to {out_path}")
     else:
-        add_log(f"Downloading {inner_folder_location[0]} from repo...")
-        add_log(f"URL: https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(inner_folder_location[0]).replace(' ', '%20')}{".zip" if folder else ""}")
+        add_to_backlog(f"Downloading {inner_folder_location[0]} from repo...")
+        add_to_backlog(f"URL: https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(inner_folder_location[0]).replace(' ', '%20')}{".zip" if folder else ""}")
         github_file = requests.get(f"https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(inner_folder_location[0]).replace(' ', '%20')}{".zip" if folder else ""}", timeout=20)
-        add_log(f"Finished downloading {inner_folder_location[0]} from repo")
+        add_to_backlog(f"Finished downloading {inner_folder_location[0]} from repo")
         file_content = github_file.content
-        add_log("File Response Code:", github_file.status_code)
+        add_to_backlog("File Response Code:", github_file.status_code)
         if github_file.status_code != 200:
             raise Exception(f"Failed to download {inner_folder_location[0]} from repo, status code: {github_file.status_code}")
         output_directory.mkdir(parents=True, exist_ok=True)
-        add_log("Created output directory if it did not exist")
-        add_log(f"Extracting {file} to {output_directory}...")
+        add_to_backlog("Created output directory if it did not exist")
+        add_to_backlog(f"Extracting {file} to {output_directory}...")
         with zipfile.ZipFile(io.BytesIO(file_content)) as zip_extractor:
-            add_log(zip_extractor.namelist()[:20])
+            add_to_backlog(zip_extractor.namelist()[:20])
             for name in zip_extractor.namelist():
                 if not name.startswith(inner_folder_location[1]) or name.endswith("/"):
                     continue
@@ -242,22 +229,22 @@ def download_from_repo(file, output_directory, tag=f"v{current_version}", folder
 def verify_folders(folder, path, tag=f"v{current_version}"):
     folder_location = path / folder
     if not folder_location.exists():
-        add_log(f"{folder} does not exist, downloading...")
+        add_to_backlog(f"{folder} does not exist, downloading...")
         inner_prefix = "Lib/" if folder == "Lib" else f"Lib/{folder}/"
         download_from_repo(folder, folder_location, tag=tag, folder=True, inner_folder_location=("Lib", inner_prefix))
     else:
-        add_log(f"{folder} already exists, skipping download")
+        add_to_backlog(f"{folder} already exists, skipping download")
 
 def verify_files(file, path, tag=f"v{current_version}"):
     file_location = path / file
     if not file_location.exists():
-        add_log(f"{file} does not exist, downloading...")
+        add_to_backlog(f"{file} does not exist, downloading...")
         if path.name in ("Images", "Icons") and path.parent.name == "Lib":
             download_from_repo(file, path, tag=tag, folder=True, inner_folder_location=("Lib", f"Lib/{path.name}/"))
         else:
             download_from_repo(file, path, tag=tag)
     else:
-        add_log(f"{file} already exists, skipping download")
+        add_to_backlog(f"{file} already exists, skipping download")
 
 verify_folders("Lib", local_appdata_directory)
 
@@ -270,7 +257,7 @@ for image_file in images_to_check:
 for icon_file in icons_to_check:
     verify_files(icon_file, local_appdata_directory / "Lib" / "Icons")
 
-add_log("File Verification Completed")
+add_to_backlog("File Verification Completed")
 
 # Config and Data
 def nice_config_save(ind=4):
@@ -431,7 +418,7 @@ hidden_config = {
             }
         }
     },
-    "current_preset": "Main",
+    "current preset": "Main",
     "private server link": ""
 }
 if config_path.exists() and not use_built_in_config:
@@ -671,12 +658,13 @@ class Dark_Sol(QMainWindow):
         self.theme_tab = QWidget()
         self.settings_tab = QWidget()
         # Create Main Tab Elements
+        self.status_label = QLabel("Status: Stopped")
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
-        self.status_label = QLabel("Status: Stopped")
+        self.rejoin_and_path_to_potion_gui_button = QPushButton("Rejoin and Path to Potion GUI")
         self.log_area = QPlainTextEdit()
         # Create Presets Tab Elements
-        self.current_preset = config["current_preset"]
+        self.current_preset = config["current preset"]
         self.preset_selector = QComboBox()
         self.rename_preset_button = QPushButton("Rename")
         self.delete_preset_button = QPushButton("Delete")
@@ -772,11 +760,11 @@ class Dark_Sol(QMainWindow):
             self.debug_tab_qv_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
             self.debug_tab.setLayout(self.debug_tab_qv_layout)
 
-            self.debug_test_button_1.clicked.connect(lambda: self.log("Test Button 1 Pressed"))
-            self.debug_test_button_2.clicked.connect(lambda: self.log("Test Button 2 Pressed"))
-            self.debug_test_button_3.clicked.connect(lambda: self.log("Test Button 3 Pressed"))
-            self.debug_test_button_4.clicked.connect(lambda: self.log("Test Button 4 Pressed"))
-            self.debug_test_button_5.clicked.connect(lambda: self.log("Test Button 5 Pressed"))
+            self.debug_test_button_1.clicked.connect(lambda: self.create_msg_box("Test Button 1 Pressed", "This is a test message box for button 1."))
+            self.debug_test_button_2.clicked.connect(lambda: self.create_msg_box("Test Button 2 Pressed", "This is a test message box for button 2.", "Yes", "No"))
+            self.debug_test_button_3.clicked.connect(lambda: self.create_msg_box("Test Button 3 Pressed", "This is a test message box for button 3.", "OK", "Cancel"))
+            self.debug_test_button_4.clicked.connect(lambda: self.create_msg_box("Test Button 4 Pressed", "This is a test message box for button 4.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel))
+            self.debug_test_button_5.clicked.connect(lambda: self.create_msg_box("Test Button 5 Pressed", "This is a test message box for button 5.", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No, QMessageBox.StandardButton.Cancel))
 
     def init_ui(self):
         # Initialize Tabs
@@ -794,6 +782,7 @@ class Dark_Sol(QMainWindow):
         main_tab_vbox.addWidget(self.status_label)
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_tab_vbox.addLayout(main_tab_hbox)
+        main_tab_vbox.addWidget(self.rejoin_and_path_to_potion_gui_button)
         main_tab_vbox.addWidget(self.log_area)
         self.log_area.setReadOnly(True)
         self.main_tab.setLayout(main_tab_vbox)
@@ -815,19 +804,20 @@ class Dark_Sol(QMainWindow):
         presets_header_layout.addWidget(self.rename_preset_button)
         presets_header_layout.addWidget(self.delete_preset_button)
         self.presets_tab_scroller.setWidget(self.presets_tab_content)
+        self.presets_tab_scroller.setFrameShape(QFrame.Shape.NoFrame)
         self.presets_tab_scroller.setWidgetResizable(True)
         self.presets_tab_scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.presets_tab_scroller.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.presets_tab_scroller.setStyleSheet("QScrollArea { border: 0px; }")
         self.presets_tab_content_layout = QVBoxLayout(self.presets_tab_content)
         self.presets_tab_content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.presets_tab_main_vbox = QVBoxLayout()
         self.presets_tab_main_vbox.addWidget(presets_header)
-        self.presets_tab_main_vbox.addWidget(self.presets_tab_scroller, 1)
+        self.presets_tab_main_vbox.addWidget(self.presets_tab_scroller)
         self.presets_tab.setStyleSheet("""
                     QWidget { background-color: black; }
                     QLabel { color: cyan; font-size: 14pt; }
                     QCheckBox { color: cyan; font-size: 11pt; }
+                    QScrollArea { border: 0px; }
                 """)
         self.presets_tab.setLayout(self.presets_tab_main_vbox)
         self.build_potions_ui()
@@ -912,7 +902,7 @@ class Dark_Sol(QMainWindow):
         self.find_auto_add_button.clicked.connect(lambda: (self.focus_roblox(), time.sleep(0.2), self.safe_image_find("auto add button")))
         self.find_craft_button.clicked.connect(lambda: (self.focus_roblox(), time.sleep(0.2), self.safe_image_find("craft button")))
         self.find_search_bar.clicked.connect(lambda: (self.focus_roblox(), time.sleep(0.2), self.safe_image_find("potion search bar")))
-        self.auto_calibrate_add_completed_checkmarks_button.clicked.connect(self.find_checkmark)
+        self.auto_calibrate_add_completed_checkmarks_button.clicked.connect(self.find_and_calibrate_checkmarks)
         self.find_potion_selection_button.clicked.connect(lambda: self.find_potion_selection_buttons())
         self.auto_calibrate_scrolling_button.clicked.connect(lambda: self.calibrate_scrolling())    
 
@@ -932,7 +922,6 @@ class Dark_Sol(QMainWindow):
         self.set_craft_button_coordinates.clicked.connect(lambda: self.manual_calibration("craft button"))
         self.set_search_bar_coordinates.clicked.connect(lambda: self.manual_calibration("potion search bar"))
         self.set_potion_selection_button_coordinates.clicked.connect(lambda: self.manual_calibration("potion selection button"))
-        self.calibrate_add_completed_checkmarks_button.clicked.connect(lambda: self.manual_calibration("add completed checkmark"))
         self.calibrate_add_completed_checkmarks_button.clicked.connect(lambda: self.manual_checkmarks_calibration())
         self.manually_calibrate_scrolling_button.clicked.connect(lambda: self.manual_scroll_calibration())
         self.ps_link_save_button.clicked.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
@@ -941,6 +930,7 @@ class Dark_Sol(QMainWindow):
         self.set_amount_box_template.clicked.connect(lambda: self.change_template("amount box"))
         self.reset_add_button_template_button.clicked.connect(lambda: verify_files("add_button.png", local_appdata_directory / "Lib" / "Images"))
         self.reset_amount_box_template_button.clicked.connect(lambda: verify_files("amount_box.png", local_appdata_directory / "Lib" / "Images"))
+        self.rejoin_and_path_to_potion_gui_button.clicked.connect(lambda: self.reload_potion_gui())
 
         self.preset_selector.currentTextChanged.connect(lambda: self.switch_preset(self.preset_selector.currentText()) if self.preset_selector.currentText() != "Create New Preset" else self.create_new_preset())
         self.rename_preset_button.clicked.connect(self.rename_preset)
@@ -955,6 +945,7 @@ class Dark_Sol(QMainWindow):
         self.mini_status_qv.addWidget(self.general_mini_status_label)
         self.mini_status_qv.addWidget(self.mini_status_label)
         self.mini_status_widget.move(600, 75)
+        self.mini_status_qv.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.general_mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         # Set Ui Theme
@@ -1216,18 +1207,20 @@ class Dark_Sol(QMainWindow):
         widget.close()
         return selection_result
 
-    def manual_calibration(self, calibration_name, save=True):
+    def manual_calibration(self, calibration_name, save=True, what_to_save=("bbox", "center")):
         self.focus_roblox()
         time.sleep(0.2)
         result = self.select_region()
         if result == None:
             self.log(f"Manual calibration for {calibration_name} was cancelled.")
         else:
-            bbox = (result[0], result[1], result[2], result[3])
-            center = ((bbox[0] + bbox[2]) // 2, (bbox[1] + bbox[3]) // 2)
+            bbox = result
+            center = (int((bbox[0] + bbox[2]) // 2), int((bbox[1] + bbox[3]) // 2))
             self.log(f"Manual calibration for {calibration_name} completed successfully.")
             if save:
-                config["positions"][calibration_name] = {"bbox": bbox, "center": center}
+                if not isinstance(what_to_save, (tuple)):
+                    what_to_save = (what_to_save,)
+                config["positions"][calibration_name] = {key: value for key, value in [("bbox", bbox), ("center", center)] if key in what_to_save}
                 nice_config_save()
                 self.log(f"Manual Calibration Coordinates for {calibration_name} saved to config.")
             return bbox, center
@@ -1250,20 +1243,20 @@ class Dark_Sol(QMainWindow):
         layout.addWidget(buttons)
 
         if dlg.exec() != QDialog.DialogCode.Accepted:
-            self.preset_selector.setCurrentText(config["current_preset"])
+            self.preset_selector.setCurrentText(config["current preset"])
             return
 
         preset_name = name_edit.text().strip()
         if not preset_name or preset_name == None or "":
             QMessageBox.warning(self, "Invalid Name", "Preset name cannot be empty.")
-            self.preset_selector.setCurrentText(config["current_preset"])
+            self.preset_selector.setCurrentText(config["current preset"])
             return
         if preset_name in config["item presets"].keys():
             QMessageBox.warning(self, "Name Exists", "A preset with that name already exists.")
-            self.preset_selector.setCurrentText(config["current_preset"])
+            self.preset_selector.setCurrentText(config["current preset"])
             return
 
-        source_key = config["current_preset"]
+        source_key = config["current preset"]
         if source_key not in config["item presets"]:
             presets = list(config["item presets"].keys())
             source_key = presets[0] if presets else None
@@ -1307,14 +1300,14 @@ class Dark_Sol(QMainWindow):
             break
 
         config["item presets"][new_name] = config["item presets"].pop(old_name)
-        config["current_preset"] = new_name
+        config["current preset"] = new_name
         self.current_preset = new_name
 
         nice_config_save()
         self.preset_selector.blockSignals(True)
         self.preset_selector.clear()
         self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
-        self.preset_selector.setCurrentText(config["current_preset"])
+        self.preset_selector.setCurrentText(config["current preset"])
         self.preset_selector.blockSignals(False)
         self.rebuild_potions_ui()
 
@@ -1356,15 +1349,10 @@ class Dark_Sol(QMainWindow):
             next_preset = next_selector.currentText()
 
             if next_preset == "-- Select preset --":
-                msg = QMessageBox(self)
-                msg.setIcon(QMessageBox.Icon.Warning)
-                msg.setWindowTitle("Select Preset")
-                msg.setText("Select the preset you want to switch to first.")
-                msg.setStyleSheet("QLabel{font-size: 9pt;}")
-                msg.exec()
+                self.create_msg_box("Select Preset", "Select the preset you want to switch to first.", QMessageBox.Icon.Warning)
                 continue
 
-            config["current_preset"] = next_preset
+            config["current preset"] = next_preset
             self.current_preset = next_preset
             config["item presets"].pop(preset_name)
             break
@@ -1373,14 +1361,14 @@ class Dark_Sol(QMainWindow):
         self.preset_selector.blockSignals(True)
         self.preset_selector.clear()
         self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
-        self.preset_selector.setCurrentText(config["current_preset"])
+        self.preset_selector.setCurrentText(config["current preset"])
         self.preset_selector.blockSignals(False)
         self.rebuild_potions_ui()
 
     def switch_preset(self, preset_name):
-        if config["current_preset"] == preset_name:
+        if config["current preset"] == preset_name:
             return
-        config["current_preset"] = preset_name
+        config["current preset"] = preset_name
         self.current_preset = preset_name
         nice_config_save()
         self.preset_selector.blockSignals(True)
@@ -1495,7 +1483,6 @@ class Dark_Sol(QMainWindow):
 
             nice_config_save()
             self.presets_tab_content.adjustSize()
-            self.presets_tab_scroller.adjustSize()
 
         for potion in data["item data"].keys():
             # Data References
@@ -1581,8 +1568,9 @@ class Dark_Sol(QMainWindow):
                 addition_buttons_to_click_checkbox.setProperty("btn", btn)
                 addition_buttons_to_click_checkbox.toggled.connect(change_potion_list)
                 right_column_QV_Layout.addWidget(addition_buttons_to_click_checkbox)
-            columns_QH_Layout.addWidget(left_column, 1)
-            columns_QH_Layout.addWidget(right_column, 1)
+            columns_QH_Layout.addWidget(left_column)
+            columns_QH_Layout.addStretch(1)
+            columns_QH_Layout.addWidget(right_column)
             QVLayout.addWidget(body)
             # Initial Visibility Setup
             collapsed = potion_config["collapsed"]
@@ -1635,22 +1623,33 @@ class Dark_Sol(QMainWindow):
                 self.create_overlay(bbox, text=calibration)
         self.calibrations_overlay_active = not self.calibrations_overlay_active
 
-    def create_external_msg_box(self, title, text, *buttons, msg_box_type=QMessageBox.Icon.Information):
-        msg_box = QMessageBox()
+    def create_msg_box(self, title, text, *buttons, msg_box_type=QMessageBox.Icon.Information, internal=True):
+        if internal:
+            msg_box = QMessageBox(self)
+        else:
+            msg_box = QMessageBox()
         msg_box.setIcon(msg_box_type)
         msg_box.setWindowTitle(title)
         msg_box.setText(text)
         msg_box.setStyleSheet("""QLabel { color: cyan; font-size: 14pt;} QWidget {background-color: black;} QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt;}""")
         if buttons:
             for button in buttons:
-                msg_box.addButton(button)
+                if isinstance(button, str):
+                    msg_box.addButton(button, QMessageBox.ButtonRole.AcceptRole)
+                else:
+                    msg_box.addButton(button)
         else:
             msg_box.addButton(QMessageBox.StandardButton.Ok)
         msg_box.show()
         msg_box.raise_()
         msg_box.activateWindow()
         msg_box.exec()
-        return msg_box.clickedButton()
+        clicked = msg_box.clickedButton()
+        if clicked is None:
+            return False
+        clicked_text = clicked.text()
+        self.log(f"Button clicked: {clicked_text.lower()}")
+        return clicked_text
 
     def adjust_template_settings(self, calibration, multiple=False, bbox_required=True, add_start_index=None, stop_index=None, multi_settings=False, scroll_check=False):
         return_bool2 = False
@@ -1847,7 +1846,7 @@ class Dark_Sol(QMainWindow):
         time.sleep(0.5)
         keyboard.Controller().press(keyboard.Key.enter)
         self.show_calibration_overlays()
-        self.create_external_msg_box("Auto Calibration Complete", "Auto calibration is complete. Please verify the positions are correct.")
+        self.create_msg_box("Auto Calibration Complete", "Auto calibration is complete. Please verify the positions are correct.", internal=False)
         self.show_calibration_overlays()
 
     def find_add_buttons(self):
@@ -1887,7 +1886,7 @@ class Dark_Sol(QMainWindow):
             if not self.safe_image_find("potion selection button " + str(count + 1)):
                 return
         
-    def find_checkmark(self):
+    def find_and_calibrate_checkmarks(self):
         self.focus_roblox()
         time.sleep(0.2)
         self.move_and_click(config["positions"]["amount box 1"]["center"], False)
@@ -1906,11 +1905,12 @@ class Dark_Sol(QMainWindow):
 
         for count in range(2, 6):
             amount_box_bbox = config["positions"][f"amount box {count}"]["bbox"]
-            config["positions"][f"add completed checkmark {count}"]["bbox"] = (checkmark_width_1, amount_box_bbox[1] + checkmark_height_difference_top, checkmark_width_2, amount_box_bbox[3] + checkmark_height_difference_bottom)
+            bbox = (checkmark_width_1, amount_box_bbox[1] + checkmark_height_difference_top, checkmark_width_2, amount_box_bbox[3] + checkmark_height_difference_bottom)
+            config["positions"].setdefault(f"add completed checkmark {count}", {})["bbox"] = bbox
         nice_config_save()
         for count in range(5):
             self.create_overlay(bbox=config["positions"][f"add completed checkmark {count + 1}"]["bbox"])
-        self.create_external_msg_box("Checkmark Calibration Complete", "checkmark calibration is complete. Please verify the positions are correct.")
+        self.create_msg_box("Checkmark Calibration Complete", "checkmark calibration is complete. Please verify the positions are correct.", internal=False)
         self.create_overlay(disabled=True)
 
     def manual_scroll_calibration(self):
@@ -1924,7 +1924,9 @@ class Dark_Sol(QMainWindow):
         scroll_calibration_mouse_listener.join()
 
     def manual_checkmarks_calibration(self):
-        self.manual_calibration("add completed checkmark 1", save=True)
+        calibrated = self.manual_calibration("add completed checkmark 1", save=True, what_to_save=("bbox",))
+        if calibrated is None:
+            return
         self.calibrate_checkmarks()
 
     def focus_roblox(self):
@@ -2025,7 +2027,7 @@ class Dark_Sol(QMainWindow):
 
         local_x = x_scaled - screen_geo.x()
         local_y = y_scaled - screen_geo.y()
-        outline_frame = QWidget(overlay_window)
+        outline_frame = QFrame(overlay_window)
         outline_frame.setGeometry(QRect(local_x, local_y, w_scaled, h_scaled))
 
         if isinstance(color, tuple):
@@ -2088,9 +2090,6 @@ class Dark_Sol(QMainWindow):
         total_image_scale_x = scale_ratio * image_ratio_x
         total_image_scale_y = scale_ratio * image_ratio_y
         self.log(f"Total Scale X: {total_image_scale_x}, Total Scale Y: {total_image_scale_y}")
-        self.log(f"Screen Resolution: {screen_width}x{screen_height}, DPI Scale: {scale*100:.2f}%")
-        self.log(f"Image Scale: {image_scale}, Image Resolution: {image_resolution}")
-        self.log(f"Scale Ratio: {scale_ratio}, Resolution Ratio X: {image_ratio_x}, Resolution Ratio Y: {image_ratio_y}")
 
         template_img = Image.open(template_path)
         template_scaled = template_img.resize((int(template_img.width * total_image_scale_x), int(template_img.height * total_image_scale_y)), Image.Resampling.LANCZOS)
@@ -2103,17 +2102,8 @@ class Dark_Sol(QMainWindow):
         def save_position(position_name, center, bbox):
             if not save:
                 return False
-            save_message_box = QMessageBox()
-            save_message_box.setWindowTitle("Save Position")
-            save_message_box.setText(f"Save position for '{position_name}'?")
-            save_button = save_message_box.addButton("Yes", QMessageBox.ButtonRole.AcceptRole)
-            save_message_box.addButton("No", QMessageBox.ButtonRole.RejectRole)
-            save_message_box.setStyleSheet("""QLabel { color: cyan; font-size: 14pt;} QWidget {background-color: black;} QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt;}""")
-            save_message_box.show()
-            save_message_box.raise_()
-            save_message_box.activateWindow()
-            save_message_box.exec()
-            if save_message_box.clickedButton() != save_button:
+            self.log(f"Proposed position for '{position_name}': Center: {center}, bbox: {bbox}")
+            if self.create_msg_box("Save Position", f"Save position for '{position_name}'?", "Yes", "No", internal=False) != "Yes":
                 return False
             if bbox != None:
                 config["positions"][position_name] = {"bbox": bbox, "center": center}
@@ -2135,7 +2125,6 @@ class Dark_Sol(QMainWindow):
             try:
                 if not multiple:
                     match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["calibration data"][calibration]["confidence"])
-                    self.log(match)
                     bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))  # type: ignore[reportOptionalMemberAccess]
                     center = (int(match.left + match.width // 2), int(match.top + match.height // 2))  # type: ignore[reportOptionalMemberAccess]
                     self.log(f"  bbox : {bbox}, center: {center}")
@@ -2153,7 +2142,6 @@ class Dark_Sol(QMainWindow):
                     for count, cal in enumerate(data["calibration data"][calibration[:-1].strip()]["sub calibrations"][add_start_index[0] if add_start_index != None else 0:int(calibration[-1])]):
                         self.log("Searching for multiple matches...")
                         match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["calibration data"][cal]["confidence"], region=search_region)
-                        
                         if count == stop_index:
                             return
                         
@@ -2189,28 +2177,15 @@ class Dark_Sol(QMainWindow):
                         return_bool = True
             except Exception as exception:
                 self.create_overlay(disabled=True)
-                
 
                 if isinstance(exception, (pyautogui.ImageNotFoundException, pyscreeze_ImageNotFoundException))and ignore_match_not_found:
                     pass
                 elif isinstance(exception, (pyautogui.ImageNotFoundException, pyscreeze_ImageNotFoundException)):
                     self.log(f"No matches found for template: {template_path}")
-                    match_exception_message_box = QMessageBox()
-                    match_exception_message_box.setText(f"No Matches Found For: {calibration}")
-                    match_exception_message_box.setStyleSheet("""QLabel { color: cyan; font-size: 14pt;} QWidget {background-color: black;} QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt;}""")
-                    match_exception_message_box.show()
-                    match_exception_message_box.raise_()
-                    match_exception_message_box.activateWindow()
-                    match_exception_message_box.exec()
+                    self.create_msg_box("No Matches Found", f"No Matches Found For: {calibration}", internal=False)
                 else:
                     self.log(f"Error finding matches: {exception}")
-                    match_exception_message_box = QMessageBox()
-                    match_exception_message_box.setText(f"Error Finding Matches: {exception}")
-                    match_exception_message_box.setStyleSheet("""QLabel { color: cyan; font-size: 14pt;} QWidget {background-color: black;} QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt;}""")
-                    match_exception_message_box.show()
-                    match_exception_message_box.raise_()
-                    match_exception_message_box.activateWindow()
-                    match_exception_message_box.exec()
+                    self.create_msg_box("Error Finding Matches", f"Error Finding Matches: {exception}")
                 return_bool = False
 
         template_scaled = self.rescale_template(data["calibration data"][calibration if calibration in data["calibration data"] else calibration[:-1].strip()]["image path"], template_path)
@@ -2260,7 +2235,9 @@ class Dark_Sol(QMainWindow):
 
         self.focus_roblox()
         self.mini_status_widget.show()
+        self.update_status("Calibrating", what_to_update="General")
         self.update_status("Calibrating scrolling")
+        QApplication.processEvents()
         self.move_and_click(config["positions"]["amount box 5"]["center"], False)
         pyautogui.scroll(2000)
         count1 = count_scrolls()
@@ -2268,15 +2245,19 @@ class Dark_Sol(QMainWindow):
             return False
         config["data"]["scroll amounts"]["to_5"] = count1
         nice_config_save()
+        self.create_msg_box("Scroll Calibration", f"scrolls needed to reach 5th add button: {count1}", internal=False)
         if not count_scrolls(False):
             self.mini_status_widget.hide()
+            QApplication.processEvents()
             return False
         count2 = count_scrolls()
         if count2 == False:
             return False
         config["data"]["scroll amounts"]["past_5"] = count2
         nice_config_save()
+        self.create_msg_box("Scroll Calibration", f"scrolls needed to reach past 5th add button: {count2}", internal=False)
         self.mini_status_widget.hide()
+        QApplication.processEvents()
         return True
             
     def start_macro(self):
@@ -2430,7 +2411,7 @@ class Dark_Sol(QMainWindow):
                 self.move_and_click(config["positions"][button_to_add_to]["center"])
                 self.log(f"{button_to_add_to} clicked")
             elif int(button_to_add_to[-1]) >= 5:
-                self.move_and_click(config["positions"]["amount box 4"]["center"], False)
+                self.move_and_click(config["positions"]["amount box 5"]["center"], False)
                 self.log("Moved to amount box 5 center")
                 pyautogui.scroll(2000)
                 self.log("Scrolled up")
@@ -2460,6 +2441,7 @@ class Dark_Sol(QMainWindow):
                 pyautogui.scroll(2000)
                 self.log("Scrolled up")
                 time.sleep(slowdown2)
+                time.sleep(slowdown2)
                 bbox = config["positions"][f"add completed checkmark {button_to_check[-1]}"]["bbox"]
             else:
                 self.move_and_click(config["positions"]["amount box 5"]["center"], False)
@@ -2471,6 +2453,7 @@ class Dark_Sol(QMainWindow):
                 for x in range(4, int(button_to_check[-1])):
                     pyautogui.scroll(-config["data"]["scroll amounts"]["past_5"])
                     self.log("Scrolled down to slot", x + 1)
+                time.sleep(slowdown2)
                 time.sleep(slowdown2)
                 bbox = config["positions"][f"add completed checkmark 5"]["bbox"]
             pixel_matches =self.find_pixels_with_color("#42FF6E", "#41FA6C", "#3FF369", "#3EEE67", "#41FC6D", "#40F169", bbox=bbox)
@@ -2493,6 +2476,15 @@ class Dark_Sol(QMainWindow):
                     self.log(f"Additional button {button_to_click} for {item} succeeded.")
             return True
 
+        def add_next_item_to_auto_add():
+            if len(self.auto_add_waitlist) > 0:
+                self.update_status("Setting Auto Add for:", self.auto_add_waitlist[0].capitalize())
+                self.search_for_potion(self.auto_add_waitlist[0])
+                time.sleep(slowdown2)
+                self.check_auto_add_button()
+                time.sleep(slowdown)
+                self.current_auto_add_potion = self.auto_add_waitlist.pop(0)
+
         def macro_loop_iteration(item):
             self.focus_roblox()
             if item not in self.auto_add_waitlist and self.current_auto_add_potion != item:
@@ -2506,7 +2498,7 @@ class Dark_Sol(QMainWindow):
 
                 item_ready = True
                 self.log(f"{item} set to ready")
-                
+                time.sleep(slowdown2)
                 self.update_status("Checking Buttons for:", item.capitalize())
                 for button_to_check in config["item presets"][self.current_preset][item]["buttons to check"]:
                     item_ready = check_button(button_to_check)
@@ -2536,6 +2528,18 @@ class Dark_Sol(QMainWindow):
                 self.search_for_potion(item)
                 item_ready = True
                 self.log(f"{item.capitalize()} set to ready")
+                for slot in config["item presets"][self.current_preset][item]["buttons to check"]:
+                    add_to_button(slot)
+                    if not check_button(slot):
+                        item_ready = False
+                        break
+                if not item_ready:
+                    self.log(f"{item.capitalize()} false detected a completed check button, skipping craft and moving to next auto add item")
+                    self.current_auto_add_potion = None
+                    add_next_item_to_auto_add()
+                    return
+                item_ready = True
+                self.log(f"{item.capitalize()} set to ready")
                 self.update_status("Checking All Buttons")
                 auto_add_check_range = []
                 for crafting_slot in range(1, data["item data"][item]["crafting slots"] + 1):
@@ -2558,13 +2562,7 @@ class Dark_Sol(QMainWindow):
                     self.move_and_click(config["positions"]["craft button"]["center"])
                     self.log("Clicked craft button")
                     time.sleep(slowdown)
-                    if len(self.auto_add_waitlist) > 0:
-                        self.update_status("Setting Auto Add for:", self.auto_add_waitlist[0].capitalize())
-                        self.search_for_potion(self.auto_add_waitlist[0])
-                        time.sleep(slowdown2)
-                        self.check_auto_add_button()
-                        time.sleep(slowdown)
-                        self.current_auto_add_potion = self.auto_add_waitlist.pop(0)
+                    add_next_item_to_auto_add()
                            
         for item in data["item data"].keys():
                 if config["item presets"][self.current_preset][item]["enabled"]:
