@@ -20,11 +20,10 @@
 13. Make config creation be added to log after it is created due to the fact config is made before log is created
 
 - Random
-15. Add auto updater
-19. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
-20. Make it so that overlays can show individual pixels instead of an area
-21. Add donation stuff
-22. Add paths for auto rejoin and auto calibrations
+14. Add auto updater
+15. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
+16. Make it so that overlays can show individual pixels instead of an area
+18. Add paths for auto rejoin and auto calibrations
 23. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
 24. Add crafted potion detection / stats
 25. Make ps join button check for valid ps link and save private server link button
@@ -77,6 +76,7 @@
 8. Make calibration checks not need manual scrolling to verify calibrations
 9. Add the ability to reset templates to default by pulling from the repo
 10. Add the ability to craft a specfic amount of potions and then stop crafting that potion and if all have been crafted then stop
+11. Highest donatator list with messages (steal from coteab (ask for permission ofc))
 
 # Planned for the future:
 1. Make dpi, resolution, scale and etc global
@@ -642,6 +642,9 @@ class Dark_Sol(QMainWindow):
         super().__init__()
         self.setWindowTitle("Dark Sol")
         self.setGeometry(int(((screen_width / 2) / scale) - (self.width() / 2)), int(((screen_height / 2) / scale) - (self.height() / 2 )), 0, 0) # Make gui as small as possible and appear in the center of the screen
+        # Create Main Gui Elements
+        self.central_widget = QWidget()
+        self.central_widget_vbox = QVBoxLayout(self.central_widget)
         # Create Tabs
         self.tabs_widget = QTabWidget()
         self.main_tab = QWidget()
@@ -717,6 +720,8 @@ class Dark_Sol(QMainWindow):
         self.ps_link_join_button = QPushButton("Join Private Server")
         self.reset_add_button_template_button = QPushButton("Reset Add Button Template")
         self.reset_amount_box_template_button = QPushButton("Reset Amount Box Template")
+        # Create Donations Stuff
+        self.donate_label = QLabel("Donate")
         # Mini Status Label 
         self.mini_status_widget = QWidget()
         self.general_mini_status_label = QLabel("Stopped")
@@ -760,8 +765,12 @@ class Dark_Sol(QMainWindow):
             self.debug_test_button_5.clicked.connect(lambda: self.create_msg_box("Test Button 5 Pressed", "This is a test message box for button 5.", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No, QMessageBox.StandardButton.Cancel))
 
     def init_ui(self):
+        # Initalize Main Gui
+        self.setCentralWidget(self.central_widget)
+        self.central_widget.setLayout(self.central_widget_vbox)
+        self.central_widget_vbox.addWidget(self.tabs_widget)
+        self.central_widget_vbox.setContentsMargins(0,0,0,0)
         # Initialize Tabs
-        self.setCentralWidget(self.tabs_widget)
         self.tabs_widget.addTab(self.main_tab, "Main")
         self.tabs_widget.addTab(self.presets_tab, "Presets")
         self.tabs_widget.addTab(self.calibrations_tab, "Calibrations")
@@ -889,6 +898,40 @@ class Dark_Sol(QMainWindow):
         settings_tab_vbox.addWidget(self.ps_link_join_button)
         settings_tab_vbox.addWidget(self.reset_add_button_template_button)
         settings_tab_vbox.addWidget(self.reset_amount_box_template_button)
+        # Donations Layout
+        self.donate_row = QWidget()
+        donate_row_layout = QHBoxLayout(self.donate_row)
+        donate_row_layout.setContentsMargins(0, 0, 0, 0)
+        donate_row_layout.addStretch(1)
+        donate_row_layout.addWidget(self.donate_label)
+        self.central_widget_vbox.addWidget(self.donate_row)
+        self.donate_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+       
+        self.donate_label.setTextFormat(Qt.TextFormat.RichText)
+        self.donate_label.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
+        self.donate_label.setOpenExternalLinks(True)
+        self.donate_label.setStyleSheet("padding-right: 12px; padding-bottom: 6px;")
+        self.donate_label.setMouseTracking(True)
+        self.donate_label.setCursor(Qt.CursorShape.ArrowCursor)
+        self.donate_label_color = 0
+
+        def change_donate_label_color():
+            hovered = self.donate_label.underMouse()
+            self.donate_label.setCursor(
+                Qt.CursorShape.PointingHandCursor if hovered
+                else Qt.CursorShape.ArrowCursor
+            )
+            self.donate_label_color = (self.donate_label_color + 2) % 360
+            color = QColor.fromHsv(self.donate_label_color, 255, 255).name()
+            underline = "underline" if hovered else "none"
+            self.donate_label.setText(
+                f'<a href="https://www.roblox.com/games/74832430065070/The-Bank#!/store" style="color:{color}; text-decoration:{underline};">Donate</a>')
+        # Timer (keep a reference on self so it never gets GC’d)
+        self.donate_timer = QTimer(self)
+        self.donate_timer.timeout.connect(change_donate_label_color)
+        self.donate_timer.start(30)
+
+        change_donate_label_color()
         
         # Button Connectors
         self.calibration_mode_button.clicked.connect(lambda: self.switch_calibration_mode())
