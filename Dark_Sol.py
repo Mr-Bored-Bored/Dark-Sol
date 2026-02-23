@@ -76,7 +76,7 @@
 8. Make calibration checks not need manual scrolling to verify calibrations
 9. Add the ability to reset templates to default by pulling from the repo
 10. Add the ability to craft a specfic amount of potions and then stop crafting that potion and if all have been crafted then stop
-11. Highest donatator list with messages (steal from coteab (ask for permission ofc))
+11. Highest donatator list with messages
 
 # Planned for the future:
 1. Make dpi, resolution, scale and etc global
@@ -2137,7 +2137,7 @@ class Dark_Sol(QMainWindow):
         return template_scaled
     
     def auto_find_image(self, calibration, save=True, multiple=False, bbox_required=True, add_start_index=None, stop_index=None, ignore_match_not_found=False):
-        template_path = f"{local_appdata_directory}\\Lib\\Images\\{data['calibration data'][calibration if calibration in data["position data"] else calibration[:-1].strip()]['image path']}"
+        template_path = f"{local_appdata_directory}\\Lib\\Images\\{data['position data'][calibration if calibration in data['position data'] else calibration[:-1].strip()]['image path']}"
         return_bool = False
             
         def save_position(position_name, center, bbox):
@@ -2537,73 +2537,63 @@ class Dark_Sol(QMainWindow):
                     add_to_button(button_to_add_to)
                     time.sleep(slowdown)
 
-                item_ready = True
                 self.log(f"{item} set to ready")
                 time.sleep(slowdown2)
                 self.update_status("Checking Buttons for:", item.capitalize())
                 for button_to_check in config["item presets"][self.current_preset][item]["buttons to check"]:
-                    item_ready = check_button(button_to_check)
-                    time.sleep(slowdown)
-                    if not item_ready:
-                        break
-
-                if item_ready:
-                    self.update_status("Adding Additional Buttons for", item.capitalize())
-                    if add_additional_buttons_for_item(item):
-                        if not config["item presets"][self.current_preset][item]["instant craft"]:
-                            self.update_status("Setting Auto Add for:", item.capitalize())
-                            if self.current_auto_add_potion == None:
-                                self.check_auto_add_button()
-                                self.current_auto_add_potion = item
-                            elif not self.current_auto_add_potion == None and item not in self.auto_add_waitlist:
-                                self.auto_add_waitlist.append(item)
-                                self.log(f"{item.capitalize()} added to auto add waitlist")
-                        else:
-                            self.update_status("Crafting:", item.capitalize())
-                            self.move_and_click(config["positions"]["craft button"])
-                            self.log("Clicked craft button")
+                    if not check_button(button_to_check):
+                        return  
+                    
+                self.update_status("Adding Additional Buttons for", item.capitalize())
+                if add_additional_buttons_for_item(item):
+                    if not config["item presets"][self.current_preset][item]["instant craft"]:
+                        self.update_status("Setting Auto Add for:", item.capitalize())
+                        if self.current_auto_add_potion == None:
+                            self.check_auto_add_button()
+                            self.current_auto_add_potion = item
+                        elif not self.current_auto_add_potion == None and item not in self.auto_add_waitlist:
+                            self.auto_add_waitlist.append(item)
+                            self.log(f"{item.capitalize()} added to auto add waitlist")
+                    else:
+                        self.update_status("Crafting:", item.capitalize())
+                        self.move_and_click(config["positions"]["craft button"])
+                        self.log("Clicked craft button")
 
             elif item == self.current_auto_add_potion:
                 self.move_and_click(config["positions"]["potion menu item button"]["center"])
                 self.update_status("Searching for:", item.capitalize())
                 self.search_for_potion(item)
-                item_ready = True
                 self.log(f"{item.capitalize()} set to ready")
+                self.update_status("Checking All Buttons")
+
                 for slot in config["item presets"][self.current_preset][item]["buttons to check"]:
                     add_to_button(slot)
                     if not check_button(slot):
-                        item_ready = False
-                        break
-                if not item_ready:
-                    self.log(f"{item.capitalize()} false detected a completed check button, skipping craft and moving to next auto add item")
-                    self.current_auto_add_potion = None
-                    add_next_item_to_auto_add()
-                    return
-                item_ready = True
-                self.log(f"{item.capitalize()} set to ready")
-                self.update_status("Checking All Buttons")
-                auto_add_check_range = []
-                for crafting_slot in range(1, data["item data"][item]["crafting slots"] + 1):
-                    if crafting_slot in config["item presets"][self.current_preset][item]["buttons to check"][-1:]:
+                        self.log(f"{item.capitalize()} false positive detected on completed check button: {data['item data'][item][slot]['button names']}, skipping craft and moving to next auto add item")
+                        self.current_auto_add_potion = None
+                        add_next_item_to_auto_add()
                         return
-                    if crafting_slot in config["item presets"][self.current_preset][item]["additional buttons to click"][-1:]:
+                
+                for slot in config["item presets"][self.current_preset][item]["additional buttons to click"]:
+                    add_to_button(slot)
+                    if not check_button(slot):
+                        self.log(f"{item.capitalize()} false positive detected on additional button to click: {data['item data'][item][slot]['button names']}, skipping craft and moving to next auto add item")
+                        self.current_auto_add_potion = None
+                        add_next_item_to_auto_add()
                         return
-                    else:
-                        auto_add_check_range.append(crafting_slot)
                     
-                for slot in auto_add_check_range:
-                    add_to_button("add button " + str(slot))
-                    if not check_button("add button " + str(slot)):
-                        time.sleep(slowdown)
-                        item_ready = False
-                        break
+                for slot in range(1, data['item data'][item]['crafting slots'] + 1):
+                    slot = "add button " + str(slot)
+                    if slot not in (config["item presets"][self.current_preset][item]["buttons to check"] or config["item presets"][self.current_preset][item]["additional buttons to click"]):
+                        add_to_button(slot)
+                        if not check_button(slot):
+                            return
 
-                if item_ready:
-                    self.update_status("Crafting:", item.capitalize())
-                    self.move_and_click(config["positions"]["craft button"]["center"])
-                    self.log("Clicked craft button")
-                    time.sleep(slowdown)
-                    add_next_item_to_auto_add()
+                self.update_status("Crafting:", item.capitalize())
+                self.move_and_click(config["positions"]["craft button"]["center"])
+                self.log("Clicked craft button")
+                time.sleep(slowdown)
+                add_next_item_to_auto_add()
                            
         for item in data["item data"].keys():
                 if config["item presets"][self.current_preset][item]["enabled"]:
