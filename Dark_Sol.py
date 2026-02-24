@@ -23,47 +23,44 @@
 14. Add auto updater
 15. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
 16. Make it so that overlays can show individual pixels instead of an area
-18. Add paths for auto rejoin and auto calibrations
-23. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
-24. Add crafted potion detection / stats
-25. Make ps join button check for valid ps link and save private server link button
-26. Add collection buttons to calibrations (exit button may not be added)
-27. Add play button to calibrations
-28. Make safe image find function have the ability to not save (check if completed)
-29. Add logs where needed (idk check)
-30. Get normal path and set it so that in settings you can choose which path to use
-32. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
-33. Add potion gui entered check
-34. Add config corrupted check and fix config
-36. Add complete macro exception handling with message box and logging
-37. Add msgbox for when something is being downloaded from the repo
-38. Make requirements file and check what its file type should be 
-39. Improve logging by adding log type, log file, and better wrapping
-40. Add current auto add potion enabled check
-41. fix scroll calibration status label
-42. Add check for auto add potion to see if a false positive happened and remove it from auto add list or current auto add potion if it did
-43. Add stuff for potions that have only requires manual crafting
-44. Make potion menu item button be clicked with search for potion function
-45. Fix skip already added and checked buttons not setting range correctly
-46. Add extra slowdown then set it for check button function (because it is incorrectly getting the button if it still is happening however it is most likely not a timing issue but slow it down much more and if it happens again then it is definately not a timing issue)
-47. Add checks if current auto add potion was disabled after pause
-48. Add macro pause and unpause auto add button check
-49. Add, add button check improvements (to auto image find aka yk what to do i just cant explain it)(use regions from previous founds instead of remaking regions each time also make 5th add button search from bottom)
-50. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
-51. Add manual checkmark calibration failsafe (if calibration was not done to not contine)
-52. Make remove overlay possible for specific overlays instead of just all overlays
-53. Seperate auto add checks to detect false positives (and remove from auto add list or current auto add potion if they happen and add logging for it)
-54. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
-55. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
+17. Add paths for auto rejoin and auto calibrations
+18. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
+19. Add crafted potion detection / stats
+20. Make ps join button check for valid ps link and save private server link button
+21. Add collection buttons to calibrations (exit button may not be added)
+22. Add play button to calibrations
+23. Make safe image find function have the ability to not save (check if completed)
+24. Add logs where needed (idk check)
+25. Get normal path and set it so that in settings you can choose which path to use
+26. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
+27. Add potion gui entered check
+28. Add config corrupted check and fix config
+29. Add complete macro exception handling with message box and logging
+30. Add msgbox for when something is being downloaded from the repo
+31. Make requirements file and check what its file type should be 
+32. Improve logging by adding log type, log file, and better wrapping
+33. Add current auto add potion enabled check (after pause / unpause)
+34. fix scroll calibration status label
+35. Add stuff for potions that have only requires manual crafting
+36. Make potion menu item button be clicked with search for potion function
+37. Fix skip already added and checked buttons not setting range correctly
+38. Add extra slowdown then set it for check button function (because it is incorrectly getting the button if it still is happening however it is most likely not a timing issue but slow it down much more and if it happens again then it is definately not a timing issue)
+39. Add macro pause and unpause auto add button check
+40. Add, add button check improvements (to auto image find aka yk what to do i just cant explain it)(use regions from previous founds instead of remaking regions each time also make 5th add button search from bottom)
+41. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
+42. Add manual checkmark calibration failsafe (if calibration was not done to not contine)
+43. Make remove overlay possible for specific overlays instead of just all overlays
+44. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
+45. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
     
 - Mini Status Label
-56. Make Mini Status Label movable (when moving make it show largest size)
-57. make mini status label wrapable
+46. Make Mini Status Label movable (when moving make it show largest size)
+47. Make mini status label wrapable
 
 - Final Checks
-60. Remove excess delays / slowdowns (ensure reliability)
-61. Check print statements and remove unnecessary ones
-62. Verify macro can handle everything after entering potion craft gui
+48. Remove excess delays / slowdowns (ensure reliability)
+49. Check print statements and remove unnecessary ones
+50. Verify macro can handle everything after entering potion craft gui
 
 # Might be added for First Release:
 1. Add multi template for single calibration
@@ -92,14 +89,13 @@
 11. Add importing / exporting themes
 12. Add ability to change hotkeys
 14. Make it so that it can add in 1's instead of just the amount numbers
-15. Complete auto find template function
 16. Add custom log messages (ability for certain logs to not show)
 17. Add complete calibration (paths needed)
 18. Add private server reconnects (paths needed)
 19. Make macro full screen compatible (only needs template rescaling adjustment(i think))
 21. Complete overhall and  usage of multi classes
-21. Auto Quest Plugin Depending on what cresqnt says
-22. Make auto rare biome popping plugin
+21. Auto Quest Plugin (Depending on what cresqnt and noteab say)
+22. Make auto rare biome popping plugin (Depending on what cresqnt and noteab say)
 23. Make it so that you can adjust wait time after reset in settings
 24. Make it so that rescaled templates are saved so the function doesnt have to be called every time
 32. Add ability to craft Limbo potions (aka enter limbo for easier aura gathering)
@@ -2569,7 +2565,7 @@ class Dark_Sol(QMainWindow):
                 for slot in config["item presets"][self.current_preset][item]["buttons to check"]:
                     add_to_button(slot)
                     if not check_button(slot):
-                        self.log(f"{item.capitalize()} false positive detected on completed check button: {data['item data'][item][slot]['button names']}, skipping craft and moving to next auto add item")
+                        self.log(f"{item.capitalize()} false positive detected on completed check button: {data['item data'][item]['button names'][slot]}, skipping craft and moving to next auto add item")
                         self.current_auto_add_potion = None
                         add_next_item_to_auto_add()
                         return
@@ -2577,7 +2573,7 @@ class Dark_Sol(QMainWindow):
                 for slot in config["item presets"][self.current_preset][item]["additional buttons to click"]:
                     add_to_button(slot)
                     if not check_button(slot):
-                        self.log(f"{item.capitalize()} false positive detected on additional button to click: {data['item data'][item][slot]['button names']}, skipping craft and moving to next auto add item")
+                        self.log(f"{item.capitalize()} false positive detected on additional button to click: {data['item data'][item]['button names'][slot]}, skipping craft and moving to next auto add item")
                         self.current_auto_add_potion = None
                         add_next_item_to_auto_add()
                         return
