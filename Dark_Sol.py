@@ -5,62 +5,54 @@
 - Calibrations
 1. Fix manual scroll calibration
 2. Improve calibration gui / fix it to support new systems
-3. For multi template, template settings only have the previous ones
-4. Add scroll calibration template adjustment settings when using calibrate scrolls button
-5. Make it so that macro cant start until calibrations are complete
-6. Make it so that you can close auto calibrate and then resume where you left off
-7. Add verifications before runnning certain calibrations
-8. Rename calibration buttons
-9. make adjust template use multiple variable instead of excess multi settings variable
-10. Make manual calibration have a single position thing instead of a box for some calibrations
-11. Make a list of features that show if the repo cannot be reached
+3. Make it so that macro cant start until calibrations are complete
+4. Make it so that you can close auto calibrate and then resume where you left off
+5. Add verifications before runnning certain calibrations
+6. Rename calibration buttons
+7. Make manual calibration have a single position thing instead of a box for some calibrations
+8. Make a list of features that show if the repo cannot be reached
 
 - Logs
-12. Add debug log file
-13. Make config creation be added to log after it is created due to the fact config is made before log is created
+9. Add debug log file
+10. Make config creation be added to log after it is created due to the fact config is made before log is created
 
 - Random
-14. Add auto updater
-15. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
-16. Make it so that overlays can show individual pixels instead of an area
-17. Add paths for auto rejoin and auto calibrations
-18. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
-19. Add crafted potion detection / stats
-20. Make ps join button check for valid ps link and save private server link button
-21. Add collection buttons to calibrations (exit button may not be added)
-22. Add play button to calibrations
-23. Make safe image find function have the ability to not save (check if completed)
-24. Add logs where needed (idk check)
-25. Get normal path and set it so that in settings you can choose which path to use
-26. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
-27. Add potion gui entered check
-28. Add config corrupted check and fix config
-29. Add complete macro exception handling with message box and logging
-30. Add msgbox for when something is being downloaded from the repo
-31. Make requirements file and check what its file type should be 
-32. Improve logging by adding log type, log file, and better wrapping
-33. Add current auto add potion enabled check (after pause / unpause)
-34. fix scroll calibration status label
-35. Add stuff for potions that have only requires manual crafting
-36. Make potion menu item button be clicked with search for potion function
-37. Fix skip already added and checked buttons not setting range correctly
-38. Add extra slowdown then set it for check button function (because it is incorrectly getting the button if it still is happening however it is most likely not a timing issue but slow it down much more and if it happens again then it is definately not a timing issue)
-39. Add macro pause and unpause auto add button check
-40. Add, add button check improvements (to auto image find aka yk what to do i just cant explain it)(use regions from previous founds instead of remaking regions each time also make 5th add button search from bottom)
-41. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
-42. Add manual checkmark calibration failsafe (if calibration was not done to not contine)
-43. Make remove overlay possible for specific overlays instead of just all overlays
-44. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
-45. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
-    
+11. Add auto updater
+12. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
+13. Make it so that overlays can show individual pixels instead of an area
+14. Add paths for auto rejoin (non vip and add settings to choose path) and auto calibrations
+15. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
+16. Add crafted potion detection / stats
+17. Make ps join button check for valid ps link and save private server link button
+18. Add collection buttons to calibrations (exit button may not be added)
+19. Add play button to calibrations
+20. Add logs where needed (idk check)
+21. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
+22. Add potion gui entered check
+23. Add config corrupted check and fix config
+25. Add complete macro exception handling with message box and logging
+26. Add msgbox for when something is being downloaded from the repo
+27. Make requirements file and check what its file type should be 
+28. Improve logging by adding log type, log file, and better wrapping
+29. Add current auto add potion enabled check (after pause / unpause)
+30. Add stuff for potions that have only requires manual crafting
+31. Make potion menu item button be clicked with search for potion function
+32. Add macro pause and unpause auto add button check
+33. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
+34. Add manual checkmark calibration failsafe (if calibration was not done to not contine)
+35. Make remove overlay possible for specific overlays instead of just all overlays
+36. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
+37. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
+38. Make requirements downloader check lib folder in github instead of manual list of files and folders to check    
+
 - Mini Status Label
-46. Make Mini Status Label movable (when moving make it show largest size)
-47. Make mini status label wrapable
+39. Make Mini Status Label movable (when moving make it show largest size)
+40. Make mini status label wrapable
 
 - Final Checks
-48. Remove excess delays / slowdowns (ensure reliability)
-49. Check print statements and remove unnecessary ones
-50. Verify macro can handle everything after entering potion craft gui
+41. Remove excess delays / slowdowns (ensure reliability)
+42. Check print statements and remove unnecessary ones
+43. Verify macro can handle everything after entering potion craft gui
 
 # Might be added for First Release:
 1. Add multi template for single calibration
@@ -754,11 +746,11 @@ class Dark_Sol(QMainWindow):
             self.debug_tab_qv_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
             self.debug_tab.setLayout(self.debug_tab_qv_layout)
 
-            self.debug_test_button_1.clicked.connect(lambda: self.create_msg_box("Test Button 1 Pressed", "This is a test message box for button 1."))
-            self.debug_test_button_2.clicked.connect(lambda: self.create_msg_box("Test Button 2 Pressed", "This is a test message box for button 2.", "Yes", "No"))
-            self.debug_test_button_3.clicked.connect(lambda: self.create_msg_box("Test Button 3 Pressed", "This is a test message box for button 3.", "OK", "Cancel"))
-            self.debug_test_button_4.clicked.connect(lambda: self.create_msg_box("Test Button 4 Pressed", "This is a test message box for button 4.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel))
-            self.debug_test_button_5.clicked.connect(lambda: self.create_msg_box("Test Button 5 Pressed", "This is a test message box for button 5.", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No, QMessageBox.StandardButton.Cancel))
+            self.debug_test_button_1.clicked.connect(lambda: self.log("Test Button 1 Pressed"))
+            self.debug_test_button_2.clicked.connect(lambda: self.log("Test Button 2 Pressed"))
+            self.debug_test_button_3.clicked.connect(lambda: self.log("Test Button 3 Pressed"))
+            self.debug_test_button_4.clicked.connect(lambda: self.log("Test Button 4 Pressed"))
+            self.debug_test_button_5.clicked.connect(lambda: self.log("Test Button 5 Pressed"))
 
     def init_ui(self):
         # Initalize Main Gui
@@ -941,7 +933,7 @@ class Dark_Sol(QMainWindow):
         self.find_search_bar.clicked.connect(lambda: (self.focus_roblox(), time.sleep(0.2), self.safe_image_find("potion search bar")))
         self.auto_calibrate_add_completed_checkmarks_button.clicked.connect(self.find_and_calibrate_checkmarks)
         self.find_potion_selection_button.clicked.connect(lambda: self.find_potion_selection_buttons())
-        self.auto_calibrate_scrolling_button.clicked.connect(lambda: self.calibrate_scrolling())    
+        self.auto_calibrate_scrolling_button.clicked.connect(lambda: self.auto_calibrate_scrolling())    
 
         self.set_add_button_coordinates.clicked.connect(lambda: self.add_button_coordinates_selector.show())
         self.set_add_button_1_coordinates.clicked.connect(lambda: self.manual_calibration("add button 1"))
@@ -963,8 +955,8 @@ class Dark_Sol(QMainWindow):
         self.manually_calibrate_scrolling_button.clicked.connect(lambda: self.manual_scroll_calibration())
         self.ps_link_save_button.clicked.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
         self.ps_link_join_button.clicked.connect(lambda: self.open_roblox(config["private server link"]))
-        self.set_add_button_template.clicked.connect(lambda: self.change_template("add button"))
-        self.set_amount_box_template.clicked.connect(lambda: self.change_template("amount box"))
+        self.set_add_button_template.clicked.connect(lambda: self.replace_template("add button"))
+        self.set_amount_box_template.clicked.connect(lambda: self.replace_template("amount box"))
         self.reset_add_button_template_button.clicked.connect(lambda: verify_files("add_button.png", local_appdata_directory / "Lib" / "Images"))
         self.reset_amount_box_template_button.clicked.connect(lambda: verify_files("amount_box.png", local_appdata_directory / "Lib" / "Images"))
         self.rejoin_and_path_to_potion_gui_button.clicked.connect(lambda: self.reload_potion_gui())
@@ -1006,20 +998,24 @@ class Dark_Sol(QMainWindow):
         self.start_button.clicked.connect(self.start_macro)
         self.stop_button.clicked.connect(self.stop_macro)
         
+    def reset_template(self):
+        pass
+
+    def auto_calibrate_scrolling(self):
+        if not self.calibrate_scrolling():
+            self.adjust_template_settings("add button 5", what_to_save=None, multiple=True, ignore_match_not_found=True, scroll_check=True, region=(0, config["positions"]["add button 4"]["bbox"][3], screen_width, config["positions"]["add button 5"]["bbox"][3] - config["positions"]["add button 4"]["bbox"][3]))
+
     def catch_up_log(self):
         for log in log_backlog:
             self.log(log)
     
-    def change_template(self, template_name):
+    def replace_template(self, template_name):
         image_location = data["position data"][template_name]["image path"]
         image_path = str(local_appdata_directory / "Lib" / "Images" / image_location)
         if not (new_template_bbox := self.select_region()):
             return
         else:
             ImageGrab.grab(new_template_bbox).save(image_path)
-
-    def reset_template(self, template_name):
-        pass
 
     def open_roblox(self, link):
         def convert_roblox_link(url):
@@ -1052,7 +1048,7 @@ class Dark_Sol(QMainWindow):
 
         while True:
             self.focus_roblox()
-            if self.auto_find_image("play button", save=False, ignore_match_not_found=True):
+            if self.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True):
                 self.move_and_click((270,1050))
                 break
             time.sleep(1)
@@ -1688,7 +1684,7 @@ class Dark_Sol(QMainWindow):
         self.log(f"Button clicked: {clicked_text.lower()}")
         return clicked_text
 
-    def adjust_template_settings(self, calibration, multiple=False, bbox_required=True, add_start_index=None, stop_index=None, multi_settings=False, scroll_check=False):
+    def adjust_template_settings(self, calibration, what_to_save=("center", "bbox"), multiple=False, ignore_match_not_found=False, region=None, scroll_check=False):
         return_bool2 = False
         self.focus_roblox()
 
@@ -1696,16 +1692,16 @@ class Dark_Sol(QMainWindow):
             nonlocal return_bool2
 
             if not scroll_check:
-                if self.auto_find_image(calibration, multiple=multiple, bbox_required=bbox_required, add_start_index=add_start_index, stop_index=stop_index):
+                if self.auto_find_image(calibration, what_to_save=what_to_save, multiple=multiple, ignore_match_not_found=ignore_match_not_found, region=region):
                     adjust_template_widget.close()
-                    self.log(f"Template '{calibration}' found with current settings. return: True")
+                    self.log(f"Template '{calibration}' found with current settings.")
                     return_bool2 = True
                 else:
                     re_raise()
             else: 
                 if self.calibrate_scrolling():
                     adjust_template_widget.close()
-                    self.log(f"Scroll calibration succeeded with current settings. return: True")
+                    self.log(f"Scroll calibration succeeded with current settings.")
                     return_bool2 = True
                 else:
                     re_raise()
@@ -1715,18 +1711,13 @@ class Dark_Sol(QMainWindow):
             adjust_template_widget.activateWindow()
 
         def update_confidence(calibration):
-            sender = self.sender()
-            if not isinstance(sender, QSlider):
-                return
-            confidence_label = sender.property("label")
-            if not isinstance(confidence_label, QLabel):
-                return
+
             if scroll_check:
-                config["data"]["position data"][calibration]["scroll check confidence"] = sender.value() / 100.0
-                confidence_label.setText(f"Adjust scroll confidence: {sender.value()}%")
+                config["data"]["position data"][calibration]["scroll check confidence"] = slider.value() / 100.0
+                confidence_label.setText(f"Adjust scroll confidence: {slider.value()}%")
             else:
-                config["data"]["position data"][calibration]["confidence"] = sender.value() / 100.0
-                confidence_label.setText(f"Adjust confidence for '{calibration}': {sender.value()}%")
+                config["data"]["position data"][calibration]["confidence"] = slider.value() / 100.0
+                confidence_label.setText(f"Adjust confidence for '{calibration}': {slider.value()}%")
             nice_config_save()
 
         adjust_template_widget = QDialog()
@@ -1739,66 +1730,32 @@ class Dark_Sol(QMainWindow):
                      QSlider::handle:horizontal {width: 18px; margin: -6px 0px; background-color: cyan; border: 2px solid #2b2b2b; border-radius: 9px;}
                      """)
         
-        check_for_button = QPushButton()
-        check_for_button.clicked.connect(check_if_template_found)
         adjust_template_widget_layout = QVBoxLayout(adjust_template_widget)
 
-        if not multi_settings: #make this check multiple variable instead
-            slider = QSlider(Qt.Orientation.Horizontal)
-            slider.setRange(0, 100)
-            if not scroll_check:
-                slider.setValue(int(config["data"]["position data"][calibration]["confidence"] * 100))
-            else:
-                slider.setValue(int(config["data"]["position data"][calibration]["scroll check confidence"] * 100))
-            
+        check_for_button = QPushButton()
+        check_for_button.setText("Check For Template" if not scroll_check else "Calibrate Scrolling")
+        check_for_button.clicked.connect(check_if_template_found)
 
-            confidence_label = QLabel(slider)
-            
-            slider.setProperty("label", confidence_label)
+        slider = QSlider(Qt.Orientation.Horizontal)
+        slider.setRange(0, 100)
+        slider.setValue(int(config["data"]["position data"][calibration]["confidence"] * 100) if not scroll_check else int(config["data"]["position data"][calibration]["scroll check confidence"] * 100))
 
-            slider.valueChanged.connect(lambda value, cal=calibration: update_confidence(cal))
+        confidence_label = QLabel(slider)
+        confidence_label.setText(f"Adjust confidence for '{calibration}': {slider.value()}%" if not scroll_check else f"Adjust scroll confidence: {slider.value()}%")
+        slider.valueChanged.connect(lambda value, cal=calibration: update_confidence(cal))
 
-            adjust_template_widget_layout.addWidget(confidence_label)
-            adjust_template_widget_layout.addWidget(slider)
-            
-            if not scroll_check:
-                confidence_label.setText(f"Adjust confidence for '{calibration}': {slider.value()}%")
-            else:
-                confidence_label.setText(f"Adjust scroll confidence: {slider.value()}%")
-                
-        else:
-            for sub_calibration in data["position data"][calibration[:-1].strip()]["sub positions"]:
-
-                slider = QSlider(Qt.Orientation.Horizontal)
-                slider.setRange(0, 100)
-                slider.setValue(int(config["data"]["position data"][sub_calibration]["confidence"] * 100))
-
-                confidence_label = QLabel(slider)
-                confidence_label.setText(f"Adjust confidence for '{sub_calibration}': {slider.value()}%")
-
-                slider.setProperty("label", confidence_label)
-
-                slider.valueChanged.connect(lambda value, sub_cal=sub_calibration: update_confidence(sub_cal))
-
-                adjust_template_widget_layout.addWidget(confidence_label)
-                adjust_template_widget_layout.addWidget(slider)
-
-        if not scroll_check:
-            check_for_button.setText("Check For Template")
-        else:
-            check_for_button.setText("Calibrate Scrolling")
-
+        adjust_template_widget_layout.addWidget(confidence_label)
+        adjust_template_widget_layout.addWidget(slider)
         adjust_template_widget_layout.addWidget(check_for_button)
-
         adjust_template_widget.show()
         adjust_template_widget.raise_()
         adjust_template_widget.activateWindow()
         adjust_template_widget.exec()
         return return_bool2
 
-    def safe_image_find(self, calibration, multiple=False, bbox_required=True, add_start_index=None, stop_index=None, multi_settings=False):
-        if not self.auto_find_image(calibration, multiple=multiple, bbox_required=bbox_required, add_start_index=add_start_index, stop_index=stop_index):
-            if not self.adjust_template_settings(calibration, multiple=multiple, bbox_required=bbox_required, add_start_index=add_start_index, stop_index=stop_index, multi_settings=multi_settings):
+    def safe_image_find(self, calibration, what_to_save=("center", "bbox"), multiple=False, ignore_match_not_found=False, region=None):
+        if not self.auto_find_image(calibration, what_to_save=what_to_save, multiple=multiple, ignore_match_not_found=ignore_match_not_found, region=region):
+            if not self.adjust_template_settings(calibration, what_to_save=what_to_save, multiple=multiple, ignore_match_not_found=ignore_match_not_found, region=region):
                 self.log(f"Auto Calibration failed at calibration: '{calibration}'")
                 return False
         self.log(f"Auto Calibration found, calibration: '{calibration}'")
@@ -1822,7 +1779,7 @@ class Dark_Sol(QMainWindow):
         time.sleep(0.5)
         keyboard.Controller().press(keyboard.Key.enter)
         time.sleep(0.1)
-        for count, selection_button in enumerate(range(3)):
+        for count in range(1, 4):
             if not self.safe_image_find("potion selection button " + str(count + 1)):
                 return
         self.move_and_click(config["positions"]["potion selection button 1"]["center"])
@@ -1841,19 +1798,19 @@ class Dark_Sol(QMainWindow):
             return
         self.move_and_click(config["positions"]["amount box 1"]["center"], False)
         pyautogui.scroll(2000)
-        for count, add_button in enumerate(data["position data"]["add button"]["sub positions"][:4]):
-            if not self.safe_image_find(add_button, multiple=True, add_start_index=(0, (count,)), stop_index = 4, multi_settings=True):
+        for add_button in config["positions"]["add button"]["sub positions"][:4]:
+            if not self.safe_image_find(add_button, multiple=True):
                 return
-        for count, amount_box in enumerate(data["position data"]["amount box"]["sub positions"][:4]):
-            if not self.safe_image_find(amount_box, multiple=True, add_start_index=(0, (count,)), stop_index = 4, multi_settings=True):
+        for amount_box in config["positions"]["amount box"]["sub positions"][:4]:
+            if not self.safe_image_find(amount_box, multiple=True):
                 return
         self.move_and_click(config["positions"]["add button 1"]["center"], False)
         pyautogui.scroll(-2000)
         time.sleep(0.1)
-        if not self.safe_image_find("add button 5", multiple=True, add_start_index=(1, (3,)), stop_index = 4, multi_settings=True):
+        if not self.safe_image_find("add button 5", multiple=True):
             return
         time.sleep(0.1)
-        if not self.safe_image_find("amount box 5", multiple=True, add_start_index=(1, (3,)), stop_index = 4, multi_settings=True):
+        if not self.safe_image_find("amount box 5", multiple=True):
             return
         if not self.safe_image_find("craft button"):
             return
@@ -1889,16 +1846,16 @@ class Dark_Sol(QMainWindow):
     def find_add_buttons(self):
         self.focus_roblox()
         time.sleep(0.2)
-        if not self.safe_image_find("add button 1"):
+        if not self.safe_image_find("amount box 1"):
             return
-        self.move_and_click(config["positions"]["add button 1"]["center"], False)
+        self.move_and_click(config["positions"]["amount box 1"]["center"], False)
         pyautogui.scroll(2000)
-        for count, add_button in enumerate(data["position data"]["add button"]["sub positions"][:4]):
-            if not self.safe_image_find(add_button, multiple=True, add_start_index=(0, (count,)), stop_index = 4, multi_settings=True):
+        for add_button in data["position data"]["add button"]["sub positions"]:
+            if not self.safe_image_find(add_button, multiple=True):
                 return
         pyautogui.scroll(-2000)
         time.sleep(0.2)
-        if not self.safe_image_find("add button 5", multiple=True, add_start_index=(1, (3,)), stop_index = 4, multi_settings=True):
+        if not self.safe_image_find("add button 5", multiple=True, region=(0, config["positions"]["add button 4"]["bbox"][3], screen_width, config["positions"]["add button 5"]["bbox"][3] - config["positions"]["add button 4"]["bbox"][3])):
             return
         
     def find_amount_boxes(self):
@@ -1908,12 +1865,12 @@ class Dark_Sol(QMainWindow):
             return
         self.move_and_click(config["positions"]["amount box 1"]["center"], False)
         pyautogui.scroll(2000)
-        for count, amount_box in enumerate(data["position data"]["amount box"]["sub positions"][:4]):
-            if not self.safe_image_find(amount_box, multiple=True, add_start_index=(0, (count,)), stop_index = 4, multi_settings=True):
+        for amount_box in config["positions"]["amount box"]["sub positions"][:4]:
+            if not self.safe_image_find(amount_box, multiple=True):
                 return
         pyautogui.scroll(-2000)
         time.sleep(0.2)
-        if not self.safe_image_find("amount box 5", multiple=True, add_start_index=(1, (3,)), stop_index = 4, multi_settings=True):
+        if not self.safe_image_find("amount box 5", multiple=True):
             return
     
     def find_potion_selection_buttons(self):
@@ -2132,86 +2089,49 @@ class Dark_Sol(QMainWindow):
         template_scaled = template_img.resize((int(template_img.width * total_image_scale_x), int(template_img.height * total_image_scale_y)), Image.Resampling.LANCZOS)
         return template_scaled
     
-    def auto_find_image(self, calibration, save=True, multiple=False, bbox_required=True, add_start_index=None, stop_index=None, ignore_match_not_found=False):
+    def auto_find_image(self, calibration,
+                        what_to_save=("center", "bbox"),
+                        multiple=False,
+                        ignore_match_not_found=False,
+                        region=None):
+        
         template_path = f"{local_appdata_directory}\\Lib\\Images\\{data['position data'][calibration if calibration in data['position data'] else calibration[:-1].strip()]['image path']}"
         return_bool = False
-            
-        def save_position(position_name, center, bbox):
-            if not save:
-                return False
+        if what_to_save != None:
+            tuple(what_to_save)
+
+        if region == None and multiple and int(calibration[-1]) > 1:
+            region = (0, config["positions"][calibration.replace(calibration[-1], str(int(calibration[-1]) - 1))]["bbox"][3], screen_width, screen_height)
+
+        def save_position(position_name, center=None, bbox=None):
             self.log(f"Proposed position for '{position_name}': Center: {center}, bbox: {bbox}")
             if self.create_msg_box("Save Position", f"Save position for '{position_name}'?", "Yes", "No", internal=False) != "Yes":
                 return False
-            if bbox != None:
-                config["positions"][position_name] = {"bbox": bbox, "center": center}
-                nice_config_save()
-            else:
-                config["positions"][position_name] = {"center": center}
-                nice_config_save()
+            if "bbox" in what_to_save and bbox != None:
+                config["positions"][position_name]["bbox"] = bbox
+            if "center" in what_to_save and center != None:
+                config["positions"][position_name]["center"] = center
+            nice_config_save()
             return True
                 
         def find_template():
             if not ignore_match_not_found:
                 self.focus_roblox()
             time.sleep(0.2)
-            count = 0
             bbox, center = None, None
             nonlocal return_bool
             return_bool = True
-            
             try:
-                if not multiple:
-                    match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["position data"][calibration]["confidence"])
-                    bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))  # type: ignore[reportOptionalMemberAccess]
-                    center = (int(match.left + match.width // 2), int(match.top + match.height // 2))  # type: ignore[reportOptionalMemberAccess]
-                    self.log(f"  bbox : {bbox}, center: {center}")
-                    if save:
-                        self.create_overlay(bbox, text=calibration)
-                        return_bool = save_position(calibration, center, bbox if bbox_required else None)
-                        self.create_overlay(bbox, text=calibration, disabled=True)
-                        if return_bool == False:
-                            return
-
-                elif multiple:
-                    screen_w, screen_h = pyautogui.size()
-                    search_region = (0, 0, screen_w, screen_h)
-
-                    for count, cal in enumerate(data["position data"][calibration[:-1].strip()]["sub positions"][add_start_index[0] if add_start_index != None else 0:int(calibration[-1])]):
-                        self.log("Searching for multiple matches...")
-                        match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["position data"][cal]["confidence"], region=search_region)
-                        if count == stop_index:
-                            return
-                        
-                        def get_image_data(match):
-                            nonlocal bbox, center
-                            bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))  # type: ignore[reportOptionalMemberAccess]
-                            center = (int(match.left + match.width // 2), int(match.top + match.height // 2))  # type: ignore[reportOptionalMemberAccess]
-                            self.log(f"  bbox : {bbox}, center: {center}")
-
-                        if add_start_index == None:
-                            self.log("1st to 4th button logic")
-                            self.log(count)
-                            get_image_data(match)
-                            if save:
-                                self.create_overlay(bbox, text=calibration)
-                                if not save_position(cal, center, bbox if bbox_required else None):
-                                    return_bool = False
-                                self.create_overlay(bbox, text=calibration, disabled=True)
-
-                        elif add_start_index != None:
-                            self.log("5th button and up logic")
-                            self.log(count)
-                            get_image_data(match)
-                            if count in add_start_index[1]:
-                                if save:
-                                    self.create_overlay(bbox, text=calibration)
-                                    if not save_position(cal, center, bbox if bbox_required else None):
-                                        return_bool = False
-                                    self.create_overlay(bbox, text=calibration, disabled=True)
-
-                        match_height = (int(match.top) + int(match.height)) # type: ignore[reportOptionalMemberAccess]
-                        search_region = (0, match_height, screen_w, screen_h - match_height)
-                        return_bool = True
+                match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["position data"][calibration]["confidence"], region=region)
+                bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))  # type: ignore[reportOptionalMemberAccess]
+                center = (int(match.left + match.width // 2), int(match.top + match.height // 2))  # type: ignore[reportOptionalMemberAccess]
+                self.log(f"  bbox : {bbox}, center: {center}")
+                if what_to_save != None:
+                    self.create_overlay(bbox, text=calibration)
+                    return_bool = save_position(calibration, center, bbox)
+                    self.create_overlay(bbox, text=calibration, disabled=True)
+                if return_bool == False:
+                    return
             except Exception as exception:
                 self.create_overlay(disabled=True)
 
@@ -2287,6 +2207,7 @@ class Dark_Sol(QMainWindow):
             self.mini_status_widget.hide()
             QApplication.processEvents()
             return False
+        self.focus_roblox()
         count2 = count_scrolls()
         if count2 == False:
             return False
