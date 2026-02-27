@@ -12,47 +12,40 @@
 7. Make manual calibration have a single position thing instead of a box for some calibrations
 8. Make a list of features that show if the repo cannot be reached
 
-- Logs
-9. Add debug log file
-10. Make config creation be added to log after it is created due to the fact config is made before log is created
-
 - Random
-11. Add auto updater
-12. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
-13. Make it so that overlays can show individual pixels instead of an area
-14. Add paths for auto rejoin (non vip and add settings to choose path) and auto calibrations
-15. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
-16. Add crafted potion detection / stats
-17. Make ps join button check for valid ps link and save private server link button
-18. Add collection buttons to calibrations (exit button may not be added)
-19. Add play button to calibrations
-20. Add logs where needed (idk check)
-21. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
-22. Add potion gui entered check
-23. Add config corrupted check and fix config
-25. Add complete macro exception handling with message box and logging
-26. Add msgbox for when something is being downloaded from the repo
-27. Make requirements file and check what its file type should be 
-28. Improve logging by adding log type, log file, and better wrapping
-29. Add current auto add potion enabled check (after pause / unpause)
-30. Add stuff for potions that have only requires manual crafting
-31. Make potion menu item button be clicked with search for potion function
-32. Add macro pause and unpause auto add button check
-33. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
-34. Add manual checkmark calibration failsafe (if calibration was not done to not contine)
-35. Make remove overlay possible for specific overlays instead of just all overlays
-36. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
-37. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
-38. Make requirements downloader check lib folder in github instead of manual list of files and folders to check    
+9. Add auto updater
+10. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
+11. Make it so that overlays can show individual pixels instead of an area
+12. Add paths for auto rejoin (non vip and add settings to choose path) and auto calibrations
+13. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
+14. Add crafted potion detection / stats
+15. Make ps join button check for valid ps link and save private server link button
+16. Add collection buttons to calibrations (exit button may not be added)
+17. Add play button to calibrations
+18. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
+19. Add potion gui entered check
+20. Add config corrupted check and fix config
+21. Add complete macro exception handling with message box and logging
+22. Add msgbox for when something is being downloaded from the repo
+23. Make requirements file and check what its file type should be 
+24. Add current auto add potion enabled check (after pause / unpause)
+25. Add stuff for potions that have only requires manual crafting
+26. Make potion menu item button be clicked with search for potion function
+27. Add macro pause and unpause auto add button check
+28. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
+29. Add manual checkmark calibration failsafe (if calibration was not done to not contine)
+30. Make remove overlay possible for specific overlays instead of just all overlays
+31. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
+32. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
+33. Make requirements downloader check lib folder in github instead of manual list of files and folders to check    
 
 - Mini Status Label
-39. Make Mini Status Label movable (when moving make it show largest size)
-40. Make mini status label wrapable
+34. Make Mini Status Label movable
 
 - Final Checks
-41. Remove excess delays / slowdowns (ensure reliability)
-42. Check print statements and remove unnecessary ones
-43. Verify macro can handle everything after entering potion craft gui
+35. Remove excess delays / slowdowns (ensure reliability)
+36. Check print statements and remove unnecessary ones
+37. Verify macro can handle everything after entering potion craft gui
 
 # Might be added for First Release:
 1. Add multi template for single calibration
@@ -91,6 +84,7 @@
 23. Make it so that you can adjust wait time after reset in settings
 24. Make it so that rescaled templates are saved so the function doesnt have to be called every time
 32. Add ability to craft Limbo potions (aka enter limbo for easier aura gathering)
+24. Add log reader arguement (so user can read logs easier if main script is crashing)
 - Mini Status Label
 21. Make mini status label show auto add waitlist and add setting for it 
 
@@ -100,18 +94,45 @@
 
 # Completed (To write commit messages):
 """
-# Logs Backlog
-log_backlog = []
-def add_to_backlog(*args):
-    message = " ".join(str(arg) for arg in args)
-    print(message)
-    log_backlog.append(message)
+# Logging
+import logging, pathlib, os
+from logging.handlers import RotatingFileHandler
+local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"]) / "Dark Sol"
+
+logger = logging.getLogger("DarkSol")
+logger.setLevel(logging.DEBUG)
+logger.propagate = False
+file_handler = RotatingFileHandler(local_appdata_directory / "Dark Sol Log.log", maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
+logging_formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+logging_formatter.default_msec_format = "%s.%03d"
+file_handler.setFormatter(logging_formatter)
+logger.addHandler(file_handler)
+class log():
+    @staticmethod
+    def debug(*args):
+        logger.debug(" ".join(str(a) for a in args))
+    @staticmethod
+    def info(*args):
+        logger.info(" ".join(str(a) for a in args))
+    @staticmethod
+    def warning(*args):
+        logger.warning(" ".join(str(a) for a in args))
+    @staticmethod
+    def error(*args):
+        logger.error(" ".join(str(a) for a in args))
+    @staticmethod
+    def exception(*args):
+        logger.exception(" ".join(str(a) for a in args))
+
+log.info("Starting Dark Sol")
+log.debug("Logging Initalized")
 
 # Dev Tools
 use_built_in_config = False
 skip_loading = True
 create_debug_test_buttons = True
-add_to_backlog("Dev Tools Loaded")
+log.debug("Dev Tools Loaded")
 
 # DPI Setup
 import ctypes
@@ -123,7 +144,7 @@ LOGPIXELSX = 88
 dpi = gdi32.GetDeviceCaps(hdc, LOGPIXELSX)
 scale = dpi / 96.0
 screen_width, screen_height = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
-add_to_backlog("DPI Tools Loaded")
+log.debug("DPI Tools Loaded")
 
 # Imports
 import os, sys, threading, pyautogui, time, ctypes, pathlib, json, win32gui, win32con, re, requests, io, zipfile
@@ -131,21 +152,21 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWi
 QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QStackedWidget, QComboBox, QLineEdit, QDialog,
     QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QLineEdit)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl, QFileSystemWatcher
 from pyscreeze import ImageNotFoundException as pyscreeze_ImageNotFoundException
 from PIL import Image, ImageGrab
 from pynput import keyboard, mouse
 from mousekey import MouseKey
 from copy import deepcopy
 import numpy as np
-add_to_backlog("Imports Loaded")
+log.debug("Imports Loaded", "hi")
                    
 # Setup Imports
 mkey = MouseKey()
 local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"]) / "Dark Sol"
 config_path = local_appdata_directory / "Dark Sol config.json"
 os.makedirs(local_appdata_directory, exist_ok=True)
-add_to_backlog("Imports Initalized")
+log.debug("Imports Initalized")
 
 # Constants
 current_version = "0.0.0.0"
@@ -155,52 +176,44 @@ images_to_check = ("add button.png", "amount box.png", "auto add button.png", "c
                     "potion menu item button.png", "zeus potion selection button.png",
                     "poseidon potion selection button.png","hades potion selection button.png",
                     "add completed checkmark.png","play button.png")
-add_to_backlog("Constants Loaded")
+log.debug("Constants Loaded")
 
 # File Verification
 def download_from_repo(file, output_directory, tag=f"v{current_version}", folder=False, inner_folder_location=None):
     if inner_folder_location == None:
-        add_to_backlog(f"Downloading {file} from repo...")
-        add_to_backlog(f"URL: https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(file).replace(' ', '%20')}{".zip" if folder else ""}")
+        log.info(f"Downloading {file} from repo...")
         github_file = requests.get(f"https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(file).replace(' ', '%20')}{".zip" if folder else ""}", timeout=20)
-        add_to_backlog(f"Finished downloading {file} from repo")
+        log.info(f"Finished downloading {file} from repo")
         file_content = github_file.content
-        add_to_backlog("Get file content")
-        add_to_backlog(file_content)
-        add_to_backlog("File Response Code:", github_file.status_code)
         if github_file.status_code != 200:
             raise Exception(f"Failed to download {file} from repo, status code: {github_file.status_code}")
         output_directory.mkdir(parents=True, exist_ok=True)
-        add_to_backlog("Created output directory if it did not exist")
+        log.debug("Created output directory if it did not exist")
         if folder:
-            add_to_backlog(f"Extracting {file} to {output_directory}...")
+            log.info(f"Extracting {file} to {output_directory}...")
             with zipfile.ZipFile(io.BytesIO(file_content)) as zip_extractor:
                 zip_extractor.extractall(output_directory)
-            add_to_backlog(f"Finished extracting {file} to {output_directory}")
+            log.info(f"Finished extracting {file} to {output_directory}")
         else:
-            add_to_backlog(f"Saving {file} to {output_directory}...")
+            log.info(f"Saving {file} to {output_directory}...")
             out_path = output_directory / str(file)
             with open(out_path, "wb") as f:
                 f.write(file_content)
-            add_to_backlog(f"Finished saving {file} to {out_path}")
+            log.info(f"Finished saving {file} to {out_path}")
     else:
-        add_to_backlog(f"Downloading {inner_folder_location[0]} from repo...")
-        add_to_backlog(f"URL: https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(inner_folder_location[0]).replace(' ', '%20')}{".zip" if folder else ""}")
+        log.info(f"Downloading {inner_folder_location[0]} from repo...")
         github_file = requests.get(f"https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(inner_folder_location[0]).replace(' ', '%20')}{".zip" if folder else ""}", timeout=20)
-        add_to_backlog(f"Finished downloading {inner_folder_location[0]} from repo")
+        log.info(f"Finished downloading {inner_folder_location[0]} from repo")
         file_content = github_file.content
-        add_to_backlog("File Response Code:", github_file.status_code)
         if github_file.status_code != 200:
             raise Exception(f"Failed to download {inner_folder_location[0]} from repo, status code: {github_file.status_code}")
         output_directory.mkdir(parents=True, exist_ok=True)
-        add_to_backlog("Created output directory if it did not exist")
-        add_to_backlog(f"Extracting {file} to {output_directory}...")
+        log.debug("Created output directory if it did not exist")
+        log.info(f"Extracting {file} to {output_directory}...")
         with zipfile.ZipFile(io.BytesIO(file_content)) as zip_extractor:
-            add_to_backlog(zip_extractor.namelist()[:20])
             for name in zip_extractor.namelist():
                 if not name.startswith(inner_folder_location[1]) or name.endswith("/"):
                     continue
-
                 rel = name[len(inner_folder_location[1]):]
                 out_path = output_directory / rel
                 out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -209,22 +222,22 @@ def download_from_repo(file, output_directory, tag=f"v{current_version}", folder
 def verify_folders(folder, path, tag=f"v{current_version}"):
     folder_location = path / folder
     if not folder_location.exists():
-        add_to_backlog(f"{folder} does not exist, downloading...")
+        log.info(f"{folder} does not exist, downloading...")
         inner_prefix = "Lib/" if folder == "Lib" else f"Lib/{folder}/"
         download_from_repo(folder, folder_location, tag=tag, folder=True, inner_folder_location=("Lib", inner_prefix))
     else:
-        add_to_backlog(f"{folder} already exists, skipping download")
+        log.debug(f"{folder} already exists, skipping download")
 
 def verify_files(file, path, tag=f"v{current_version}"):
     file_location = path / file
     if not file_location.exists():
-        add_to_backlog(f"{file} does not exist, downloading...")
+        log.info(f"{file} does not exist, downloading...")
         if path.name in ("Images", "Icons") and path.parent.name == "Lib":
             download_from_repo(file, path, tag=tag, folder=True, inner_folder_location=("Lib", f"Lib/{path.name}/"))
         else:
             download_from_repo(file, path, tag=tag)
     else:
-        add_to_backlog(f"{file} already exists, skipping download")
+        log.debug(f"{file} already exists, skipping download")
 
 verify_folders("Lib", local_appdata_directory)
 
@@ -237,7 +250,7 @@ for image_file in images_to_check:
 for icon_file in icons_to_check:
     verify_files(icon_file, local_appdata_directory / "Lib" / "Icons")
 
-add_to_backlog("File Verification Completed")
+log.info("File Verification Completed")
 
 # Config and Data
 def nice_config_save(ind=4):
@@ -297,117 +310,128 @@ def nice_config_save(ind=4):
             f.write(text)
 
 hidden_config = {
-    "data": {
-        "scroll amounts": {"to_5": 17, "past_5": 51},
-        "position data": {
-            "add button 1": {"confidence": 0.75},
-            "add button 2": {"confidence": 0.75},
-            "add button 3": {"confidence": 0.75},
-            "add button 4": {"confidence": 0.75},
-            "add button 5": {"confidence": 0.75, "scroll check confidence": 0.75},
-            "amount box 1": {"confidence": 0.75},
-            "amount box 2": {"confidence": 0.75},
-            "amount box 3": {"confidence": 0.75},
-            "amount box 4": {"confidence": 0.75},
-            "amount box 5": {"confidence": 0.75},
-            "auto add button": {"confidence": 0.75},
-            "craft button": {"confidence": 0.75},
-            "potion search bar": {"confidence": 0.75},
-            "open recipe button": {"confidence": 0.75},
-            "potion menu item button": {"confidence": 0.75},
-            "potion selection button 1": {"confidence": 0.75},
-            "potion selection button 2": {"confidence": 0.9},
-            "potion selection button 3": {"confidence": 0.9},
-            "add completed checkmark 1": {"confidence": 0.8}
-        }
-    },
-    "positions": {
-        "add button 1": {"bbox": [1080, 460, 1185, 487], "center": [1132, 473]},
-        "add button 2": {"bbox": [1081, 514, 1186, 541], "center": [1133, 527]},
-        "add button 3": {"bbox": [1081, 568, 1186, 595], "center": [1133, 581]},
-        "add button 4": {"bbox": [1081, 622, 1186, 649], "center": [1133, 635]},
-        "add button 5": {"bbox": [1081, 659, 1186, 686], "center": [1133, 672]},
-        "amount box 1": {"bbox": [969, 458, 1076, 488], "center": [1022, 473]},
-        "amount box 2": {"bbox": [969, 512, 1076, 542], "center": [1022, 527]},
-        "amount box 3": {"bbox": [969, 566, 1076, 596], "center": [1022, 581]},
-        "amount box 4": {"bbox": [969, 620, 1076, 650], "center": [1022, 635]},
-        "amount box 5": {"bbox": [969, 657, 1076, 687], "center": [1022, 672]},
-        "potion menu item button": {"bbox": [1393, 250, 1630, 285], "center": [1511, 267]},
-        "potion selection button 1": {"bbox": [1407, 337, 1857, 465], "center": [1632, 401]},
-        "potion selection button 2": {"bbox": [1408, 473, 1855, 600], "center": [1631, 536]},
-        "potion selection button 3": {"bbox": [1407, 605, 1855, 735], "center": [1631, 670]},
-        "auto add button": {"bbox": [371, 848, 508, 893], "center": [439, 870]},
-        "craft button": {"bbox": [959, 716, 1207, 749], "center": [1083, 732]},
-        "potion search bar": {"bbox": [1405, 293, 1857, 325], "center": [1631, 309]},
-        "open recipe button": {"bbox": [68, 842, 366, 897], "center": [217, 869]},
-        "add completed checkmark 1": {"bbox": [942, 458, 978, 488], "center": [960, 480]},
-        "add completed checkmark 2": {"bbox": [942, 512, 978, 542], "center": [960, 480]},
-        "add completed checkmark 3": {"bbox": [942, 566, 978, 596], "center": [960, 480]},
-        "add completed checkmark 4": {"bbox": [942, 620, 978, 650], "center": [960, 480]},
-        "add completed checkmark 5": {"bbox": [942, 657, 978, 687], "center": [960, 480]}
-    },
-    "item presets": {
-        "Main": {
-            "bound": {
-                "buttons to check": ["add button 1"],
-                "additional buttons to click": ["add button 4"],
-                "crafting slots": 4,
-                "instant craft": True,
-                "enabled": False,
-                "collapsed": False
-            },
-            "heavenly": {
-                "buttons to check": ["add button 2", "add button 3"],
-                "additional buttons to click": ["add button 1"],
-                "crafting slots": 5,
-                "instant craft": False,
-                "enabled": True,
-                "collapsed": False
-            },
-            "zeus": {
-                "buttons to check": ["add button 3"],
-                "additional buttons to click": ["add button 1", "add button 2"],
-                "crafting slots": 5,
-                "instant craft": False,
-                "enabled": True,
-                "collapsed": True
-            },
-            "poseidon": {
-                "buttons to check": ["add button 2"],
-                "additional buttons to click": ["add button 1"],
-                "crafting slots": 4,
-                "instant craft": False,
-                "enabled": True,
-                "collapsed": True
-            },
-            "hades": {
-                "buttons to check": ["add button 2"],
-                "additional buttons to click": ["add button 1"],
-                "crafting slots": 4,
-                "instant craft": False,
-                "enabled": True,
-                "collapsed": True
-            },
-            "warp": {
-                "buttons to check": ["add button 1", "add button 2", "add button 4", "add button 5", "add button 6"],
-                "additional buttons to click": ["add button 1", "add button 2"],
-                "crafting slots": 6,
-                "instant craft": False,
-                "enabled": False,
-                "collapsed": False
+                "data": {
+                    "scroll amounts": {"to_5": 16, "past_5": 50},
+                    "position data": {
+                        "add button 1": {"confidence": 0.75},
+                        "add button 2": {"confidence": 0.75},
+                        "add button 3": {"confidence": 0.75},
+                        "add button 4": {"confidence": 0.75},
+                        "add button 5": {"confidence": 0.75, "scroll check confidence": 0.75},
+                        "amount box 1": {"confidence": 0.75},
+                        "amount box 2": {"confidence": 0.75},
+                        "amount box 3": {"confidence": 0.75},
+                        "amount box 4": {"confidence": 0.75},
+                        "amount box 5": {"confidence": 0.75},
+                        "auto add button": {"confidence": 0.75},
+                        "craft button": {"confidence": 0.75},
+                        "potion search bar": {"confidence": 0.75},
+                        "open recipe button": {"confidence": 0.75},
+                        "potion menu item button": {"confidence": 0.75},
+                        "potion selection button 1": {"confidence": 0.75},
+                        "potion selection button 2": {"confidence": 0.9},
+                        "potion selection button 3": {"confidence": 0.9},
+                        "add completed checkmark 1": {"confidence": 0.8},
+                        "play button": {"confidence": 0.4}
+                    }
+                },
+                "positions": {
+                    "add button 1": {"bbox": [1080, 460, 1185, 487], "center": [1132, 473]},
+                    "add button 2": {"bbox": [1081, 514, 1186, 541], "center": [1133, 527]},
+                    "add button 3": {"bbox": [1080, 569, 1185, 596], "center": [1132, 582]},
+                    "add button 4": {"bbox": [1081, 623, 1186, 650], "center": [1133, 636]},
+                    "add button 5": {"bbox": [1081, 660, 1186, 687], "center": [1133, 673]},
+                    "amount box 1": {"bbox": [969, 458, 1076, 488], "center": [1022, 473]},
+                    "amount box 2": {"bbox": [969, 512, 1076, 542], "center": [1022, 527]},
+                    "amount box 3": {"bbox": [969, 566, 1076, 596], "center": [1022, 581]},
+                    "amount box 4": {"bbox": [969, 620, 1076, 650], "center": [1022, 635]},
+                    "amount box 5": {"bbox": [969, 657, 1076, 687], "center": [1022, 672]},
+                    "potion menu item button": {"bbox": [1393, 250, 1630, 285], "center": [1511, 267]},
+                    "potion selection button 1": {"bbox": [1407, 337, 1857, 465], "center": [1632, 401]},
+                    "potion selection button 2": {"bbox": [1408, 473, 1855, 600], "center": [1631, 536]},
+                    "potion selection button 3": {"bbox": [1407, 605, 1855, 735], "center": [1631, 670]},
+                    "auto add button": {"bbox": [371, 848, 508, 893], "center": [439, 870]},
+                    "craft button": {"bbox": [960, 716, 1208, 749], "center": [1084, 732]},
+                    "potion search bar": {"bbox": [1405, 293, 1857, 325], "center": [1631, 309]},
+                    "open recipe button": {"bbox": [68, 842, 366, 897], "center": [217, 869]},
+                    "add completed checkmark 1": {"bbox": [942, 467, 978, 493], "center": [960, 480]},
+                    "add completed checkmark 2": {"bbox": [942, 521, 978, 547]},
+                    "add completed checkmark 3": {"bbox": [942, 575, 978, 601]},
+                    "add completed checkmark 4": {"bbox": [942, 629, 978, 655]},
+                    "add completed checkmark 5": {"bbox": [942, 666, 978, 692]}
+                },
+                "item presets": {
+                    "Main": {
+                        "bound": {
+                            "buttons to check": ["add button 1", "add button 2"],
+                            "additional buttons to click": ["add button 4"],
+                            "crafting slots": 4,
+                            "instant craft": False,
+                            "enabled": True,
+                            "collapsed": True
+                        },
+                        "heavenly": {
+                            "buttons to check": ["add button 2", "add button 3"],
+                            "additional buttons to click": ["add button 1"],
+                            "crafting slots": 5,
+                            "instant craft": False,
+                            "enabled": True,
+                            "collapsed": True
+                        },
+                        "zeus": {
+                            "buttons to check": ["add button 3"],
+                            "additional buttons to click": ["add button 1", "add button 2"],
+                            "crafting slots": 5,
+                            "instant craft": False,
+                            "enabled": True,
+                            "collapsed": True
+                        },
+                        "poseidon": {
+                            "buttons to check": ["add button 2"],
+                            "additional buttons to click": ["add button 1"],
+                            "crafting slots": 4,
+                            "instant craft": False,
+                            "enabled": True,
+                            "collapsed": True
+                        },
+                        "hades": {
+                            "buttons to check": ["add button 2"],
+                            "additional buttons to click": ["add button 1"],
+                            "crafting slots": 4,
+                            "instant craft": False,
+                            "enabled": True,
+                            "collapsed": True
+                        },
+                        "warp": {
+                            "buttons to check": ["add button 1", "add button 2", "add button 4", "add button 5", "add button 6"],
+                            "additional buttons to click": ["add button 1", "add button 2"],
+                            "crafting slots": 6,
+                            "instant craft": False,
+                            "enabled": False,
+                            "collapsed": False
+                        }
+                    }
+                },
+                "current preset": "Main",
+                "private server link": "",
+                "calibrated positions": {},
+                "wrap log area": False,
+                "gui log levels": ["INFO", "WARNING", "ERROR", "CRITICAL"],
+                "show only current logs": False
             }
-        }
-    },
-    "current preset": "Main",
-    "private server link": ""
-}
-if config_path.exists() and not use_built_in_config:
+
+if use_built_in_config:
+    log.info("Using built in config (user should never see this log message)")
+    config = hidden_config
+elif config_path.exists():
+    log.debug("Config file exists, loading config")
     with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
-    
 else:
+    log.info("Config file does not exist, using hidden config")
     config = hidden_config
     nice_config_save()
+    log.info("Config file created with default settings")
 
 data = {
             "position data": {
@@ -623,7 +647,6 @@ class Dark_Sol(QMainWindow):
     stop_macro_signal = pyqtSignal()
     status_signal = pyqtSignal(str, str)
     macro_stopped_signal = pyqtSignal()
-    log_signal = pyqtSignal(str)
 
     def __init__(self):
         # Create main window
@@ -645,7 +668,33 @@ class Dark_Sol(QMainWindow):
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
         self.rejoin_and_path_to_potion_gui_button = QPushButton("Rejoin and Path to Potion GUI")
+        self.main_tab_bottom_header = QWidget()
+        self.main_tab_bottom_header_qh_layout = QHBoxLayout(self.main_tab_bottom_header)
+        self.main_tab_bottom_header_qh_layout.setContentsMargins(0, 0, 0, 0)
+        # Create Main Tab Logging Elements 
         self.log_area = QPlainTextEdit()
+        self.log_read_pos = 0
+        self.gui_log_levels = config["gui log levels"]
+        self.wrap_log_checkbox = QCheckBox("Wrap Log Area")
+        self.show_only_current_logs_checkbox = QCheckBox("Only Show Current Session Logs")
+        self.logging_settings_gui_button = QPushButton("Logging Settings")
+        self.logging_settings_gui = QWidget()
+        self.logging_settings_gui_qv_layout = QVBoxLayout(self.logging_settings_gui)
+        self.logging_settings_gui_qh_layout = QHBoxLayout()
+        self.logging_settings_gui_qh_layout2 = QHBoxLayout()
+        def change_gui_log_levels(log_level):
+            if log_level in self.gui_log_levels:
+                self.gui_log_levels.remove(log_level)
+            else:
+                self.gui_log_levels.append(log_level)
+            config["gui log levels"] = self.gui_log_levels
+            nice_config_save()
+            self.update_gui_log(True)
+        for log_level in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
+            checkbox = QCheckBox(log_level.lower().capitalize())
+            checkbox.setChecked(log_level in self.gui_log_levels)
+            checkbox.stateChanged.connect(lambda state, log_level=log_level: change_gui_log_levels(log_level))
+            self.logging_settings_gui_qh_layout.addWidget(checkbox)
         # Create Presets Tab Elements
         self.current_preset = config["current preset"]
         self.preset_selector = QComboBox()
@@ -723,10 +772,8 @@ class Dark_Sol(QMainWindow):
         self.worker = None
         self.macro_stopped_signal.connect(self.on_macro_stopped)
         self.status_signal.connect(self.inner_update_status)
-        self.log_signal.connect(self.inner_log)
         self.init_ui()
         self.setup_hotkeys()
-        self.catch_up_log()
 
         if create_debug_test_buttons:
             self.debug_tab = QWidget()
@@ -746,11 +793,11 @@ class Dark_Sol(QMainWindow):
             self.debug_tab_qv_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
             self.debug_tab.setLayout(self.debug_tab_qv_layout)
 
-            self.debug_test_button_1.clicked.connect(lambda: self.log("Test Button 1 Pressed"))
-            self.debug_test_button_2.clicked.connect(lambda: self.log("Test Button 2 Pressed"))
-            self.debug_test_button_3.clicked.connect(lambda: self.log("Test Button 3 Pressed"))
-            self.debug_test_button_4.clicked.connect(lambda: self.log("Test Button 4 Pressed"))
-            self.debug_test_button_5.clicked.connect(lambda: self.log("Test Button 5 Pressed"))
+            self.debug_test_button_1.clicked.connect(lambda: log.debug("Test Button 1 Pressed"))
+            self.debug_test_button_2.clicked.connect(lambda: log.debug("Test Button 2 Pressed"))
+            self.debug_test_button_3.clicked.connect(lambda: log.debug("Test Button 3 Pressed"))
+            self.debug_test_button_4.clicked.connect(lambda: log.debug("Test Button 4 Pressed"))
+            self.debug_test_button_5.clicked.connect(lambda: log.debug("Test Button 5 Pressed"))
 
     def init_ui(self):
         # Initalize Main Gui
@@ -776,7 +823,25 @@ class Dark_Sol(QMainWindow):
         main_tab_vbox.addWidget(self.log_area)
         self.log_area.setReadOnly(True)
         self.main_tab.setLayout(main_tab_vbox)
+        # Set Main Tab Logging Layout
         self.log_area.setStyleSheet("background-color: #0f0f0f; color: white; font-size: 11pt; padding: 1px;")
+        if not config["wrap log area"]:
+            self.log_area.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+            self.log_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.log_watcher = QFileSystemWatcher([f"{local_appdata_directory / 'Dark Sol Log.log'}"])
+        self.log_watcher.fileChanged.connect(self.update_gui_log)
+        self.logging_settings_gui.setWindowTitle("Dark Sol Logging Settings")
+        self.logging_settings_gui_qv_layout.addLayout(self.logging_settings_gui_qh_layout)
+        self.logging_settings_gui_qv_layout.addLayout(self.logging_settings_gui_qh_layout2)
+        self.main_tab_bottom_header_qh_layout.addWidget(self.logging_settings_gui_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.main_tab_bottom_header_qh_layout.addStretch(1)
+        self.logging_settings_gui.setStyleSheet("""QWidget {background-color: black; color: cyan;}""")
+        self.logging_settings_gui_qh_layout2.addWidget(self.wrap_log_checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.logging_settings_gui_qh_layout2.addWidget(self.show_only_current_logs_checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.wrap_log_checkbox.setChecked(config["wrap log area"])
+        self.wrap_log_checkbox.stateChanged.connect(self.toggle_log_wrap)
+        self.show_only_current_logs_checkbox.setChecked(config["show only current logs"])
+        self.show_only_current_logs_checkbox.stateChanged.connect(lambda state: (config.update({"show only current logs": state}), nice_config_save(), self.update_gui_log(True)))
         #Set Presets Tab Layout
         self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
         self.preset_selector.setStyleSheet("color: cyan; background: #111; font-size: 18pt; padding: 6px;")
@@ -887,14 +952,9 @@ class Dark_Sol(QMainWindow):
         settings_tab_vbox.addWidget(self.reset_add_button_template_button)
         settings_tab_vbox.addWidget(self.reset_amount_box_template_button)
         # Donations Layout
-        self.donate_row = QWidget()
-        donate_row_layout = QHBoxLayout(self.donate_row)
-        donate_row_layout.setContentsMargins(0, 0, 0, 0)
-        donate_row_layout.addStretch(1)
-        donate_row_layout.addWidget(self.donate_label)
-        self.central_widget_vbox.addWidget(self.donate_row)
+        self.main_tab_bottom_header_qh_layout.addWidget(self.donate_label)
+        self.central_widget_vbox.addWidget(self.main_tab_bottom_header)
         self.donate_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-       
         self.donate_label.setTextFormat(Qt.TextFormat.RichText)
         self.donate_label.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
         self.donate_label.setOpenExternalLinks(True)
@@ -902,29 +962,20 @@ class Dark_Sol(QMainWindow):
         self.donate_label.setMouseTracking(True)
         self.donate_label.setCursor(Qt.CursorShape.ArrowCursor)
         self.donate_label_color = 0
-
-        def change_donate_label_color():
-            hovered = self.donate_label.underMouse()
-            self.donate_label.setCursor(
-                Qt.CursorShape.PointingHandCursor if hovered
-                else Qt.CursorShape.ArrowCursor
-            )
-            self.donate_label_color = (self.donate_label_color + 2) % 360
-            color = QColor.fromHsv(self.donate_label_color, 255, 255).name()
-            underline = "underline" if hovered else "none"
-            self.donate_label.setText(
-                f'<a href="https://www.roblox.com/games/74832430065070/The-Bank#!/store" style="color:{color}; text-decoration:{underline};">Donate</a>')
-        # Timer (keep a reference on self so it never gets GC’d)
         self.donate_timer = QTimer(self)
-        self.donate_timer.timeout.connect(change_donate_label_color)
+        self.donate_timer.timeout.connect(self.change_donate_label_color)
         self.donate_timer.start(30)
-
-        change_donate_label_color()
-        
+        self.change_donate_label_color()
         # Button Connectors
+        # Main Tab Buttons
+        self.start_button.clicked.connect(self.start_macro)
+        self.stop_button.clicked.connect(self.stop_macro)
+        self.rejoin_and_path_to_potion_gui_button.clicked.connect(lambda: self.reload_potion_gui())
+        self.logging_settings_gui_button.clicked.connect(lambda: self.logging_settings_gui.show())
+        # Main Calibration Mode Buttons
         self.calibration_mode_button.clicked.connect(lambda: self.switch_calibration_mode())
         self.show_calibration_overlays_button.clicked.connect(lambda: self.show_calibration_overlays())
-
+        # Auto Calibration Buttons
         self.auto_calibrate_button.clicked.connect(self.auto_calibrate)
         self.find_add_button.clicked.connect(lambda: self.find_add_buttons())
         self.find_amount_box.clicked.connect(lambda: self.find_amount_boxes())
@@ -934,7 +985,10 @@ class Dark_Sol(QMainWindow):
         self.auto_calibrate_add_completed_checkmarks_button.clicked.connect(self.find_and_calibrate_checkmarks)
         self.find_potion_selection_button.clicked.connect(lambda: self.find_potion_selection_buttons())
         self.auto_calibrate_scrolling_button.clicked.connect(lambda: self.auto_calibrate_scrolling())    
-
+        # Semi Auto Calibration Buttons
+        self.set_add_button_template.clicked.connect(lambda: self.replace_template("add button"))
+        self.set_amount_box_template.clicked.connect(lambda: self.replace_template("amount box"))
+        # Manual Calibration Buttons
         self.set_add_button_coordinates.clicked.connect(lambda: self.add_button_coordinates_selector.show())
         self.set_add_button_1_coordinates.clicked.connect(lambda: self.manual_calibration("add button 1"))
         self.set_add_button_2_coordinates.clicked.connect(lambda: self.manual_calibration("add button 2"))
@@ -953,14 +1007,12 @@ class Dark_Sol(QMainWindow):
         self.set_potion_selection_button_coordinates.clicked.connect(lambda: self.manual_calibration("potion selection button"))
         self.calibrate_add_completed_checkmarks_button.clicked.connect(lambda: self.manual_checkmarks_calibration())
         self.manually_calibrate_scrolling_button.clicked.connect(lambda: self.manual_scroll_calibration())
+        # Settings Buttons
         self.ps_link_save_button.clicked.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
         self.ps_link_join_button.clicked.connect(lambda: self.open_roblox(config["private server link"]))
-        self.set_add_button_template.clicked.connect(lambda: self.replace_template("add button"))
-        self.set_amount_box_template.clicked.connect(lambda: self.replace_template("amount box"))
         self.reset_add_button_template_button.clicked.connect(lambda: verify_files("add_button.png", local_appdata_directory / "Lib" / "Images"))
         self.reset_amount_box_template_button.clicked.connect(lambda: verify_files("amount_box.png", local_appdata_directory / "Lib" / "Images"))
-        self.rejoin_and_path_to_potion_gui_button.clicked.connect(lambda: self.reload_potion_gui())
-
+        # Preset Buttons
         self.preset_selector.currentTextChanged.connect(lambda: self.switch_preset(self.preset_selector.currentText()) if self.preset_selector.currentText() != "Create New Preset" else self.create_new_preset())
         self.rename_preset_button.clicked.connect(self.rename_preset)
         self.delete_preset_button.clicked.connect(self.delete_preset)
@@ -994,20 +1046,62 @@ class Dark_Sol(QMainWindow):
             QLabel {color: cyan; font-size: 14pt;}
             QLabel#status_label {color: cyan; font-size: 38pt;}
         """)
-        # Setup  Hotkeys
-        self.start_button.clicked.connect(self.start_macro)
-        self.stop_button.clicked.connect(self.stop_macro)
-        
+        log.info("Ui Initialized")
+        self.update_gui_log()
+
     def reset_template(self):
         pass
+
+    def change_donate_label_color(self):
+        hovered = self.donate_label.underMouse()
+        self.donate_label.setCursor(
+            Qt.CursorShape.PointingHandCursor if hovered
+            else Qt.CursorShape.ArrowCursor
+        )
+        self.donate_label_color = (self.donate_label_color + 2) % 360
+        color = QColor.fromHsv(self.donate_label_color, 255, 255).name()
+        underline = "underline" if hovered else "none"
+        self.donate_label.setText(
+            f'<a href="https://www.roblox.com/games/74832430065070/The-Bank#!/store" style="color:{color}; text-decoration:{underline};">Donate</a>')
+        
+    def toggle_log_wrap(self):
+        if config["wrap log area"]:
+            self.log_area.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+            self.log_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        else:
+            self.log_area.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
+            self.log_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        config["wrap log area"] = not config["wrap log area"]
+        nice_config_save()
+
+    def get_current_logs(self):
+        with open(local_appdata_directory / "Dark Sol Log.log", "r", encoding="utf-8") as f:
+            self.log_read_pos = 0
+            while True:
+                line_pos = f.tell()
+                line = f.readline()
+                if not line:
+                    break
+                if "Starting Dark Sol" in line:
+                    self.log_read_pos = line_pos
+            
+    def update_gui_log(self, reset_log=False):
+        if reset_log:
+            self.log_area.clear()
+            self.log_read_pos = 0
+            if config["show only current logs"]:
+                self.get_current_logs()
+        with open(local_appdata_directory / "Dark Sol Log.log", "r", encoding="utf-8") as f:
+            f.seek(self.log_read_pos)
+            for line in f:
+                parts = line.split(" | ", 2)
+                if len(parts) >= 3 and parts[1].strip() in self.gui_log_levels:
+                    self.log_area.appendPlainText(line.rstrip("\n"))
+            self.log_read_pos = f.tell()
 
     def auto_calibrate_scrolling(self):
         if not self.calibrate_scrolling():
             self.adjust_template_settings("add button 5", what_to_save=None, multiple=True, ignore_match_not_found=True, scroll_check=True, region=(0, config["positions"]["add button 4"]["bbox"][3], screen_width, config["positions"]["add button 5"]["bbox"][3] - config["positions"]["add button 4"]["bbox"][3]))
-
-    def catch_up_log(self):
-        for log in log_backlog:
-            self.log(log)
     
     def replace_template(self, template_name):
         image_location = data["position data"][template_name]["image path"]
@@ -1245,17 +1339,17 @@ class Dark_Sol(QMainWindow):
         time.sleep(0.2)
         result = self.select_region()
         if result == None:
-            self.log(f"Manual calibration for {calibration_name} was cancelled.")
+            log.info(f"Manual calibration for {calibration_name} was cancelled.")
         else:
             bbox = result
             center = (int((bbox[0] + bbox[2]) // 2), int((bbox[1] + bbox[3]) // 2))
-            self.log(f"Manual calibration for {calibration_name} completed successfully.")
+            log.debug(f"Manual calibration for {calibration_name} completed successfully.")
             if save:
                 if not isinstance(what_to_save, (tuple)):
                     what_to_save = (what_to_save,)
                 config["positions"][calibration_name] = {key: value for key, value in [("bbox", bbox), ("center", center)] if key in what_to_save}
                 nice_config_save()
-                self.log(f"Manual Calibration Coordinates for {calibration_name} saved to config.")
+                log.info(f"Manual Calibration Coordinates for {calibration_name} saved to config.")
             return bbox, center
 
     def create_new_preset(self):
@@ -1681,7 +1775,7 @@ class Dark_Sol(QMainWindow):
         if clicked is None:
             return False
         clicked_text = clicked.text()
-        self.log(f"Button clicked: {clicked_text.lower()}")
+        log.debug(f"Button clicked: {clicked_text.lower()}")
         return clicked_text
 
     def adjust_template_settings(self, calibration, what_to_save=("center", "bbox"), multiple=False, ignore_match_not_found=False, region=None, scroll_check=False):
@@ -1694,14 +1788,14 @@ class Dark_Sol(QMainWindow):
             if not scroll_check:
                 if self.auto_find_image(calibration, what_to_save=what_to_save, multiple=multiple, ignore_match_not_found=ignore_match_not_found, region=region):
                     adjust_template_widget.close()
-                    self.log(f"Template '{calibration}' found with current settings.")
+                    log.info(f"Template '{calibration}' found with current settings.")
                     return_bool2 = True
                 else:
                     re_raise()
             else: 
                 if self.calibrate_scrolling():
                     adjust_template_widget.close()
-                    self.log(f"Scroll calibration succeeded with current settings.")
+                    log.info(f"Scroll calibration succeeded with current settings.")
                     return_bool2 = True
                 else:
                     re_raise()
@@ -1756,9 +1850,9 @@ class Dark_Sol(QMainWindow):
     def safe_image_find(self, calibration, what_to_save=("center", "bbox"), multiple=False, ignore_match_not_found=False, region=None):
         if not self.auto_find_image(calibration, what_to_save=what_to_save, multiple=multiple, ignore_match_not_found=ignore_match_not_found, region=region):
             if not self.adjust_template_settings(calibration, what_to_save=what_to_save, multiple=multiple, ignore_match_not_found=ignore_match_not_found, region=region):
-                self.log(f"Auto Calibration failed at calibration: '{calibration}'")
+                log.info(f"Calibration Failed: '{calibration}'")
                 return False
-        self.log(f"Auto Calibration found, calibration: '{calibration}'")
+        log.info(f"Calibration Found: '{calibration}'")
         return True
     
     def auto_calibrate(self):
@@ -1910,7 +2004,6 @@ class Dark_Sol(QMainWindow):
     def manual_scroll_calibration(self):
         def point_clicked(x, y, button, pressed):
             scroll_calibration_mouse_listener.stop()
-            self.log(mkey.get_cursor_position())
 
         self.focus_roblox()
         scroll_calibration_mouse_listener = mouse.Listener(on_click=point_clicked)
@@ -1926,7 +2019,7 @@ class Dark_Sol(QMainWindow):
     def focus_roblox(self):
         hwnd = win32gui.FindWindow(None, "Roblox")
         if not hwnd:
-            self.log("Roblox window not found!")
+            log.warning("Roblox window not found!")
             return False
 
         if win32gui.IsIconic(hwnd):
@@ -1937,7 +2030,7 @@ class Dark_Sol(QMainWindow):
                 win32gui.BringWindowToTop(hwnd)
                 win32gui.SetForegroundWindow(hwnd)
             except Exception:
-                self.log("Failed to bring Roblox to the foreground. It may be minimized or not responding.")
+                log.error("Failed to bring Roblox to the foreground. It may be minimized or not responding.")
 
         if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
@@ -1962,8 +2055,6 @@ class Dark_Sol(QMainWindow):
                     self.scroll_calibration_safety_check = True
             elif key == keyboard.Key.f7:
                 os._exit(1)
-            elif key == keyboard.Key.f4:
-                self.log(mkey.get_cursor_position())
         main_hotkey_listener = keyboard.Listener(on_press=on_press)
         main_hotkey_listener.start()
         main_hotkey_listener.join()
@@ -1991,7 +2082,7 @@ class Dark_Sol(QMainWindow):
         
         overlay_key = tuple(bbox)
         if overlay_key in overlay_windows:
-            self.log("Overlay already exists for this region.")
+            log.debug("Overlay already exists for this region.")
             return
 
         x, y, x2, y2 = bbox
@@ -2083,7 +2174,7 @@ class Dark_Sol(QMainWindow):
         image_ratio_y = screen_height / image_resolution[1]
         total_image_scale_x = scale_ratio * image_ratio_x
         total_image_scale_y = scale_ratio * image_ratio_y
-        self.log(f"Total Scale X: {total_image_scale_x}, Total Scale Y: {total_image_scale_y}")
+        log.debug(f"Total Scale X: {total_image_scale_x}, Total Scale Y: {total_image_scale_y}")
 
         template_img = Image.open(template_path)
         template_scaled = template_img.resize((int(template_img.width * total_image_scale_x), int(template_img.height * total_image_scale_y)), Image.Resampling.LANCZOS)
@@ -2104,7 +2195,7 @@ class Dark_Sol(QMainWindow):
             region = (0, config["positions"][calibration.replace(calibration[-1], str(int(calibration[-1]) - 1))]["bbox"][3], screen_width, screen_height)
 
         def save_position(position_name, center=None, bbox=None):
-            self.log(f"Proposed position for '{position_name}': Center: {center}, bbox: {bbox}")
+            log.debug(f"Proposed position for '{position_name}': Center: {center}, bbox: {bbox}")
             if self.create_msg_box("Save Position", f"Save position for '{position_name}'?", "Yes", "No", internal=False) != "Yes":
                 return False
             if "bbox" in what_to_save and bbox != None:
@@ -2112,6 +2203,7 @@ class Dark_Sol(QMainWindow):
             if "center" in what_to_save and center != None:
                 config["positions"][position_name]["center"] = center
             nice_config_save()
+            log.info(f"Coordinates for '{position_name}' saved.")
             return True
                 
         def find_template():
@@ -2125,7 +2217,6 @@ class Dark_Sol(QMainWindow):
                 match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["position data"][calibration]["confidence"], region=region)
                 bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))  # type: ignore[reportOptionalMemberAccess]
                 center = (int(match.left + match.width // 2), int(match.top + match.height // 2))  # type: ignore[reportOptionalMemberAccess]
-                self.log(f"  bbox : {bbox}, center: {center}")
                 if what_to_save != None:
                     self.create_overlay(bbox, text=calibration)
                     return_bool = save_position(calibration, center, bbox)
@@ -2138,10 +2229,10 @@ class Dark_Sol(QMainWindow):
                 if isinstance(exception, (pyautogui.ImageNotFoundException, pyscreeze_ImageNotFoundException))and ignore_match_not_found:
                     pass
                 elif isinstance(exception, (pyautogui.ImageNotFoundException, pyscreeze_ImageNotFoundException)):
-                    self.log(f"No matches found for template: {template_path}")
+                    log.debug(f"No matches found for template: {template_path}")
                     self.create_msg_box("No Matches Found", f"No Matches Found For: {calibration}", internal=False)
                 else:
-                    self.log(f"Error finding matches: {exception}")
+                    log.error(f"Error finding matches: {exception}")
                     self.create_msg_box("Error Finding Matches", f"Error Finding Matches: {exception}")
                 return_bool = False
 
@@ -2163,12 +2254,12 @@ class Dark_Sol(QMainWindow):
                 if find:
                     try:
                         pyautogui.locate(template_path, img, confidence=config["data"]["position data"]["add button 5"]["scroll check confidence"])
-                        self.log("'Add' detected saving scroll amount:", scrolls)
+                        log.info("'Add' detected saving scroll amount:", scrolls)
                         found = True
                     except pyautogui.ImageNotFoundException:
                         pass
                     except Exception as e:
-                        self.log(e)
+                        log.error(e)
 
                     if found:
                         self.scroll_calibration_safety_check = True
@@ -2180,10 +2271,10 @@ class Dark_Sol(QMainWindow):
                     try:
                         pyautogui.locate(template_path, img, confidence=config["data"]["position data"]["add button 5"]["scroll check confidence"])
                     except pyautogui.ImageNotFoundException:
-                        self.log("'Moved away from previous add button")
+                        log.debug("'Moved away from previous add button")
                         gone = True
                     except Exception as e:
-                        self.log(e)
+                        log.error(e)
 
                     if gone:
                         self.scroll_calibration_safety_check = True
@@ -2222,7 +2313,7 @@ class Dark_Sol(QMainWindow):
         if self.worker is not None and self.worker.is_alive():
             return
         self.mini_status_widget.show()
-        self.update_status("Running", what_to_update="General")
+        self.update_status("Running", what_to_update="Both")
         self.run_event.set()
         self.worker = threading.Thread(target=self.macro_worker, daemon=True)
         self.worker.start()
@@ -2237,9 +2328,6 @@ class Dark_Sol(QMainWindow):
                 self.macro_stopped_signal.emit()
                 break
 
-    def log(self, *args):
-        self.log_signal.emit(" ".join(str(a) for a in args))
-
     def inner_log(self, log_message):
         print(log_message)
         self.log_area.appendPlainText(log_message)
@@ -2253,14 +2341,14 @@ class Dark_Sol(QMainWindow):
         
     def inner_update_status(self, status_text, what_to_update="Task"):
         if what_to_update in ("General", "Both"):
-            self.log("Status:", status_text)
+            log.info("Status:", status_text)
             self.status_label.setText(f"Status: {status_text}")
             if self.general_mini_status_label != None:
                 self.general_mini_status_label.setText(f"Status: {status_text}")
                 self.general_mini_status_label.adjustSize()
 
         if what_to_update in ("Task", "Both"):
-            self.log("Current Task:", status_text)
+            log.info("Current Task:", status_text)
             if self.mini_status_label != None:
                 self.mini_status_label.setText(f"Current Task: {status_text}")
                 self.mini_status_label.adjustSize()
@@ -2268,8 +2356,7 @@ class Dark_Sol(QMainWindow):
         self.mini_status_widget.adjustSize()
 
     def on_macro_stopped(self):
-        self.update_status("Stopped", what_to_update="General")
-        self.update_status("", what_to_update="Task")
+        self.update_status("Stopped", what_to_update="Both")
         self.mini_status_widget.hide()
         
     def check_auto_add_button(self):
@@ -2310,15 +2397,15 @@ class Dark_Sol(QMainWindow):
             more_green = "FIRST"
             time.sleep(0.1)
             mkey.left_click()
-            self.log("double clicked auto add button as it was already active")
+            log.debug("double clicked auto add button as it was already active")
         elif second > first:
             more_green = "SECOND"
-            self.log("clicked auto add button")
+            log.debug("clicked auto add button")
         elif first == second:
             more_green = "TIE"
         else:
             raise Exception("Unexpected case in auto add button check")
-        self.log(f"first_conf={(first*100):.0f} second_conf={(second*100):.0f} more_green={more_green}")
+        log.debug(f"first_conf={(first*100):.0f} second_conf={(second*100):.0f} more_green={more_green}")
         
     def move_and_click(self, position, click=True):
         try:
@@ -2336,102 +2423,102 @@ class Dark_Sol(QMainWindow):
         self.move_and_click(config["positions"]["potion search bar"]["center"])
         mkey.left_click()
         mkey.left_click()
-        self.log("Search bar clicked")
+        log.debug("Search bar clicked")
         keyboard.Controller().type(data["item data"][potion]["name to search"])
-        self.log("Item searched:", data["item data"][potion]["name to search"].capitalize())
+        log.debug("Item searched:", data["item data"][potion]["name to search"].capitalize())
         time.sleep(0.5)
         keyboard.Controller().press(keyboard.Key.enter)
         potion_selection_button = ("potion selection button " + data["item data"][potion].get("potion selection button", "1"))
-        self.log(potion_selection_button)
+        log.debug(potion_selection_button)
         self.move_and_click(config["positions"][potion_selection_button]["center"])
         self.move_and_click(config["positions"]["open recipe button"]["center"])
-        self.log("Clicked to open recipe button")
+        log.debug("Clicked to open recipe button")
 
     def main_macro_loop(self, slowdown=0.01, slowdown2=0.1):
         def add_to_button(button_to_add_to):
-            self.log("Adding to:", button_to_add_to)
+            log.debug("Adding to:", button_to_add_to)
             if int(button_to_add_to[-1]) < 5:
                 self.move_and_click(config["positions"][f"amount box {int(button_to_add_to[-1])}"]["center"], False)
-                self.log("Moved to", "amount box", button_to_add_to[-1])
+                log.debug("Moved to", "amount box", button_to_add_to[-1])
                 pyautogui.scroll(2000)
-                self.log("Scrolled up")
+                log.debug("Scrolled up")
                 time.sleep(slowdown)
                 mkey.left_click()
                 mkey.left_click()
-                self.log("Amount box clicked to focus")
+                log.debug("Amount box clicked to focus")
                 if button_to_add_to in data["item data"][item]["amounts to add"]:
                     keyboard.Controller().type(str(data["item data"][item]["amounts to add"][button_to_add_to]))
-                    self.log(f"Typed amount: {data['item data'][item]['amounts to add'][button_to_add_to]}")
+                    log.debug(f"Typed amount: {data['item data'][item]['amounts to add'][button_to_add_to]}")
                 else:
                     keyboard.Controller().type("1")
-                    self.log("Typed amount: 1")
+                    log.debug("Typed amount: 1")
                 time.sleep(slowdown)
                 self.move_and_click(config["positions"][button_to_add_to]["center"])
-                self.log(f"{button_to_add_to} clicked")
+                log.debug(f"{button_to_add_to} clicked")
             elif int(button_to_add_to[-1]) >= 5:
                 self.move_and_click(config["positions"]["amount box 5"]["center"], False)
-                self.log("Moved to amount box 5 center")
+                log.debug("Moved to amount box 5 center")
                 pyautogui.scroll(2000)
-                self.log("Scrolled up")
+                log.debug("Scrolled up")
                 pyautogui.scroll(-config["data"]["scroll amounts"]["to_5"])
-                self.log("Scrolled down to slot 5")
+                log.debug("Scrolled down to slot 5")
                 time.sleep(slowdown)
                 for x in range(4, int(button_to_add_to[-1])):
                     pyautogui.scroll(-config["data"]["scroll amounts"]["past_5"])
-                    self.log("Scrolled down to slot", x + 1)
+                    log.debug("Scrolled down to slot", x + 1)
                 mkey.left_click()
                 mkey.left_click()
-                self.log("Amount box clicked to focus")
+                log.debug("Amount box clicked to focus")
                 if button_to_add_to in data["item data"][item]["amounts to add"]:
                     keyboard.Controller().type(str(data["item data"][item]["amounts to add"][button_to_add_to]))
-                    self.log(f"Typed amount: {data['item data'][item]['amounts to add'][button_to_add_to]}")
+                    log.debug(f"Typed amount: {data['item data'][item]['amounts to add'][button_to_add_to]}")
                 else:
                     keyboard.Controller().type("1")
-                    self.log("Typed amount: 1")
+                    log.debug("Typed amount: 1")
                 self.move_and_click(config["positions"]["add button 5"]["center"])
-                self.log(f"{button_to_add_to} clicked")
+                log.debug(f"{button_to_add_to} clicked")
 
         def check_button(button_to_check):
             time.sleep(slowdown)
             if int(button_to_check[-1]) < 5:
                 self.move_and_click(config["positions"][f"amount box {int(button_to_check[-1])}"]["center"], False)
-                self.log(f"Moved to amount box {int(button_to_check[-1])}")
+                log.debug(f"Moved to amount box {int(button_to_check[-1])}")
                 pyautogui.scroll(2000)
-                self.log("Scrolled up")
+                log.debug("Scrolled up")
                 time.sleep(slowdown2)
                 time.sleep(slowdown2)
                 bbox = config["positions"][f"add completed checkmark {button_to_check[-1]}"]["bbox"]
             else:
                 self.move_and_click(config["positions"]["amount box 5"]["center"], False)
-                self.log("Moved to amount box 5")
+                log.debug("Moved to amount box 5")
                 pyautogui.scroll(2000)
-                self.log("Scrolled up")
+                log.debug("Scrolled up")
                 pyautogui.scroll(-config["data"]["scroll amounts"]["to_5"])
-                self.log("Scrolled down to slot 4")
+                log.debug("Scrolled down to slot 4")
                 for x in range(4, int(button_to_check[-1])):
                     pyautogui.scroll(-config["data"]["scroll amounts"]["past_5"])
-                    self.log("Scrolled down to slot", x + 1)
+                    log.debug("Scrolled down to slot", x + 1)
                 time.sleep(slowdown2)
                 time.sleep(slowdown2)
                 bbox = config["positions"][f"add completed checkmark 5"]["bbox"]
             pixel_matches =self.find_pixels_with_color("#42FF6E", "#41FA6C", "#3FF369", "#3EEE67", "#41FC6D", "#40F169", bbox=bbox)
-            self.log(data["item data"][item]["button names"][button_to_check], "pixel matches:", pixel_matches)
+            log.debug(data["item data"][item]["button names"][button_to_check], "pixel matches:", pixel_matches)
             if pixel_matches > 0:
-                self.log(f"{data['item data'][item]['button names'][button_to_check]} is ready")
+                log.debug(f"{data['item data'][item]['button names'][button_to_check]} is ready")
                 return True
             else:
-                self.log(f"{data['item data'][item]['button names'][button_to_check]} is not ready")
+                log.debug(f"{data['item data'][item]['button names'][button_to_check]} is not ready")
                 return False
             
         def add_additional_buttons_for_item(item):
-            self.log(f"Clicking additional buttons for {item}")
+            log.debug(f"Clicking additional buttons for {item}")
             for button_to_click in config["item presets"][self.current_preset][item]["additional buttons to click"]:
                 add_to_button(button_to_click)
                 if not check_button(button_to_click):
-                    self.log(f"Additional button {button_to_click} for {item} failed.")
+                    log.debug(f"Additional button {button_to_click} for {item} failed.")
                     return False
                 else:
-                    self.log(f"Additional button {button_to_click} for {item} succeeded.")
+                    log.debug(f"Additional button {button_to_click} for {item} succeeded.")
             return True
 
         def add_next_item_to_auto_add():
@@ -2454,7 +2541,7 @@ class Dark_Sol(QMainWindow):
                     add_to_button(button_to_add_to)
                     time.sleep(slowdown)
 
-                self.log(f"{item} set to ready")
+                log.debug(f"{item} set to ready")
                 time.sleep(slowdown2)
                 self.update_status("Checking Buttons for:", item.capitalize())
                 for button_to_check in config["item presets"][self.current_preset][item]["buttons to check"]:
@@ -2470,23 +2557,24 @@ class Dark_Sol(QMainWindow):
                             self.current_auto_add_potion = item
                         elif not self.current_auto_add_potion == None and item not in self.auto_add_waitlist:
                             self.auto_add_waitlist.append(item)
-                            self.log(f"{item.capitalize()} added to auto add waitlist")
+                            log.debug(f"{item.capitalize()} added to auto add waitlist")
                     else:
                         self.update_status("Crafting:", item.capitalize())
                         self.move_and_click(config["positions"]["craft button"])
-                        self.log("Clicked craft button")
+                        log.debug("Clicked craft button")
+                        log.info(f"Crafted {item.capitalize()}")
 
             elif item == self.current_auto_add_potion:
                 self.move_and_click(config["positions"]["potion menu item button"]["center"])
                 self.update_status("Searching for:", item.capitalize())
                 self.search_for_potion(item)
-                self.log(f"{item.capitalize()} set to ready")
+                log.debug(f"{item.capitalize()} set to ready")
                 self.update_status("Checking All Buttons")
 
                 for slot in config["item presets"][self.current_preset][item]["buttons to check"]:
                     add_to_button(slot)
                     if not check_button(slot):
-                        self.log(f"{item.capitalize()} false positive detected on completed check button: {data['item data'][item]['button names'][slot]}, skipping craft and moving to next auto add item")
+                        log.debug(f"{item.capitalize()} false positive detected on completed check button: {data['item data'][item]['button names'][slot]}, skipping craft and moving to next auto add item")
                         self.current_auto_add_potion = None
                         add_next_item_to_auto_add()
                         return
@@ -2494,7 +2582,7 @@ class Dark_Sol(QMainWindow):
                 for slot in config["item presets"][self.current_preset][item]["additional buttons to click"]:
                     add_to_button(slot)
                     if not check_button(slot):
-                        self.log(f"{item.capitalize()} false positive detected on additional button to click: {data['item data'][item]['button names'][slot]}, skipping craft and moving to next auto add item")
+                        log.debug(f"{item.capitalize()} false positive detected on additional button to click: {data['item data'][item]['button names'][slot]}, skipping craft and moving to next auto add item")
                         self.current_auto_add_potion = None
                         add_next_item_to_auto_add()
                         return
@@ -2508,7 +2596,8 @@ class Dark_Sol(QMainWindow):
 
                 self.update_status("Crafting:", item.capitalize())
                 self.move_and_click(config["positions"]["craft button"]["center"])
-                self.log("Clicked craft button")
+                log.debug("Clicked craft button")
+                log.info(f"Crafted {item.capitalize()}")
                 time.sleep(slowdown)
                 add_next_item_to_auto_add()
                            
