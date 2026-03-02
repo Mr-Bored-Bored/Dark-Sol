@@ -1,6 +1,9 @@
 """
 # Tasks (For Mr. Bored)
 
+Calibrations
+Auto rejoin
+
 # Necessary for First Release:
 - Calibrations
 1. Fix manual scroll calibration
@@ -28,24 +31,25 @@
 21. Add complete macro exception handling with message box and logging
 22. Add msgbox for when something is being downloaded from the repo
 23. Make requirements file and check what its file type should be 
-24. Add current auto add potion enabled check (after pause / unpause)
+24. Add current auto add potion enabled check (after pause / unpause) and every 10 mins
 25. Add stuff for potions that have only requires manual crafting
 26. Make potion menu item button be clicked with search for potion function
-27. Add macro pause and unpause auto add button check
+27. Add log path variable instead of hardcoding the path in multiple places
 28. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
 29. Add manual checkmark calibration failsafe (if calibration was not done to not contine)
 30. Make remove overlay possible for specific overlays instead of just all overlays
 31. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
 32. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
 33. Make requirements downloader check lib folder in github instead of manual list of files and folders to check    
-
+34. Fix Logging
+35. Finish Auto Updater
 - Mini Status Label
-34. Make Mini Status Label movable
+36. Make Mini Status Label movable
 
 - Final Checks
-35. Remove excess delays / slowdowns (ensure reliability)
-36. Check print statements and remove unnecessary ones
-37. Verify macro can handle everything after entering potion craft gui
+37. Remove excess delays / slowdowns (ensure reliability)
+38. Check print statements and remove unnecessary ones
+39. Verify macro can handle everything after entering potion craft gui
 
 # Might be added for First Release:
 1. Add multi template for single calibration
@@ -62,10 +66,10 @@
 
 # Planned for the future:
 1. Make dpi, resolution, scale and etc global
-1. Make all hardcoded resolutions dynamic (aka figure out how scaling works)(just praying current code scales atp)
-2. Add main and auto updater reinstall arguements
-3. Fix multi monitor awareness
-4. Fix other widgets not closing properly
+2. Make all hardcoded resolutions dynamic (aka figure out how scaling works)(just praying current code scales atp)
+3. Add main and auto updater reinstall arguements
+4. Fix multi monitor awareness
+5. Fix other widgets not closing properly
 6. Make plugins system
 7. Add theme tab functionality (Requires style sheet overhaul and compression to allow for user friendly adjustments)
 8. Able to handle corrupt config
@@ -73,20 +77,21 @@
 10. Add importing / exporting presets
 11. Add importing / exporting themes
 12. Add ability to change hotkeys
-14. Make it so that it can add in 1's instead of just the amount numbers
-16. Add custom log messages (ability for certain logs to not show)
-17. Add complete calibration (paths needed)
-18. Add private server reconnects (paths needed)
-19. Make macro full screen compatible (only needs template rescaling adjustment(i think))
-21. Complete overhall and  usage of multi classes
-21. Auto Quest Plugin (Depending on what cresqnt and noteab say)
-22. Make auto rare biome popping plugin (Depending on what cresqnt and noteab say)
-23. Make it so that you can adjust wait time after reset in settings
-24. Make it so that rescaled templates are saved so the function doesnt have to be called every time
-32. Add ability to craft Limbo potions (aka enter limbo for easier aura gathering)
+13. Make it so that it can add in 1's instead of just the amount numbers
+14. Add custom log messages (ability for certain logs to not show)
+15. Add complete calibration (paths needed)
+16. Add private server reconnects (paths needed)
+17. Make macro full screen compatible (only needs template rescaling adjustment(i think))
+18. Complete overhall and  usage of multi classes
+19. Auto Quest Plugin (Depending on what cresqnt and noteab say)
+20. Make auto rare biome popping plugin (Depending on what cresqnt and noteab say)
+21. Make it so that you can adjust wait time after reset in settings
+22. Make it so that rescaled templates are saved so the function doesnt have to be called every time
+23. Add ability to craft Limbo potions (aka enter limbo for easier aura gathering)
 24. Add log reader arguement (so user can read logs easier if main script is crashing)
+25. Auto updater can procedurally update if latest version from repo is uncompatible with current version instead of just saying manual update is needed
 - Mini Status Label
-21. Make mini status label show auto add waitlist and add setting for it 
+26. Make mini status label show auto add waitlist and add setting for it 
 
 --- IGNORE ---
 # Start Arguments
@@ -102,28 +107,34 @@ local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"]) / "Dark Sol"
 logger = logging.getLogger("DarkSol")
 logger.setLevel(logging.DEBUG)
 logger.propagate = False
-file_handler = RotatingFileHandler(local_appdata_directory / "Dark Sol Log.log", maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
+file_handler = RotatingFileHandler(local_appdata_directory / "Dark Sol Log.log", maxBytes=50 * 1024 * 1024, backupCount=1, encoding="utf-8")
 file_handler.setLevel(logging.DEBUG)
 logging_formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 logging_formatter.default_msec_format = "%s.%03d"
 file_handler.setFormatter(logging_formatter)
 logger.addHandler(file_handler)
+
 class log():
     @staticmethod
     def debug(*args):
         logger.debug(" ".join(str(a) for a in args))
+        print(" ".join(str(a) for a in args))
     @staticmethod
     def info(*args):
         logger.info(" ".join(str(a) for a in args))
+        print(" ".join(str(a) for a in args))
     @staticmethod
     def warning(*args):
         logger.warning(" ".join(str(a) for a in args))
+        print(" ".join(str(a) for a in args))
     @staticmethod
     def error(*args):
         logger.error(" ".join(str(a) for a in args))
+        print(" ".join(str(a) for a in args))
     @staticmethod
     def exception(*args):
         logger.exception(" ".join(str(a) for a in args))
+        print(" ".join(str(a) for a in args))
 
 log.info("Starting Dark Sol")
 log.debug("Logging Initalized")
@@ -147,19 +158,20 @@ screen_width, screen_height = user32.GetSystemMetrics(0), user32.GetSystemMetric
 log.debug("DPI Tools Loaded")
 
 # Imports
-import os, sys, threading, pyautogui, time, ctypes, pathlib, json, win32gui, win32con, re, requests, io, zipfile
+import os, sys, threading, pyautogui, time, ctypes, pathlib, json, win32gui, win32con, re, requests, io, zipfile, socket, subprocess
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout,
 QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QStackedWidget, QComboBox, QLineEdit, QDialog,
     QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QLineEdit)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl, QFileSystemWatcher
 from pyscreeze import ImageNotFoundException as pyscreeze_ImageNotFoundException
+from packaging import version
 from PIL import Image, ImageGrab
 from pynput import keyboard, mouse
 from mousekey import MouseKey
 from copy import deepcopy
 import numpy as np
-log.debug("Imports Loaded", "hi")
+log.debug("Imports Loaded", " Hi This is an easter egg lol 🥚")
                    
 # Setup Imports
 mkey = MouseKey()
@@ -169,7 +181,7 @@ os.makedirs(local_appdata_directory, exist_ok=True)
 log.debug("Imports Initalized")
 
 # Constants
-current_version = "0.0.0.0"
+current_version = "0.0.0.2"
 folders_to_check = ("Icons", "Images")
 icons_to_check = ("up chevron.svg", "down chevron.svg", "up chevron disabled.svg")
 images_to_check = ("add button.png", "amount box.png", "auto add button.png", "craft button.png", "potion search bar.png", "open recipe button.png",
@@ -603,6 +615,113 @@ data = {
                 }
             }
 
+# Auto Updater
+class auto_updater():
+    latest_updateable_version = str()
+    def __init__(self):
+        if not (local_appdata_directory / "Dark_Sol_Updater.exe").exists():
+            log.info("Updater not found")
+            download_from_repo("Dark_Sol_Updater.exe", local_appdata_directory,)
+        if "--updated" in sys.argv:
+            log.info("Macro updated successfully")
+            self.create_msg_box("Update Successful", f"Dark Sol has been updated to version {current_version} successfully!", msg_box_type=QMessageBox.Icon.Information)
+        elif "--update_failed" in sys.argv:
+            log.error("Macro update failed")
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+                    client.connect(("localhost", 5295))
+                    client.settimeout(10)
+                    log.debug("Listening for crash signal from updater...")
+                    data = client.recv(4096)
+                    log.debug(f"Received data from updater: {data.decode()}")
+                    if str(self.create_msg_box("Dark Sol", f"Dark Sol failed to update, reason: {data.decode()}. Would you like to try again? \n Please try updating manually by downloading the latest release from the GitHub repository, if this fails continuously.", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No, msg_box_type=QMessageBox.Icon.Warning)).removeprefix("&") == "Yes":
+                        self.send_update_signal()
+            except socket.timeout:
+                log.error("No data received from updater, update may have failed silently")
+                if str(self.create_msg_box("Dark Sol", "Dark Sol failed to update and no response was received from the main script. Would you like to try updating again? \n Please try updating manually by downloading the latest release from the GitHub repository, if this fails continuously.", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No, msg_box_type=QMessageBox.Icon.Warning)).removeprefix("&") == "Yes":
+                    self.send_update_signal()
+            except Exception as e:
+                log.error("An error occurred while waiting for updater response:", e)
+                self.create_msg_box("Dark Sol", f"An error occurred while waiting for the updater's response: {e}. Please try updating manually by downloading the latest release from the GitHub repository, if this fails continuously.", msg_box_type=QMessageBox.Icon.Warning)
+        else:
+            self.ask_to_update()
+
+    def send_update_signal(self):
+        subprocess.Popen([str(local_appdata_directory / "Dark_Sol_Updater.exe")])
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
+            server.bind(("localhost", 5296))
+            server.listen(1)
+            conn, addr = server.accept()
+            signal = {
+                "command": "Update Dark Sol",
+                "version": self.latest_updateable_version,
+                "path": str(pathlib.Path(sys.executable).resolve() if getattr(sys, "frozen", False) else pathlib.Path(__file__).resolve())
+            }
+            with conn:
+                conn.send(json.dumps(signal).encode("utf-8"))
+                conn.shutdown(socket.SHUT_WR)
+                response = conn.recv(4096)
+            log.debug(f"Received: {response.decode()}")
+            if response.decode() == "Dark Sol Update Signal Received":
+                log.info("Update signal acknowledged by main script, exiting")
+                os._exit(0)
+
+    def ask_to_update(self):
+        if self.get_latest_version():
+            if str(self.create_msg_box("Update Available", f"A new version of Dark Sol is available: {self.latest_updateable_version}. You are currently using version {current_version}. Would you like to update now?", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)).removeprefix("&") == "Yes":
+                log.info(f"Updating macro to version: {self.latest_updateable_version}")
+                self.send_update_signal()
+            else:
+                log.debug("User Skipped Update")
+
+    def get_latest_version(self):
+        try:
+            url = f"https://api.github.com/repos/Mr-Bored-Bored/Dark-Sol/releases/latest"
+            response = requests.get(url, timeout=20)
+            response.raise_for_status()
+
+            self.latest_updateable_version = response.json().get("tag_name", "").strip().lstrip("v")
+            log.debug(f"Latest version from GitHub: {self.latest_updateable_version}")
+            if version.parse(current_version) == version.parse(self.latest_updateable_version):
+                log.debug("You are already using the latest version.")
+                return False
+            elif version.parse(current_version) > version.parse(self.latest_updateable_version):
+                log.debug("You are using a newer version than the latest release. No update needed.")
+                return False
+            elif version.parse(current_version) < version.parse(self.latest_updateable_version):
+                log.info(f"A new version is available: {self.latest_updateable_version}")
+                return True
+        except Exception as e:
+            log.error("Failed to check for updates:", e)
+
+    def create_msg_box(self, title, text, *buttons, msg_box_type=QMessageBox.Icon.Information, internal=True):
+        if internal:
+            msg_box = QMessageBox()
+        else:
+            msg_box = QMessageBox()
+        msg_box.setIcon(msg_box_type)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(text)
+        msg_box.setStyleSheet("""QLabel { color: cyan; font-size: 14pt;} QWidget {background-color: black;} QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt;}""")
+        if buttons:
+            for button in buttons:
+                if isinstance(button, str):
+                    msg_box.addButton(button, QMessageBox.ButtonRole.AcceptRole)
+                else:
+                    msg_box.addButton(button)
+        else:
+            msg_box.addButton(QMessageBox.StandardButton.Ok)
+        msg_box.show()
+        msg_box.raise_()
+        msg_box.activateWindow()
+        msg_box.exec()
+        clicked = msg_box.clickedButton()
+        if clicked is None:
+            return False
+        clicked_text = clicked.text()
+        log.debug(f"Button clicked: {clicked_text.lower()}")
+        return clicked_text
+
 # Loading Screen
 class loading_thread(QThread):
     finished = pyqtSignal()
@@ -743,11 +862,14 @@ class Dark_Sol(QMainWindow):
         self.set_amount_box_3_coordinates = QPushButton("Set Amount Box 3 Coordinates")
         self.set_amount_box_4_coordinates = QPushButton("Set Amount Box 4 Coordinates")
         self.set_amount_box_5_coordinates = QPushButton("Set Amount Box 5 Coordinates")
+        self.set_potion_menu_item_button_coordinates = QPushButton("Set Potion Menu Item Button Coordinates")
+        self.set_potion_selection_button_1_coordinates = QPushButton("Set Potion Selection Button 1 Coordinates")
+        self.set_potion_selection_button_2_coordinates = QPushButton("Set Potion Selection Button 2 Coordinates")
+        self.set_potion_selection_button_3_coordinates = QPushButton("Set Potion Selection Button 3 Coordinates")
         self.set_auto_add_button_coordinates = QPushButton("Set Auto Add Button Coordinates")
         self.set_amount_box_coordinates = QPushButton("Set Amount Box Coordinates")
         self.set_craft_button_coordinates = QPushButton("Set Craft Button Coordinates")
         self.set_search_bar_coordinates = QPushButton("Set Search Bar Coordinates")
-        self.set_potion_selection_button_coordinates = QPushButton("Set Potion Selection Button Coordinates")
         self.calibrate_add_completed_checkmarks_button = QPushButton("Manually Calibrate Add Completed Checkmarks")
         self.manually_calibrate_scrolling_button = QPushButton("Manually Calibrate Scroll Amounts")
         # Settings Tab
@@ -774,6 +896,7 @@ class Dark_Sol(QMainWindow):
         self.status_signal.connect(self.inner_update_status)
         self.init_ui()
         self.setup_hotkeys()
+        auto_updater_connector = auto_updater()
 
         if create_debug_test_buttons:
             self.debug_tab = QWidget()
@@ -841,7 +964,7 @@ class Dark_Sol(QMainWindow):
         self.wrap_log_checkbox.setChecked(config["wrap log area"])
         self.wrap_log_checkbox.stateChanged.connect(self.toggle_log_wrap)
         self.show_only_current_logs_checkbox.setChecked(config["show only current logs"])
-        self.show_only_current_logs_checkbox.stateChanged.connect(lambda state: (config.update({"show only current logs": state}), nice_config_save(), self.update_gui_log(True)))
+        self.show_only_current_logs_checkbox.stateChanged.connect(lambda state: (config.update({"show only current logs": True if state == 2 else False}), nice_config_save(), self.update_gui_log(True)))
         #Set Presets Tab Layout
         self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
         self.preset_selector.setStyleSheet("color: cyan; background: #111; font-size: 18pt; padding: 6px;")
@@ -913,12 +1036,16 @@ class Dark_Sol(QMainWindow):
         self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_3_coordinates)
         self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_4_coordinates)
         self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_5_coordinates)
+        manual_layout.addWidget(self.set_potion_menu_item_button_coordinates)
+        manual_layout.addWidget(self.set_potion_selection_button_1_coordinates)
+        manual_layout.addWidget(self.set_potion_selection_button_2_coordinates)
+        manual_layout.addWidget(self.set_potion_selection_button_3_coordinates)
         manual_layout.addWidget(self.set_add_button_coordinates)
         manual_layout.addWidget(self.set_amount_box_coordinates)
         manual_layout.addWidget(self.set_auto_add_button_coordinates)
         manual_layout.addWidget(self.set_craft_button_coordinates)
         manual_layout.addWidget(self.set_search_bar_coordinates)
-        manual_layout.addWidget(self.set_potion_selection_button_coordinates)
+        manual_layout.addWidget(self.set_potion_menu_item_button_coordinates)
         manual_layout.addWidget(self.calibrate_add_completed_checkmarks_button)
         manual_layout.addWidget(self.manually_calibrate_scrolling_button)
         self.add_button_coordinates_selector.setStyleSheet("QWidget {background-color: black;} QPushButton {color: cyan;border: 2px solid cyan; border-radius: 6px; font-size: 22pt;}")
@@ -1001,10 +1128,12 @@ class Dark_Sol(QMainWindow):
         self.set_amount_box_3_coordinates.clicked.connect(lambda: self.manual_calibration("amount box 3"))
         self.set_amount_box_4_coordinates.clicked.connect(lambda: self.manual_calibration("amount box 4"))
         self.set_amount_box_5_coordinates.clicked.connect(lambda: self.manual_calibration("amount box 5"))
+        self.set_potion_selection_button_1_coordinates.clicked.connect(lambda: self.manual_calibration("potion selection button 1"))
+        self.set_potion_selection_button_2_coordinates.clicked.connect(lambda: self.manual_calibration("potion selection button 2"))
+        self.set_potion_selection_button_3_coordinates.clicked.connect(lambda: self.manual_calibration("potion selection button 3"))
         self.set_auto_add_button_coordinates.clicked.connect(lambda: self.manual_calibration("auto add button"))
         self.set_craft_button_coordinates.clicked.connect(lambda: self.manual_calibration("craft button"))
         self.set_search_bar_coordinates.clicked.connect(lambda: self.manual_calibration("potion search bar"))
-        self.set_potion_selection_button_coordinates.clicked.connect(lambda: self.manual_calibration("potion selection button"))
         self.calibrate_add_completed_checkmarks_button.clicked.connect(lambda: self.manual_checkmarks_calibration())
         self.manually_calibrate_scrolling_button.clicked.connect(lambda: self.manual_scroll_calibration())
         # Settings Buttons
@@ -1040,18 +1169,20 @@ class Dark_Sol(QMainWindow):
             QTabBar::tab:selected { background-color: black; }
             QTabBar {color: cyan;}
             QWidget {background-color: black;}
-            QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt;}
+            QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt; }
+            
             QPushButton#start_button {font-size: 22pt;}
             QPushButton#stop_button {font-size: 22pt;}
             QLabel {color: cyan; font-size: 14pt;}
             QLabel#status_label {color: cyan; font-size: 38pt;}
         """)
+        #QPushButton:hover {background-color: #0d2c33;}
         log.info("Ui Initialized")
         self.update_gui_log()
 
     def reset_template(self):
         pass
-
+    
     def change_donate_label_color(self):
         hovered = self.donate_label.underMouse()
         self.donate_label.setCursor(

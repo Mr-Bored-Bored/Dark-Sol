@@ -3,6 +3,7 @@
 *
 !.gitignore
 !Dark_Sol.py
+!Dark_Sol_Updater.py
 
 !Appdata/
 !Appdata/Lib/
