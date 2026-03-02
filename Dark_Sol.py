@@ -1217,7 +1217,7 @@ class Dark_Sol(QMainWindow):
                     self.log_read_pos = line_pos
             
     def update_gui_log(self, reset_log=False):
-        if reset_log:
+        if reset_log is True:
             self.log_area.clear()
             self.log_read_pos = 0
             if config["show only current logs"]:
