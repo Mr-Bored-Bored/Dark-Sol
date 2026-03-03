@@ -136,7 +136,7 @@ log.debug("Logging Initalized")
 # Dev Tools
 use_built_in_config = False
 skip_loading = True
-create_debug_test_buttons = True
+create_debug_test_buttons = False
 log.debug("Dev Tools Loaded")
 
 # DPI Setup
@@ -788,7 +788,7 @@ class Dark_Sol(QMainWindow):
         # Create main window
         super().__init__()
         self.setWindowTitle("Dark Sol")
-        self.setGeometry(int(((screen_width / 2) / scale) - (self.width() / 2)), int(((screen_height / 2) / scale) - (self.height() / 2 )), 0, 0) # Make gui as small as possible and appear in the center of the screen
+        #self.setGeometry(int(((screen_width / 2) / scale) - (self.width() / 2)), int(((screen_height / 2) / scale) - (self.height() / 2 )), 0, 0) # Make gui as small as possible and appear in the center of the screen
         # Create Main Gui Elements
         self.central_widget = QWidget()
         self.central_widget_vbox = QVBoxLayout(self.central_widget)
