@@ -1,55 +1,49 @@
 """
 # Tasks (For Mr. Bored)
 
-Calibrations
-Auto rejoin
-
 # Necessary for First Release:
 - Calibrations
 1. Fix manual scroll calibration
 2. Improve calibration gui / fix it to support new systems
 3. Make it so that macro cant start until calibrations are complete
-4. Make it so that you can close auto calibrate and then resume where you left off
-5. Add verifications before runnning certain calibrations
-6. Rename calibration buttons
-7. Make manual calibration have a single position thing instead of a box for some calibrations
-8. Make a list of features that show if the repo cannot be reached
+4. Make a list of features that show if the repo cannot be reached
+5. Make some calibrations skipable if they arent used with specific settings off
 
 - Random
-9. Add auto updater
-10. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
-11. Make it so that overlays can show individual pixels instead of an area
-12. Add paths for auto rejoin (non vip and add settings to choose path) and auto calibrations
-13. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
-14. Add crafted potion detection / stats
-15. Make ps join button check for valid ps link and save private server link button
-16. Add collection buttons to calibrations (exit button may not be added)
-17. Add play button to calibrations
-18. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
-19. Add potion gui entered check
-20. Add config corrupted check and fix config
-21. Add complete macro exception handling with message box and logging
-22. Add msgbox for when something is being downloaded from the repo
-23. Make requirements file and check what its file type should be 
-24. Add current auto add potion enabled check (after pause / unpause) and every 10 mins
-25. Add stuff for potions that have only requires manual crafting
-26. Make potion menu item button be clicked with search for potion function
-27. Add log path variable instead of hardcoding the path in multiple places
-28. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
-29. Add manual checkmark calibration failsafe (if calibration was not done to not contine)
-30. Make remove overlay possible for specific overlays instead of just all overlays
-31. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
-32. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
-33. Make requirements downloader check lib folder in github instead of manual list of files and folders to check    
-34. Fix Logging
-35. Finish Auto Updater
+6. Finish auto updater
+7. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
+8. Make it so that overlays can show individual pixels instead of an area
+9. Add paths for auto rejoin (non vip and add settings to choose path) and auto calibrations
+10. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
+11. Add crafted potion detection / stats
+12. Make ps join button check for valid ps link and save private server link button
+13. Add collection buttons to calibrations (exit button may not be added)
+14. Add play button to calibrations
+15. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
+16. Add potion gui entered check
+17. Add config corrupted check and fix config
+18. Add complete macro exception handling with message box and logging
+19. Add msgbox for when something is being downloaded from the repo
+20. Make requirements file and check what its file type should be 
+21. Add current auto add potion enabled check (after pause / unpause) and every 10 mins
+22. Add stuff for potions that have only requires manual crafting
+23. Make potion menu item button be clicked with search for potion function
+24. Add log path variable instead of hardcoding the path in multiple places
+25. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
+26. Add manual checkmark calibration failsafe (if calibration was not done to not contine)
+27. Make remove overlay possible for specific overlays instead of just all overlays
+28. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
+29. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
+30. Make requirements downloader check lib folder in github instead of manual list of files and folders to check    
+31. Fix Logging
+32. Finish Auto Updater
 - Mini Status Label
-36. Make Mini Status Label movable
+33. Make Mini Status Label movable
 
 - Final Checks
-37. Remove excess delays / slowdowns (ensure reliability)
-38. Check print statements and remove unnecessary ones
-39. Verify macro can handle everything after entering potion craft gui
+34. Remove excess delays / slowdowns (ensure reliability)
+35. Check print statements and remove unnecessary ones
+36. Verify macro can handle everything after entering potion craft gui
 
 # Might be added for First Release:
 1. Add multi template for single calibration
@@ -181,7 +175,7 @@ os.makedirs(local_appdata_directory, exist_ok=True)
 log.debug("Imports Initalized")
 
 # Constants
-current_version = "0.0.0.2"
+current_version = "0.0.0.3"
 folders_to_check = ("Icons", "Images")
 icons_to_check = ("up chevron.svg", "down chevron.svg", "up chevron disabled.svg")
 images_to_check = ("add button.png", "amount box.png", "auto add button.png", "craft button.png", "potion search bar.png", "open recipe button.png",
@@ -424,12 +418,35 @@ hidden_config = {
                         }
                     }
                 },
+                "calibrated positions": {"path": False,
+                                        "scroll amounts": False,
+                                        "add completed checkmarks": {"bbox": False},
+                                        "play button": {"bbox": False, "center": False},
+                                        "potion menu item button": {"bbox": False, "center": False},
+                                        "potion search bar": {"bbox": False, "center": False},
+                                        "potion selection button 1": {"bbox": False, "center": False},
+                                        "potion selection button 2": {"bbox": False, "center": False},
+                                        "potion selection button 3": {"bbox": False, "center": False},
+                                        "open recipe button": {"bbox": False, "center": False},
+                                        "add button 1": {"bbox": False, "center": False},
+                                        "add button 2": {"bbox": False, "center": False},
+                                        "add button 3": {"bbox": False, "center": False},
+                                        "add button 4": {"bbox": False, "center": False},
+                                        "add button 5": {"bbox": False, "center": False},
+                                        "amount box 1": {"bbox": False, "center": False},
+                                        "amount box 2": {"bbox": False, "center": False},
+                                        "amount box 3": {"bbox": False, "center": False},
+                                        "amount box 4": {"bbox": False, "center": False},   
+                                        "amount box 5": {"bbox": False, "center": False},
+                                        "auto add button": {"bbox": False, "center": False},
+                                        "craft button": {"bbox": False, "center": False},
+                                        },
                 "current preset": "Main",
                 "private server link": "",
-                "calibrated positions": {},
                 "wrap log area": False,
                 "gui log levels": ["INFO", "WARNING", "ERROR", "CRITICAL"],
-                "show only current logs": False
+                "show only current logs": False,
+                "path": "vip"
             }
 
 if use_built_in_config:
@@ -779,7 +796,6 @@ class Dark_Sol(QMainWindow):
         self.tabs_widget = QTabWidget()
         self.main_tab = QWidget()
         self.presets_tab = QWidget()
-        self.calibrations_tab = QWidget()
         self.theme_tab = QWidget()
         self.settings_tab = QWidget()
         # Create Main Tab Elements
@@ -824,54 +840,6 @@ class Dark_Sol(QMainWindow):
         self.up_chevron_svg = str(local_appdata_directory / "Lib" / "Icons" / "up chevron.svg")
         self.down_chevron_svg = str(local_appdata_directory / "Lib" / "Icons" / "down chevron.svg")
         self.up_chevron_disabled_svg = str(local_appdata_directory / "Lib" / "Icons" / "up chevron disabled.svg")
-        # Create Calibration Tab Elements
-        self.completed_calibrations = []
-        self.calibration_mode = "auto"
-        self.calibration_mode_button = QPushButton("Current Mode: Automatic Calibration")
-        self.show_calibration_overlays_button = QPushButton("Show Calibration Overlays")
-        self.calibrations_overlay_active = False
-        # Auto Calibration Mode
-        self.auto_calibrate_button = QPushButton("Auto Calibrate")
-        self.find_add_button = QPushButton("Find Add Buttons")
-        self.find_amount_box = QPushButton("Find Amount Boxes")
-        self.find_auto_add_button = QPushButton("Find Auto Add Button")
-        self.find_craft_button = QPushButton("Find Craft Button")
-        self.find_search_bar = QPushButton("Find Search Bar")
-        self.find_potion_selection_button = QPushButton("Find Potion Selection Button")
-        self.auto_calibrate_add_completed_checkmarks_button = QPushButton("Calibrate Add Completed Checkmarks")
-        self.auto_calibrate_scrolling_button = QPushButton("Calibrate Scroll Amounts")
-        # Semi Auto Calibration Mode
-        self.set_add_button_template = QPushButton("Set Add Button Template")
-        self.set_amount_box_template = QPushButton("Set Amount Box Template")
-        # Manual Calibration Mode
-        self.add_button_coordinates_selector = QWidget()
-        self.add_button_coordinates_selector.setWindowTitle("Set Add Button Coordinates")
-        self.add_button_coordinates_selector_layout = QVBoxLayout(self.add_button_coordinates_selector)
-        self.set_add_button_coordinates = QPushButton("Set Add Button Coordinates", self)
-        self.set_add_button_1_coordinates = QPushButton("Set Add Button 1 Coordinates")
-        self.set_add_button_2_coordinates = QPushButton("Set Add Button 2 Coordinates")
-        self.set_add_button_3_coordinates = QPushButton("Set Add Button 3 Coordinates")
-        self.set_add_button_4_coordinates = QPushButton("Set Add Button 4 Coordinates")
-        self.set_add_button_5_coordinates = QPushButton("Set Add Button 5 Coordinates")
-        self.amount_box_coordinates_selector = QWidget()
-        self.amount_box_coordinates_selector.setWindowTitle("Set Amount Box Coordinates")
-        self.amount_box_coordinates_selector_layout = QVBoxLayout(self.amount_box_coordinates_selector)
-        self.set_amount_box_coordinates = QPushButton("Set Amount Box Coordinates", self)
-        self.set_amount_box_1_coordinates = QPushButton("Set Amount Box 1 Coordinates")
-        self.set_amount_box_2_coordinates = QPushButton("Set Amount Box 2 Coordinates")
-        self.set_amount_box_3_coordinates = QPushButton("Set Amount Box 3 Coordinates")
-        self.set_amount_box_4_coordinates = QPushButton("Set Amount Box 4 Coordinates")
-        self.set_amount_box_5_coordinates = QPushButton("Set Amount Box 5 Coordinates")
-        self.set_potion_menu_item_button_coordinates = QPushButton("Set Potion Menu Item Button Coordinates")
-        self.set_potion_selection_button_1_coordinates = QPushButton("Set Potion Selection Button 1 Coordinates")
-        self.set_potion_selection_button_2_coordinates = QPushButton("Set Potion Selection Button 2 Coordinates")
-        self.set_potion_selection_button_3_coordinates = QPushButton("Set Potion Selection Button 3 Coordinates")
-        self.set_auto_add_button_coordinates = QPushButton("Set Auto Add Button Coordinates")
-        self.set_amount_box_coordinates = QPushButton("Set Amount Box Coordinates")
-        self.set_craft_button_coordinates = QPushButton("Set Craft Button Coordinates")
-        self.set_search_bar_coordinates = QPushButton("Set Search Bar Coordinates")
-        self.calibrate_add_completed_checkmarks_button = QPushButton("Manually Calibrate Add Completed Checkmarks")
-        self.manually_calibrate_scrolling_button = QPushButton("Manually Calibrate Scroll Amounts")
         # Settings Tab
         self.ps_link_label = QLabel("Private Server Link:")
         self.ps_link_line = QLineEdit()
@@ -879,6 +847,10 @@ class Dark_Sol(QMainWindow):
         self.ps_link_join_button = QPushButton("Join Private Server")
         self.reset_add_button_template_button = QPushButton("Reset Add Button Template")
         self.reset_amount_box_template_button = QPushButton("Reset Amount Box Template")
+        # Calibration Elements
+        self.calibrations_overlay_active = False
+        self.show_calibration_overlays_button = QPushButton("Show Calibration Overlays")
+        self.calibrate_macro_button = QPushButton("Calibrate Macro")
         # Create Donations Stuff
         self.donate_label = QLabel("Donate")
         # Mini Status Label 
@@ -896,7 +868,7 @@ class Dark_Sol(QMainWindow):
         self.status_signal.connect(self.inner_update_status)
         self.init_ui()
         self.setup_hotkeys()
-        auto_updater_connector = auto_updater()
+        auto_updater()
 
         if create_debug_test_buttons:
             self.debug_tab = QWidget()
@@ -931,7 +903,6 @@ class Dark_Sol(QMainWindow):
         # Initialize Tabs
         self.tabs_widget.addTab(self.main_tab, "Main")
         self.tabs_widget.addTab(self.presets_tab, "Presets")
-        self.tabs_widget.addTab(self.calibrations_tab, "Calibrations")
         self.tabs_widget.addTab(self.theme_tab, "Theme")
         self.tabs_widget.addTab(self.settings_tab, "Settings")
         # Set Main Tab Layout
@@ -999,68 +970,6 @@ class Dark_Sol(QMainWindow):
                 """)
         self.presets_tab.setLayout(self.presets_tab_main_vbox)
         self.build_potions_ui()
-        # Set Calibrations Tab Layout
-        self.calibrations_tab_main_vbox = QVBoxLayout()
-        self.calibrations_stack = QStackedWidget()
-        self.calibration_mode_button.setToolTip("Switch between automatic, semi-automatic, and manual calibration modes.")
-        # Auto Calibration Page
-        auto_calibration_page = QWidget()
-        auto_layout = QVBoxLayout(auto_calibration_page)
-        auto_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        auto_layout.addWidget(self.auto_calibrate_button)
-        auto_layout.addWidget(self.find_add_button)
-        auto_layout.addWidget(self.find_amount_box)
-        auto_layout.addWidget(self.find_auto_add_button)
-        auto_layout.addWidget(self.find_craft_button)
-        auto_layout.addWidget(self.find_search_bar)
-        auto_layout.addWidget(self.find_potion_selection_button)
-        auto_layout.addWidget(self.auto_calibrate_add_completed_checkmarks_button)
-        auto_layout.addWidget(self.auto_calibrate_scrolling_button)
-        # Semi Auto Calibration Page
-        semi_auto_calibration_page = QWidget()
-        semi_auto_layout = QVBoxLayout(semi_auto_calibration_page)
-        semi_auto_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        semi_auto_layout.addWidget(self.set_add_button_template)
-        semi_auto_layout.addWidget(self.set_amount_box_template)
-        # Manual Calibration Page
-        manual_calibration_page = QWidget()
-        manual_layout = QVBoxLayout(manual_calibration_page)
-        manual_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_1_coordinates)
-        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_2_coordinates)
-        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_3_coordinates)
-        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_4_coordinates)
-        self.add_button_coordinates_selector_layout.addWidget(self.set_add_button_5_coordinates)
-        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_1_coordinates)
-        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_2_coordinates)
-        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_3_coordinates)
-        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_4_coordinates)
-        self.amount_box_coordinates_selector_layout.addWidget(self.set_amount_box_5_coordinates)
-        manual_layout.addWidget(self.set_potion_menu_item_button_coordinates)
-        manual_layout.addWidget(self.set_potion_selection_button_1_coordinates)
-        manual_layout.addWidget(self.set_potion_selection_button_2_coordinates)
-        manual_layout.addWidget(self.set_potion_selection_button_3_coordinates)
-        manual_layout.addWidget(self.set_add_button_coordinates)
-        manual_layout.addWidget(self.set_amount_box_coordinates)
-        manual_layout.addWidget(self.set_auto_add_button_coordinates)
-        manual_layout.addWidget(self.set_craft_button_coordinates)
-        manual_layout.addWidget(self.set_search_bar_coordinates)
-        manual_layout.addWidget(self.set_potion_menu_item_button_coordinates)
-        manual_layout.addWidget(self.calibrate_add_completed_checkmarks_button)
-        manual_layout.addWidget(self.manually_calibrate_scrolling_button)
-        self.add_button_coordinates_selector.setStyleSheet("QWidget {background-color: black;} QPushButton {color: cyan;border: 2px solid cyan; border-radius: 6px; font-size: 22pt;}")
-        self.amount_box_coordinates_selector.setStyleSheet("QWidget {background-color: black;} QPushButton {color: cyan;border: 2px solid cyan; border-radius: 6px; font-size: 22pt;}")
-        self.add_button_coordinates_selector.adjustSize()
-        self.amount_box_coordinates_selector.adjustSize()
-        # Calibration Pages Setup
-        self.calibrations_stack.addWidget(auto_calibration_page)       # index 0
-        self.calibrations_stack.addWidget(semi_auto_calibration_page)  # index 1
-        self.calibrations_stack.addWidget(manual_calibration_page)     # index 2
-        self.calibrations_tab_main_vbox.addWidget(self.calibration_mode_button)
-        self.calibrations_tab_main_vbox.addWidget(self.show_calibration_overlays_button)
-        self.calibrations_tab_main_vbox.addWidget(self.calibrations_stack)
-        self.calibrations_stack.setCurrentIndex(0)
-        self.calibrations_tab.setLayout(self.calibrations_tab_main_vbox)
         # Settings Tab Layout
         settings_tab_vbox = QVBoxLayout(self.settings_tab)
         private_server_hbox = QHBoxLayout()
@@ -1078,6 +987,9 @@ class Dark_Sol(QMainWindow):
         settings_tab_vbox.addWidget(self.ps_link_join_button)
         settings_tab_vbox.addWidget(self.reset_add_button_template_button)
         settings_tab_vbox.addWidget(self.reset_amount_box_template_button)
+        # Calibrations
+        settings_tab_vbox.addWidget(self.show_calibration_overlays_button)
+        settings_tab_vbox.addWidget(self.calibrate_macro_button)
         # Donations Layout
         self.main_tab_bottom_header_qh_layout.addWidget(self.donate_label)
         self.central_widget_vbox.addWidget(self.main_tab_bottom_header)
@@ -1099,48 +1011,14 @@ class Dark_Sol(QMainWindow):
         self.stop_button.clicked.connect(self.stop_macro)
         self.rejoin_and_path_to_potion_gui_button.clicked.connect(lambda: self.reload_potion_gui())
         self.logging_settings_gui_button.clicked.connect(lambda: self.logging_settings_gui.show())
-        # Main Calibration Mode Buttons
-        self.calibration_mode_button.clicked.connect(lambda: self.switch_calibration_mode())
-        self.show_calibration_overlays_button.clicked.connect(lambda: self.show_calibration_overlays())
-        # Auto Calibration Buttons
-        self.auto_calibrate_button.clicked.connect(self.auto_calibrate)
-        self.find_add_button.clicked.connect(lambda: self.find_add_buttons())
-        self.find_amount_box.clicked.connect(lambda: self.find_amount_boxes())
-        self.find_auto_add_button.clicked.connect(lambda: (self.focus_roblox(), time.sleep(0.2), self.safe_image_find("auto add button")))
-        self.find_craft_button.clicked.connect(lambda: (self.focus_roblox(), time.sleep(0.2), self.safe_image_find("craft button")))
-        self.find_search_bar.clicked.connect(lambda: (self.focus_roblox(), time.sleep(0.2), self.safe_image_find("potion search bar")))
-        self.auto_calibrate_add_completed_checkmarks_button.clicked.connect(self.find_and_calibrate_checkmarks)
-        self.find_potion_selection_button.clicked.connect(lambda: self.find_potion_selection_buttons())
-        self.auto_calibrate_scrolling_button.clicked.connect(lambda: self.auto_calibrate_scrolling())    
-        # Semi Auto Calibration Buttons
-        self.set_add_button_template.clicked.connect(lambda: self.replace_template("add button"))
-        self.set_amount_box_template.clicked.connect(lambda: self.replace_template("amount box"))
-        # Manual Calibration Buttons
-        self.set_add_button_coordinates.clicked.connect(lambda: self.add_button_coordinates_selector.show())
-        self.set_add_button_1_coordinates.clicked.connect(lambda: self.manual_calibration("add button 1"))
-        self.set_add_button_2_coordinates.clicked.connect(lambda: self.manual_calibration("add button 2"))
-        self.set_add_button_3_coordinates.clicked.connect(lambda: self.manual_calibration("add button 3"))
-        self.set_add_button_4_coordinates.clicked.connect(lambda: self.manual_calibration("add button 4"))
-        self.set_add_button_5_coordinates.clicked.connect(lambda: self.manual_calibration("add button 5"))
-        self.set_amount_box_coordinates.clicked.connect(lambda: self.amount_box_coordinates_selector.show())
-        self.set_amount_box_1_coordinates.clicked.connect(lambda: self.manual_calibration("amount box 1"))
-        self.set_amount_box_2_coordinates.clicked.connect(lambda: self.manual_calibration("amount box 2"))
-        self.set_amount_box_3_coordinates.clicked.connect(lambda: self.manual_calibration("amount box 3"))
-        self.set_amount_box_4_coordinates.clicked.connect(lambda: self.manual_calibration("amount box 4"))
-        self.set_amount_box_5_coordinates.clicked.connect(lambda: self.manual_calibration("amount box 5"))
-        self.set_potion_selection_button_1_coordinates.clicked.connect(lambda: self.manual_calibration("potion selection button 1"))
-        self.set_potion_selection_button_2_coordinates.clicked.connect(lambda: self.manual_calibration("potion selection button 2"))
-        self.set_potion_selection_button_3_coordinates.clicked.connect(lambda: self.manual_calibration("potion selection button 3"))
-        self.set_auto_add_button_coordinates.clicked.connect(lambda: self.manual_calibration("auto add button"))
-        self.set_craft_button_coordinates.clicked.connect(lambda: self.manual_calibration("craft button"))
-        self.set_search_bar_coordinates.clicked.connect(lambda: self.manual_calibration("potion search bar"))
-        self.calibrate_add_completed_checkmarks_button.clicked.connect(lambda: self.manual_checkmarks_calibration())
-        self.manually_calibrate_scrolling_button.clicked.connect(lambda: self.manual_scroll_calibration())
         # Settings Buttons
         self.ps_link_save_button.clicked.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
         self.ps_link_join_button.clicked.connect(lambda: self.open_roblox(config["private server link"]))
         self.reset_add_button_template_button.clicked.connect(lambda: verify_files("add_button.png", local_appdata_directory / "Lib" / "Images"))
         self.reset_amount_box_template_button.clicked.connect(lambda: verify_files("amount_box.png", local_appdata_directory / "Lib" / "Images"))
+        # Calibration Buttons
+        self.show_calibration_overlays_button.clicked.connect(lambda: self.show_calibration_overlays())
+        self.calibrate_macro_button.clicked.connect(lambda: self.calibrate_macro())
         # Preset Buttons
         self.preset_selector.currentTextChanged.connect(lambda: self.switch_preset(self.preset_selector.currentText()) if self.preset_selector.currentText() != "Create New Preset" else self.create_new_preset())
         self.rename_preset_button.clicked.connect(self.rename_preset)
@@ -1162,7 +1040,6 @@ class Dark_Sol(QMainWindow):
         self.status_label.setObjectName("status_label")
         self.start_button.setObjectName("start_button")
         self.stop_button.setObjectName("stop_button")
-        self.calibrations_tab.setObjectName("calibrations_tab")
         self.setStyleSheet("""
             QMainWindow {background-color: black; }
             QTabBar::tab { background-color: #222; }
@@ -1229,10 +1106,6 @@ class Dark_Sol(QMainWindow):
                 if len(parts) >= 3 and parts[1].strip() in self.gui_log_levels:
                     self.log_area.appendPlainText(line.rstrip("\n"))
             self.log_read_pos = f.tell()
-
-    def auto_calibrate_scrolling(self):
-        if not self.calibrate_scrolling():
-            self.adjust_template_settings("add button 5", what_to_save=None, multiple=True, ignore_match_not_found=True, scroll_check=True, region=(0, config["positions"]["add button 4"]["bbox"][3], screen_width, config["positions"]["add button 5"]["bbox"][3] - config["positions"]["add button 4"]["bbox"][3]))
     
     def replace_template(self, template_name):
         image_location = data["position data"][template_name]["image path"]
@@ -1272,7 +1145,7 @@ class Dark_Sol(QMainWindow):
         self.open_roblox(config["private server link"])
 
         while True:
-            self.focus_roblox()
+            self.focus_roblox(ignore_roblox_not_found=True)
             if self.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True):
                 self.move_and_click((270,1050))
                 break
@@ -1281,7 +1154,15 @@ class Dark_Sol(QMainWindow):
         time.sleep(2)
         self.path_to_potion_gui()
 
-    def path_to_potion_gui(self):
+    def path_to_potion_gui(self, reset=False):
+        if reset:
+            keyboard.Controller().press(keyboard.Key.esc)
+            keyboard.Controller().release(keyboard.Key.esc)
+            keyboard.Controller().press('r')
+            keyboard.Controller().release('r')
+            keyboard.Controller().press(keyboard.Key.enter)
+            keyboard.Controller().release(keyboard.Key.enter)
+
         self.move_and_click((40,500))
         self.move_and_click((414,163))
 
@@ -1292,97 +1173,104 @@ class Dark_Sol(QMainWindow):
         time.sleep(0.2)
         mkey.right_mouse_up()
 
-        time.sleep(5)
-        keyboard.Controller().press('s')
-        time.sleep(0.0059)
-        keyboard.Controller().press('a')
-        time.sleep(3.1014)
-        keyboard.Controller().release('a')
-        time.sleep(3.0857)
-        keyboard.Controller().release('s')
-        time.sleep(0.1841)
-        keyboard.Controller().press('d')
-        time.sleep(0.9020)
-        keyboard.Controller().press('s')
-        time.sleep(0.3860)
-        keyboard.Controller().release('s')
-        time.sleep(0.0772)
-        keyboard.Controller().release('d')
-        time.sleep(0.1619)
-        keyboard.Controller().press('w')
-        time.sleep(0.1413)
-        keyboard.Controller().release('w')
-        time.sleep(0.0856)
-        keyboard.Controller().press(keyboard.Key.space)
-        time.sleep(0.1184)
-        keyboard.Controller().press('d')
-        time.sleep(0.0255)
-        keyboard.Controller().release(keyboard.Key.space)
-        time.sleep(0.2294)
-        keyboard.Controller().release('d')
-        time.sleep(0.2628)
-        keyboard.Controller().press('s')
-        time.sleep(0.6789)
-        keyboard.Controller().press('a')
-        time.sleep(0.9100)
-        keyboard.Controller().release('a')
-        time.sleep(0.9474)
-        keyboard.Controller().press('a')
-        time.sleep(0.1487)
-        keyboard.Controller().release('a')
-        time.sleep(3.9572)
-        keyboard.Controller().press('a')
-        time.sleep(2.2367)
-        keyboard.Controller().release('a')
-        time.sleep(0.3313)
-        keyboard.Controller().press('a')
-        time.sleep(0.1747)
-        keyboard.Controller().release('a')
-        time.sleep(0.7474)
-        keyboard.Controller().press('a')
-        time.sleep(1.2850)
-        keyboard.Controller().release('a')
-        time.sleep(0.0758)
-        keyboard.Controller().release('s')
-        time.sleep(0.2941)
-        keyboard.Controller().press('w')
-        time.sleep(0.0029)
-        keyboard.Controller().press('d')
-        time.sleep(0.2300)
-        keyboard.Controller().release('d')
-        time.sleep(0.0002)
-        keyboard.Controller().release('w')
-        time.sleep(0.2077)
-        keyboard.Controller().press(keyboard.Key.space)
-        time.sleep(0.0041)
-        keyboard.Controller().press('s')
-        time.sleep(0.1679)
-        keyboard.Controller().release(keyboard.Key.space)
-        time.sleep(0.5104)
-        keyboard.Controller().release('s')
-        time.sleep(0.0555)
-        keyboard.Controller().press('a')
-        time.sleep(0.0881)
-        keyboard.Controller().press(keyboard.Key.space)
-        time.sleep(0.1990)
-        keyboard.Controller().release(keyboard.Key.space)
-        time.sleep(2.8905)
-        keyboard.Controller().release('a')
-        time.sleep(0.0732)
-        keyboard.Controller().press('s')
-        time.sleep(1.8236)
-        keyboard.Controller().release('s')
-        time.sleep(2.6950)
-        keyboard.Controller().press('a')
-        time.sleep(0.7439)
-        keyboard.Controller().release('a')
-        time.sleep(0.2463)
-        keyboard.Controller().press('f')
-        time.sleep(0.0868)
-        keyboard.Controller().release('f')
-        keyboard.Controller().press('d')
-        time.sleep(1)
-        keyboard.Controller().release('d')
+        if config["path"] == "vip":
+            time.sleep(5)
+            keyboard.Controller().press('s')
+            time.sleep(0.0059)
+            keyboard.Controller().press('a')
+            time.sleep(3.1014)
+            keyboard.Controller().release('a')
+            time.sleep(3.0857)
+            keyboard.Controller().release('s')
+            time.sleep(0.1841)
+            keyboard.Controller().press('d')
+            time.sleep(0.9020)
+            keyboard.Controller().press('s')
+            time.sleep(0.3860)
+            keyboard.Controller().release('s')
+            time.sleep(0.0772)
+            keyboard.Controller().release('d')
+            time.sleep(0.1619)
+            keyboard.Controller().press('w')
+            time.sleep(0.1413)
+            keyboard.Controller().release('w')
+            time.sleep(0.0856)
+            keyboard.Controller().press(keyboard.Key.space)
+            time.sleep(0.1184)
+            keyboard.Controller().press('d')
+            time.sleep(0.0255)
+            keyboard.Controller().release(keyboard.Key.space)
+            time.sleep(0.2294)
+            keyboard.Controller().release('d')
+            time.sleep(0.2628)
+            keyboard.Controller().press('s')
+            time.sleep(0.6789)
+            keyboard.Controller().press('a')
+            time.sleep(0.9100)
+            keyboard.Controller().release('a')
+            time.sleep(0.9474)
+            keyboard.Controller().press('a')
+            time.sleep(0.1487)
+            keyboard.Controller().release('a')
+            time.sleep(3.9572)
+            keyboard.Controller().press('a')
+            time.sleep(2.2367)
+            keyboard.Controller().release('a')
+            time.sleep(0.3313)
+            keyboard.Controller().press('a')
+            time.sleep(0.1747)
+            keyboard.Controller().release('a')
+            time.sleep(0.7474)
+            keyboard.Controller().press('a')
+            time.sleep(1.2850)
+            keyboard.Controller().release('a')
+            time.sleep(0.0758)
+            keyboard.Controller().release('s')
+            time.sleep(0.2941)
+            keyboard.Controller().press('w')
+            time.sleep(0.0029)
+            keyboard.Controller().press('d')
+            time.sleep(0.2300)
+            keyboard.Controller().release('d')
+            time.sleep(0.0002)
+            keyboard.Controller().release('w')
+            time.sleep(0.2077)
+            keyboard.Controller().press(keyboard.Key.space)
+            time.sleep(0.0041)
+            keyboard.Controller().press('s')
+            time.sleep(0.1679)
+            keyboard.Controller().release(keyboard.Key.space)
+            time.sleep(0.5104)
+            keyboard.Controller().release('s')
+            time.sleep(0.0555)
+            keyboard.Controller().press('a')
+            time.sleep(0.0881)
+            keyboard.Controller().press(keyboard.Key.space)
+            time.sleep(0.1990)
+            keyboard.Controller().release(keyboard.Key.space)
+            time.sleep(2.8905)
+            keyboard.Controller().release('a')
+            time.sleep(0.0732)
+            keyboard.Controller().press('s')
+            time.sleep(1.8236)
+            keyboard.Controller().release('s')
+            time.sleep(2.6950)
+            keyboard.Controller().press('a')
+            time.sleep(0.7439)
+            keyboard.Controller().release('a')
+            time.sleep(0.2463)
+            keyboard.Controller().press('f')
+            time.sleep(0.0868)
+            keyboard.Controller().release('f')
+            keyboard.Controller().press('d')
+            time.sleep(1)
+            keyboard.Controller().release('d')
+        elif config["path"] == "normal":
+            pass
+        elif config["path"] == "abyssal hunter/vip":
+            pass
+        elif config["path"] == "abyssal hunter/normal":
+            pass
 
     def select_region(self):
         loop = QEventLoop()
@@ -1465,7 +1353,9 @@ class Dark_Sol(QMainWindow):
         widget.close()
         return selection_result
 
-    def manual_calibration(self, calibration_name, save=True, what_to_save=("bbox", "center")):
+    def manual_area_calibration(self, calibration_name, what_to_save=("bbox", "center")):
+        if not isinstance(what_to_save, (tuple)):
+            what_to_save = (what_to_save,)
         self.focus_roblox()
         time.sleep(0.2)
         result = self.select_region()
@@ -1475,7 +1365,7 @@ class Dark_Sol(QMainWindow):
             bbox = result
             center = (int((bbox[0] + bbox[2]) // 2), int((bbox[1] + bbox[3]) // 2))
             log.debug(f"Manual calibration for {calibration_name} completed successfully.")
-            if save:
+            if what_to_save is not None:
                 if not isinstance(what_to_save, (tuple)):
                     what_to_save = (what_to_save,)
                 config["positions"][calibration_name] = {key: value for key, value in [("bbox", bbox), ("center", center)] if key in what_to_save}
@@ -1851,22 +1741,6 @@ class Dark_Sol(QMainWindow):
             enabled_checkbox.toggled.connect(potion_enabled)
 
             self.presets_tab_content_layout.addWidget(potion_section)
-
-    def switch_calibration_mode(self):
-        if self.calibration_mode == "auto":
-            self.calibrations_stack.setCurrentIndex(1)
-            self.calibration_mode_button.setText("Current Mode: Semi-Automatic Calibration")
-            self.calibration_mode = "semi-auto"
-
-        elif self.calibration_mode == "semi-auto":
-            self.calibrations_stack.setCurrentIndex(2)
-            self.calibration_mode_button.setText("Current Mode: Manual Calibration")
-            self.calibration_mode = "manual"
-
-        elif self.calibration_mode == "manual":
-            self.calibrations_stack.setCurrentIndex(0)
-            self.calibration_mode_button.setText("Current Mode: Automatic Calibration")
-            self.calibration_mode = "auto"
         
     def show_calibration_overlays(self):
         for calibration in config["positions"].keys():
@@ -1981,22 +1855,84 @@ class Dark_Sol(QMainWindow):
     def safe_image_find(self, calibration, what_to_save=("center", "bbox"), multiple=False, ignore_match_not_found=False, region=None):
         if not self.auto_find_image(calibration, what_to_save=what_to_save, multiple=multiple, ignore_match_not_found=ignore_match_not_found, region=region):
             if not self.adjust_template_settings(calibration, what_to_save=what_to_save, multiple=multiple, ignore_match_not_found=ignore_match_not_found, region=region):
-                log.info(f"Calibration Failed: '{calibration}'")
+                log.info(f"Auto Calibration Failed: '{calibration}'")
                 return False
-        log.info(f"Calibration Found: '{calibration}'")
+        log.info(f"Auto Calibration Found: '{calibration}'")
         return True
-    
-    def auto_calibrate(self):
-        if not self.focus_roblox():
-            QMessageBox.warning(self, "Roblox Not Found", "Could not find a Roblox window. Please make sure Roblox is running.")
-            return
+
+    def calibrate_macro(self):
+        def calibrate_position(calibration, what_to_save=("center", "bbox"), multiple=False, ignore_match_not_found=False, region=None, area_required=False, dont_save_center=False, save_calibrated_position=True):
+            if self.safe_image_find(calibration, what_to_save=what_to_save, multiple=multiple, ignore_match_not_found=ignore_match_not_found, region=region):
+                if save_calibrated_position:
+                    config["calibrated positions"][calibration] = {key: True for key in what_to_save}
+                    nice_config_save()
+                return True
+            if not str(self.create_msg_box("Calibrations", f"Auto calibration for '{calibration}' either failed or was canceled. \n Would you like to manually calibrate this position?", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No, msg_box_type=QMessageBox.Icon.Question)).removeprefix("&") == "Yes":
+                return False
+                
+            if area_required:
+                self.create_msg_box("Calibrations", "This calibration requires the entire area to be highlighted for the macro to work")
+                if not dont_save_center:
+                    if self.manual_area_calibration(calibration, what_to_save=("bbox", "center")):
+                        if save_calibrated_position:
+                            config["calibrated positions"][calibration] = {"bbox": True, "center": True}
+                            nice_config_save()
+                        return True
+                else:
+                    if self.manual_area_calibration(calibration, what_to_save="bbox"):
+                        if save_calibrated_position:
+                            config["calibrated positions"][calibration] = {"bbox": True}
+                            nice_config_save()
+                        return True
+            else:
+                if self.create_msg_box("Calibrations", " Would you like to select the area or just use the click coordinate for this position?", "Area", "Click Position", msg_box_type=QMessageBox.Icon.Question) == "Area":
+                    if self.manual_area_calibration(calibration, what_to_save=("bbox", "center")):
+                        if save_calibrated_position:
+                            config["calibrated positions"][calibration] = {"bbox": True, "center": True}
+                            nice_config_save()
+                        return True
+                else:
+                    if self.manual_point_calibration(calibration):
+                        if save_calibrated_position:
+                            config["calibrated positions"][calibration] = {"center": True}
+                            nice_config_save()
+                        return True   
+            return False
         
+        if not config["calibrated positions"]["path"]:
+            def choose_path():
+                if path_selector.currentText() == "Normal":
+                    config["path"] = "normal"
+                elif path_selector.currentText() == "VIP":
+                    config["path"] = "vip"
+                elif path_selector.currentText() == "Abyssal Hunter (VIP)":
+                    config["path"] = "abyssal hunter/vip"
+                elif path_selector.currentText() == "Abyssal Hunter (Normal)":
+                    config["path"] = "abyssal hunter/normal"
+                config["calibrated positions"]["path"] = True
+                nice_config_save()
+
+            path_selector_widget = QDialog(self)
+            path_selector_layout = QVBoxLayout(path_selector_widget)
+            path_selector_layout.addWidget(QLabel("Select the path you want to calibrate:"))
+            path_selector = QComboBox()
+            path_selector.addItems(["Normal", "VIP", "Abyssal Hunter (VIP)", "Abyssal Hunter (Normal)"])
+            path_selector_done_button = QPushButton("Select")
+            path_selector_done_button.clicked.connect(lambda: (choose_path(), path_selector_widget.close()))
+            path_selector_layout.addWidget(path_selector)
+            path_selector_layout.addWidget(path_selector_done_button)
+            path_selector_widget.exec()
+
+        if not self.focus_roblox():
+            return
         time.sleep(0.2)
-        if not self.safe_image_find("potion menu item button"):
-            return
+        if not config["calibrated positions"]["potion menu item button"]["center"]:
+            if not calibrate_position("potion menu item button"):
+                return
         self.move_and_click(config["positions"]["potion menu item button"]["center"])
-        if not self.safe_image_find("potion search bar"):
-            return
+        if not config["calibrated positions"]["potion search bar"]["center"]:
+            if not calibrate_position("potion search bar"):
+                return
         self.move_and_click(config["positions"]["potion search bar"]["center"])
         mkey.left_click()
         mkey.left_click()
@@ -2005,9 +1941,9 @@ class Dark_Sol(QMainWindow):
         keyboard.Controller().press(keyboard.Key.enter)
         time.sleep(0.1)
         for count in range(1, 4):
-            if not self.safe_image_find("potion selection button " + str(count + 1)):
-                return
-        self.move_and_click(config["positions"]["potion selection button 1"]["center"])
+            if not config["calibrated positions"]["potion selection button " + str(count)]["center"]:
+                if not calibrate_position("potion selection button " + str(count)):
+                    return
         self.move_and_click(config["positions"]["potion search bar"]["center"])
         mkey.left_click()
         mkey.left_click()
@@ -2016,49 +1952,64 @@ class Dark_Sol(QMainWindow):
         keyboard.Controller().press(keyboard.Key.enter)
         time.sleep(0.1)
         self.move_and_click(config["positions"]["potion selection button 1"]["center"])
-        if not self.safe_image_find("open recipe button"):
-            return
+        if not config["calibrated positions"]["open recipe button"]["center"]:
+            if not calibrate_position("open recipe button"):
+                return
         self.move_and_click(config["positions"]["open recipe button"]["center"])
-        if not self.safe_image_find("amount box 1"):
-            return
+        if not config["calibrated positions"]["craft button"]["center"]:
+            if not calibrate_position("craft button"):
+                return
+        if not config["calibrated positions"]["auto add button"]["bbox"] or not config["calibrated positions"]["auto add button"]["center"]:
+            if not calibrate_position("auto add button", area_required=True):
+                return
+        if not config["calibrated positions"]["amount box 1"]["center"]:
+            if not calibrate_position("amount box 1"):
+                return
         self.move_and_click(config["positions"]["amount box 1"]["center"], False)
         pyautogui.scroll(2000)
-        for add_button in config["positions"]["add button"]["sub positions"][:4]:
-            if not self.safe_image_find(add_button, multiple=True):
-                return
-        for amount_box in config["positions"]["amount box"]["sub positions"][:4]:
-            if not self.safe_image_find(amount_box, multiple=True):
-                return
+        for add_button in data["position data"]["add button"]["sub positions"][:4]:
+            if not config["calibrated positions"][add_button]["center"]:
+                if not calibrate_position(add_button, multiple=True):
+                    return
+        for amount_box in data["position data"]["amount box"]["sub positions"][:4]:
+            if not config["calibrated positions"][amount_box]["center"]:
+                if not calibrate_position(amount_box, multiple=True):
+                    return
         self.move_and_click(config["positions"]["add button 1"]["center"], False)
         pyautogui.scroll(-2000)
         time.sleep(0.1)
-        if not self.safe_image_find("add button 5", multiple=True):
-            return
-        time.sleep(0.1)
-        if not self.safe_image_find("amount box 5", multiple=True):
-            return
-        if not self.safe_image_find("craft button"):
-            return
-        if not self.safe_image_find("auto add button"):
-            return
-        pyautogui.scroll(2000)
-        if not self.calibrate_scrolling():
-            if not self.adjust_template_settings("add button 5", scroll_check=True):
+        if not config["calibrated positions"]["add button 5"]["center"]:
+            if not calibrate_position("add button 5", multiple=True):
                 return
+        time.sleep(0.1)
+        if not config["calibrated positions"]["amount box 5"]["center"]:
+            if not calibrate_position("amount box 5", multiple=True):
+                return
+        self.move_and_click(config["positions"]["amount box 1"]["center"], False)
+        pyautogui.scroll(2000)
+        if not config["calibrated positions"]["scroll amounts"]:
+            if not self.calibrate_scrolling():
+                if not self.adjust_template_settings("add button 5", scroll_check=True):
+                    if not str(self.create_msg_box("Calibrations", "Scroll calibration failed or was cancelled. would you like to manually calibrate it?", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No, msg_box_type=QMessageBox.Icon.Question)).removeprefix("&") == "Yes":
+                        return
+                    if not self.manual_scroll_calibration():
+                        return
+            config["calibrated positions"]["scroll amounts"] = True
+            nice_config_save()
         
         self.move_and_click(config["positions"]["amount box 1"]["center"], False)
         pyautogui.scroll(2000)
         mkey.left_click()
-        mkey.left_click
+        mkey.left_click()
         keyboard.Controller().type("20")
         self.move_and_click(config["positions"]["add button 1"]["center"])
         time.sleep(0.1)
-
-        if not self.safe_image_find("add completed checkmark 1"):
-            return
+        if not config["calibrated positions"]["add completed checkmarks"]:
+            if not calibrate_position("add completed checkmark 1", area_required=True, dont_save_center=True, save_calibrated_position=False):
+                return
+            self.calibrate_checkmarks()
         
-        self.calibrate_checkmarks()
-        self.move_and_click(config["positions"]["search bar"]["center"], True)
+        self.move_and_click(config["positions"]["potion search bar"]["center"])
         mkey.left_click()
         mkey.left_click()
         keyboard.Controller().type("godly")
@@ -2067,54 +2018,6 @@ class Dark_Sol(QMainWindow):
         self.show_calibration_overlays()
         self.create_msg_box("Auto Calibration Complete", "Auto calibration is complete. Please verify the positions are correct.", internal=False)
         self.show_calibration_overlays()
-
-    def find_add_buttons(self):
-        self.focus_roblox()
-        time.sleep(0.2)
-        if not self.safe_image_find("amount box 1"):
-            return
-        self.move_and_click(config["positions"]["amount box 1"]["center"], False)
-        pyautogui.scroll(2000)
-        for add_button in data["position data"]["add button"]["sub positions"]:
-            if not self.safe_image_find(add_button, multiple=True):
-                return
-        pyautogui.scroll(-2000)
-        time.sleep(0.2)
-        if not self.safe_image_find("add button 5", multiple=True, region=(0, config["positions"]["add button 4"]["bbox"][3], screen_width, config["positions"]["add button 5"]["bbox"][3] - config["positions"]["add button 4"]["bbox"][3])):
-            return
-        
-    def find_amount_boxes(self):
-        self.focus_roblox()
-        time.sleep(0.2)
-        if not self.safe_image_find("amount box 1"):
-            return
-        self.move_and_click(config["positions"]["amount box 1"]["center"], False)
-        pyautogui.scroll(2000)
-        for amount_box in config["positions"]["amount box"]["sub positions"][:4]:
-            if not self.safe_image_find(amount_box, multiple=True):
-                return
-        pyautogui.scroll(-2000)
-        time.sleep(0.2)
-        if not self.safe_image_find("amount box 5", multiple=True):
-            return
-    
-    def find_potion_selection_buttons(self):
-        self.focus_roblox()
-        time.sleep(0.2)
-        for count in range(3):
-            if not self.safe_image_find("potion selection button " + str(count + 1)):
-                return
-        
-    def find_and_calibrate_checkmarks(self):
-        self.focus_roblox()
-        time.sleep(0.2)
-        self.move_and_click(config["positions"]["amount box 1"]["center"], False)
-        pyautogui.scroll(2000)
-        mkey.left_click()
-        mkey.left_click()
-        if not self.safe_image_find("add completed checkmark 1"):
-            return
-        self.calibrate_checkmarks()
 
     def calibrate_checkmarks(self):
         checkmark_width_1 = config["positions"][f"add completed checkmark 1"]["bbox"][0]
@@ -2129,43 +2032,92 @@ class Dark_Sol(QMainWindow):
         nice_config_save()
         for count in range(5):
             self.create_overlay(bbox=config["positions"][f"add completed checkmark {count + 1}"]["bbox"])
-        self.create_msg_box("Checkmark Calibration Complete", "checkmark calibration is complete. Please verify the positions are correct.", internal=False)
+        checkmarks_calibrated_correctly = str(self.create_msg_box("Checkmark Calibration Complete", "checkmark calibration is complete. Please verify the positions are correct.", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No, internal=False)).removeprefix("&")
         self.create_overlay(disabled=True)
+        if checkmarks_calibrated_correctly == "Yes":
+            config["calibrated positions"]["add completed checkmarks"] = True
+            nice_config_save()
+            return True
+        else:
+            return False
 
-    def manual_scroll_calibration(self):
-        def point_clicked(x, y, button, pressed):
-            scroll_calibration_mouse_listener.stop()
-
-        self.focus_roblox()
-        scroll_calibration_mouse_listener = mouse.Listener(on_click=point_clicked)
-        scroll_calibration_mouse_listener.start()
-        scroll_calibration_mouse_listener.join()
-
-    def manual_checkmarks_calibration(self):
-        calibrated = self.manual_calibration("add completed checkmark 1", save=True, what_to_save=("bbox",))
-        if calibrated is None:
+    def select_point(self):
+        if not self.focus_roblox():
             return
-        self.calibrate_checkmarks()
+        time.sleep(0.2)
 
-    def focus_roblox(self):
+        loop = QEventLoop()
+        selected_center = None
+        widget = QWidget()
+        widget.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
+        widget.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        widget.setMouseTracking(True)
+        widget.setCursor(Qt.CursorShape.CrossCursor)
+
+        def paint_event(event):  # type: ignore[no-untyped-def]
+            painter = QPainter(widget)
+            painter.fillRect(widget.rect(), QColor(120, 120, 120, 80))
+            painter.end()
+
+        def key_press_event(event):  # type: ignore[no-untyped-def]
+            if event is None:
+                return
+            if event.key() == Qt.Key.Key_Escape:
+                loop.quit()
+                return False
+
+        def mouse_press_event(event):  # type: ignore[no-untyped-def]
+            nonlocal selected_center
+            if event is None:
+                return
+            if event.button() != Qt.MouseButton.LeftButton:
+                return
+            global_pos = widget.mapToGlobal(event.pos())
+            center_x = int(round(global_pos.x() * scale))
+            center_y = int(round(global_pos.y() * scale))
+            selected_center = (center_x, center_y)
+            loop.quit()
+
+        widget.paintEvent = paint_event  # type: ignore[method-assign]
+        widget.keyPressEvent = key_press_event  # type: ignore[method-assign]
+        widget.mousePressEvent = mouse_press_event  # type: ignore[method-assign]
+
+        widget.showFullScreen()
+        loop.exec()
+        widget.close()
+        return selected_center
+
+    def manual_point_calibration(self, calibration_name):
+        point = self.select_point()
+        if not point:
+            log.info(f"Manual point calibration for '{calibration_name}' was canceled.")
+            return False
+        config["positions"]["center"] = point
+        nice_config_save()
+        log.info(f"Manual point calibration for '{calibration_name}' completed successfully.")
+        return True
+        
+    def manual_scroll_calibration(self):
+        pass
+
+    def focus_roblox(self, ignore_roblox_not_found=False):
         hwnd = win32gui.FindWindow(None, "Roblox")
         if not hwnd:
-            log.warning("Roblox window not found!")
+            if not ignore_roblox_not_found:
+                log.warning("Roblox window not found!")
+                QMessageBox.warning(self, "Roblox Not Found", "Could not find a Roblox window. Please make sure Roblox is running.")
             return False
 
         if win32gui.IsIconic(hwnd):
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-
         if win32gui.GetForegroundWindow() != hwnd:
             try:
                 win32gui.BringWindowToTop(hwnd)
                 win32gui.SetForegroundWindow(hwnd)
             except Exception:
                 log.error("Failed to bring Roblox to the foreground. It may be minimized or not responding.")
-
         if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
-
         return True
 
     def close_roblox(self):
@@ -2416,7 +2368,7 @@ class Dark_Sol(QMainWindow):
         self.mini_status_widget.show()
         self.update_status("Calibrating", what_to_update="General")
         self.update_status("Calibrating scrolling")
-        QApplication.processEvents()
+        app.processEvents()
         self.move_and_click(config["positions"]["amount box 5"]["center"], False)
         pyautogui.scroll(2000)
         count1 = count_scrolls()
@@ -2427,7 +2379,7 @@ class Dark_Sol(QMainWindow):
         self.create_msg_box("Scroll Calibration", f"scrolls needed to reach 5th add button: {count1}", internal=False)
         if not count_scrolls(False):
             self.mini_status_widget.hide()
-            QApplication.processEvents()
+            app.processEvents()
             return False
         self.focus_roblox()
         count2 = count_scrolls()
@@ -2437,7 +2389,7 @@ class Dark_Sol(QMainWindow):
         nice_config_save()
         self.create_msg_box("Scroll Calibration", f"scrolls needed to reach past 5th add button: {count2}", internal=False)
         self.mini_status_widget.hide()
-        QApplication.processEvents()
+        app.processEvents()
         return True
             
     def start_macro(self):
