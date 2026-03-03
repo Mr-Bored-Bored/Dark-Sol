@@ -924,6 +924,7 @@ class Dark_Sol(QMainWindow):
             self.log_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.log_watcher = QFileSystemWatcher([f"{local_appdata_directory / 'Dark Sol Log.log'}"])
         self.log_watcher.fileChanged.connect(self.update_gui_log)
+        self.update_gui_log(reset_log=True)
         self.logging_settings_gui.setWindowTitle("Dark Sol Logging Settings")
         self.logging_settings_gui_qv_layout.addLayout(self.logging_settings_gui_qh_layout)
         self.logging_settings_gui_qv_layout.addLayout(self.logging_settings_gui_qh_layout2)
