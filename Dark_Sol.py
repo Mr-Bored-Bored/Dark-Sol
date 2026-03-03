@@ -154,14 +154,14 @@ log.debug("DPI Tools Loaded")
 # Imports
 import os, sys, threading, pyautogui, time, ctypes, pathlib, json, win32gui, win32con, re, requests, io, zipfile, socket, subprocess
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout,
-QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QStackedWidget, QComboBox, QLineEdit, QDialog,
+QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QComboBox, QLineEdit, QDialog,
     QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QLineEdit)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl, QFileSystemWatcher
 from pyscreeze import ImageNotFoundException as pyscreeze_ImageNotFoundException
 from packaging import version
 from PIL import Image, ImageGrab
-from pynput import keyboard, mouse
+from pynput import keyboard
 from mousekey import MouseKey
 from copy import deepcopy
 import numpy as np
