@@ -1194,8 +1194,8 @@ class Dark_Sol(QMainWindow):
             QPushButton#stop_button {font-size: 22pt;}
             QLabel {color: cyan; font-size: 14pt;}
             QLabel#status_label {color: cyan; font-size: 38pt;}
+            QPushButton:hover {background-color: #0d2c33;}
         """)
-        #QPushButton:hover {background-color: #0d2c33;}
         log.info("Ui Initialized")
         self.update_gui_log()
 
