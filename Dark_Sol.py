@@ -155,7 +155,7 @@ log.debug("DPI Tools Loaded")
 import os, sys, threading, pyautogui, time, ctypes, pathlib, json, win32gui, win32con, re, requests, io, zipfile, socket, subprocess
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout,
 QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QComboBox, QLineEdit, QDialog, QGridLayout,
-    QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QLineEdit)
+    QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QSizePolicy, QLineEdit)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices, QRegularExpressionValidator
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl, QFileSystemWatcher, QRegularExpression
 from pyscreeze import ImageNotFoundException as pyscreeze_ImageNotFoundException
@@ -164,7 +164,6 @@ from PIL import Image, ImageGrab
 from pynput import keyboard
 from mousekey import MouseKey
 from copy import deepcopy
-from math import floor
 import numpy as np
 log.debug("Imports Loaded", " Hi This is an easter egg lol 🥚")
                    
@@ -856,36 +855,74 @@ class Dark_Sol(QMainWindow):
        
         self.calibrate_macro_button = QPushButton("Calibrate Macro")
         self.calibrations_widget = QWidget()
-        self.calibrations_widget.setStyleSheet("""QWidget {background-color: black; color: cyan; font-size: 12px;} QCheckBox {border: 1px solid cyan; border-radius: 5px; padding: 3px;} QPushButton {border: 1px solid cyan; border-radius: 5px; padding: 3px;}""")
+        self.calibrations_widget.setStyleSheet("""
+            QWidget {background-color: black; color: cyan; font-size: 14px;}
+            QPushButton {border: 1px solid cyan; border-radius: 5px; font-size: 14px; padding-left: 5px; padding-right: 5px;}
+            QCheckBox {border: 1px solid cyan; border-radius: 5px; font-size: 14px; padding-left: 5px; padding-right: 5px;}
+        """)
         
         grid = QGridLayout(self.calibrations_widget)
-        self.calibrations_widget.show()
-        
-        self.calibrate_main_macro_loop_checkbox = QCheckBox("Potion Crafting")
+        left_title = QLabel("Calibration")
+        right_title = QLabel("Sections to Calibrate")
+        title_font = left_title.font()
+        title_font.setBold(True)
+        left_title.setFont(title_font)
+        right_title.setFont(title_font)
+        left_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        right_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.advanced_calibrations_button = QPushButton("Advanced Calibrations")
+        self.advanced_calibrations_button.clicked.connect(lambda: self.advanced_calibrations_widget.show())
+
+        self.calibrate_potion_crafting_checkbox = QCheckBox("Potion Crafting")
         self.calibrate_auto_path_checkbox = QCheckBox("Auto Path")
         self.calibrate_auto_rejoin_checkbox = QCheckBox("Auto Rejoin")
-        self.calibrate_main_macro_loop_checkbox.setChecked(config["sections to calibrate"]["potion Crafting"])
-        self.calibrate_auto_path_checkbox.setChecked(config["sections to calibrate"]["auto Path"])
-        self.calibrate_auto_rejoin_checkbox.setChecked(config["sections to calibrate"]["auto Rejoin"])
-        self.calibrate_main_macro_loop_checkbox.stateChanged.connect(lambda state: (config["sections to calibrate"].__setitem__({"potion Crafting": True if state == 2 else False}), nice_config_save()))
-        self.calibrate_auto_path_checkbox.stateChanged.connect(lambda state: (config["sections to calibrate"].__setitem__({"auto Path": True if state == 2 else False}), nice_config_save()))
-        self.calibrate_auto_rejoin_checkbox.stateChanged.connect(lambda state: (config["sections to calibrate"].__setitem__({"auto Rejoin": True if state == 2 else False}), nice_config_save()))
+        self.calibrate_potion_crafting_checkbox.setChecked(config["sections to calibrate"]["potion crafting"])
+        self.calibrate_auto_path_checkbox.setChecked(config["sections to calibrate"]["auto path"])
+        self.calibrate_auto_rejoin_checkbox.setChecked(config["sections to calibrate"]["auto rejoin"])
+
+        self.calibrate_potion_crafting_checkbox.stateChanged.connect(lambda state: (config["sections to calibrate"].__setitem__("potion crafting", True if state == 2 else False), nice_config_save()))
+        self.calibrate_auto_path_checkbox.stateChanged.connect(lambda state: (config["sections to calibrate"].__setitem__("auto path", True if state == 2 else False), nice_config_save()))
+        self.calibrate_auto_rejoin_checkbox.stateChanged.connect(lambda state: (config["sections to calibrate"].__setitem__("auto rejoin", True if state == 2 else False), nice_config_save()))
+
+        left_top_line = QFrame()
+        left_top_line.setFixedHeight(2)
+        left_top_line.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        left_top_line.setStyleSheet("background-color: cyan;")
+
+        right_top_line = QFrame()
+        right_top_line.setFixedHeight(2)
+        right_top_line.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        right_top_line.setStyleSheet("background-color: cyan;")
+
+        separator = QFrame()
+        separator.setFixedWidth(2)
+        separator.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        separator.setStyleSheet("background-color: cyan;")
+
+        grid.addWidget(left_title, 0, 0)
+        grid.addWidget(left_top_line, 1, 0)
+        grid.addWidget(self.calibrate_macro_button, 2, 0)
+        grid.addWidget(self.show_calibration_overlays_button, 3, 0)
+        grid.addWidget(self.advanced_calibrations_button, 4, 0)
+
+        grid.addWidget(separator, 0, 1, 5, 1)
+
+        grid.addWidget(right_title, 0, 2)
+        grid.addWidget(right_top_line, 1, 2)
+        grid.addWidget(self.calibrate_potion_crafting_checkbox, 2, 2)
+        grid.addWidget(self.calibrate_auto_path_checkbox, 3, 2)
+        grid.addWidget(self.calibrate_auto_rejoin_checkbox, 4, 2)
+
         self.calibrations_widget_button.clicked.connect(lambda: self.calibrations_widget.show())
-        grid.addWidget(self.calibrate_main_macro_loop_checkbox, 2, 0)
-        grid.addWidget(self.calibrate_auto_path_checkbox, 3, 0)
-        grid.addWidget(self.calibrate_auto_rejoin_checkbox, 4, 0)
-        grid.addWidget(self.calibrate_macro_button, 5, 0)
-        grid.addWidget(self.show_calibration_overlays_button, 6, 0)
-        self.advanced_calibrations_button = QPushButton("Advanced Calibrations")
         self.advanced_calibrations_widget = QWidget()
         self.advanced_calibrations_widget.setWindowTitle("Advanced Calibrations")
         self.advanced_calibrations_widget.setStyleSheet(
             "QWidget {background-color: black; color: cyan; font-size: 12px;} "
-            "QLineEdit {border: 1px solid cyan; border-radius: 5px; padding: 3px; color: cyan;} "
-            "QPushButton {border: 1px solid cyan; border-radius: 5px; padding: 3px;}"
+            "QLineEdit { border: 1px solid cyan; border-radius: 5px; padding: 3px; color: cyan;} "
+            "QPushButton { border: 1px solid cyan; border-radius: 5px; padding: 3px;}"
         )
         self.advanced_calibrations_button.clicked.connect(lambda: self.advanced_calibrations_widget.show())
-        grid.addWidget(self.advanced_calibrations_button, 7, 0)
 
         advanced_calibrations_layout = QVBoxLayout(self.advanced_calibrations_widget)
 
@@ -911,8 +948,6 @@ class Dark_Sol(QMainWindow):
         advanced_calibrations_grid.addWidget(header_bbox, 0, 4)
 
         int_list_validator = QRegularExpressionValidator(QRegularExpression(r"^-?\d+(\s*,\s*-?\d+)*$"))
-        center_edits = {}
-        bbox_edits = {}
 
         def format_values(values: list[int]) -> str:
             return ", ".join(str(v) for v in values)
