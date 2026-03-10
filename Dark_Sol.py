@@ -6,11 +6,13 @@
 import logging, pathlib, os
 from logging.handlers import RotatingFileHandler
 local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"]) / "Dark Sol"
+os.makedirs(local_appdata_directory, exist_ok=True)
+log_path = local_appdata_directory / "Dark Sol Log.log"
 
 logger = logging.getLogger("DarkSol")
 logger.setLevel(logging.DEBUG)
 logger.propagate = False
-file_handler = RotatingFileHandler(local_appdata_directory / "Dark Sol Log.log", maxBytes=50 * 1024 * 1024, backupCount=1, encoding="utf-8")
+file_handler = RotatingFileHandler(log_path, maxBytes=50 * 1024 * 1024, backupCount=1, encoding="utf-8")
 file_handler.setLevel(logging.DEBUG)
 logging_formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 logging_formatter.default_msec_format = "%s.%03d"
@@ -78,9 +80,7 @@ log.debug("Imports Loaded", " Hi This is an easter egg lol 🥚")
                    
 # Setup Imports
 mkey = MouseKey()
-local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"]) / "Dark Sol"
 config_path = local_appdata_directory / "Dark Sol config.json"
-os.makedirs(local_appdata_directory, exist_ok=True)
 log.debug("Imports Initalized")
 
 # Constants
@@ -1064,7 +1064,7 @@ class Dark_Sol(QMainWindow):
         if not config["wrap log area"]:
             self.log_area.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
             self.log_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.log_watcher = QFileSystemWatcher([f"{local_appdata_directory / 'Dark Sol Log.log'}"])
+        self.log_watcher = QFileSystemWatcher([f"{log_path}"])
         self.log_watcher.fileChanged.connect(self.update_gui_log)
         self.update_gui_log(reset_log=True)
         self.logging_settings_gui.setWindowTitle("Dark Sol Logging Settings")
@@ -1225,7 +1225,7 @@ class Dark_Sol(QMainWindow):
         nice_config_save()
 
     def get_current_logs(self):
-        with open(local_appdata_directory / "Dark Sol Log.log", "r", encoding="utf-8") as f:
+        with open(log_path, "r", encoding="utf-8") as f:
             self.log_read_pos = 0
             while True:
                 line_pos = f.tell()
@@ -1241,7 +1241,7 @@ class Dark_Sol(QMainWindow):
             self.log_read_pos = 0
             if config["show only current logs"]:
                 self.get_current_logs()
-        with open(local_appdata_directory / "Dark Sol Log.log", "r", encoding="utf-8") as f:
+        with open(log_path, "r", encoding="utf-8") as f:
             f.seek(self.log_read_pos)
             for line in f:
                 parts = line.split(" | ", 2)
