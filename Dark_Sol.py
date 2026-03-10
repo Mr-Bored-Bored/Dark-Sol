@@ -1,96 +1,6 @@
 """
-# Tasks (For Mr. Bored)
-
-# Necessary for First Release:
-- Calibrations
-1. Fix manual scroll calibration
-2. Improve calibration gui / fix it to support new systems
-3. Make it so that macro cant start until calibrations are complete
-4. Make a list of features that show if the repo cannot be reached
-5. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
-6. Add play button to calibrations
-7. Add collection buttons to calibrations (exit button may not be added)
-8. If main gui closes close every other gui
-
-- Random
-9. Finish auto updater
-10. Make it so that overlays can show individual pixels instead of an area
-11. Add paths for auto rejoin
-12. Check if roblox is open and if sols is open before starting macro and add a msg box if not also add settings for these
-13. Add crafted potion detection / stats
-14. Make ps join button check for valid ps link and save private server link button
-15. When macro starts check if roblox is open by checking for a window id if it is then check logs to see if the latest log is a join of "place 15532962292" or a disconnect of any kind also if at any point the log shows roblox was closed or the user was disconnected (kill the macro thread) and rejoin the private server if enabled and add to log
-16. Add potion gui entered check
-17. Add config corrupted check and fix config
-18. Add complete macro exception handling with message box and logging
-19. Add msgbox for when something is being downloaded from the repo
-20. Make requirements file and check what its file type should be 
-21. Add current auto add potion enabled check (after pause / unpause) and every 10 mins (or a way to check without clicking auto add button)
-22. Add stuff for potions that have only requires manual crafting
-23. Make potion menu item button be clicked with search for potion function
-24. Add log path variable instead of hardcoding the path in multiple places
-25. Check roblox logs for disconnect if sols rng is detected to be open before looking for play button
-26. Add checkmark calibration failsafe (if calibration was not done to not continue)
-27. Make remove overlay possible for specific overlays instead of just all overlays
-28. Standerized create_msg_box returns and make it skip the ok one unless a parameter is enabled
-29. Add a function to do specific points instead of a entire area for a position also allow the user to choose which one they want to do
-30. Make requirements downloader check lib folder in github instead of manual list of files and folders to check    
-31. Fix Logging before appdata
-- Mini Status Label
-32. Make Mini Status Label movable
-
-- Final Checks
-33. Remove excess delays / slowdowns (ensure reliability)
-34. Check print statements and remove unnecessary ones
-35. Verify macro can handle everything after entering potion craft gui
-
-# Might be added for First Release:
-1. Add multi template for single calibration
-2. Advanced auto updater (with progress bar)
-3. Add settings tab functionality
-4. Add tooltips to all buttons (if necessary)
-5. Add function to check multiple coordinates and seach each one below (mainly for godly's)
-6. Ability to slow down macro if it is going too fast and missing things (mainly for lower end pcs)
-7. Always on top setting
-8. Make calibration checks not need manual scrolling to verify calibrations
-9. Add the ability to reset templates to default by pulling from the repo
-10. Add the ability to craft a specfic amount of potions and then stop crafting that potion and if all have been crafted then stop
-11. Highest donatator list with messages
-
-# Planned for the future:
-1. Make dpi, resolution, scale and etc global
-2. Make all hardcoded resolutions dynamic (aka figure out how scaling works)(just praying current code scales atp)
-3. Add main and auto updater reinstall arguements
-4. Fix multi monitor awareness
-5. Fix other widgets not closing properly
-6. Make plugins system
-7. Add theme tab functionality (Requires style sheet overhaul and compression to allow for user friendly adjustments)
-8. Able to handle corrupt config
-9. Add config backups
-10. Add importing / exporting presets
-11. Add importing / exporting themes
-12. Add ability to change hotkeys
-13. Make it so that it can add in 1's instead of just the amount numbers
-14. Add custom log messages (ability for certain logs to not show)
-15. Add complete calibration (paths needed)
-16. Add private server reconnects (paths needed)
-17. Make macro full screen compatible (only needs template rescaling adjustment(i think))
-18. Complete overhall and  usage of multi classes
-19. Auto Quest Plugin (Depending on what cresqnt and noteab say)
-20. Make auto rare biome popping plugin (Depending on what cresqnt and noteab say)
-21. Make it so that you can adjust wait time after reset in settings
-22. Make it so that rescaled templates are saved so the function doesnt have to be called every time
-23. Add ability to craft Limbo potions (aka enter limbo for easier aura gathering)
-24. Add log reader arguement (so user can read logs easier if main script is crashing)
-25. Auto updater can procedurally update if latest version from repo is uncompatible with current version instead of just saying manual update is needed
-- Mini Status Label
-26. Make mini status label show auto add waitlist and add setting for it 
-
---- IGNORE ---
 # Start Arguments
 --reset_config: Resets config to default settings
-
-# Completed (To write commit messages):
 """
 # Logging
 import logging, pathlib, os
@@ -174,7 +84,7 @@ os.makedirs(local_appdata_directory, exist_ok=True)
 log.debug("Imports Initalized")
 
 # Constants
-current_version = "0.0.0.4"
+current_version = "0.0.0.5"
 folders_to_check = ("Icons", "Images")
 icons_to_check = ("up chevron.svg", "down chevron.svg", "up chevron disabled.svg")
 images_to_check = ("add button.png", "amount box.png", "auto add button.png", "craft button.png", "potion search bar.png", "open recipe button.png",
