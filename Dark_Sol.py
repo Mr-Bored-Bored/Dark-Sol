@@ -7,11 +7,10 @@
 2. Improve calibration gui / fix it to support new systems
 3. Make it so that macro cant start until calibrations are complete
 4. Make a list of features that show if the repo cannot be reached
-5. Make some calibrations skipable if they arent used with specific settings off
-6. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
-7. Add play button to calibrations
-8. Add collection buttons to calibrations (exit button may not be added)
-9. If main gui closes close every other gui
+5. Make manual scroll calibration slightly automatic using pixel detection for new item detection (need to make position selection thing first)
+6. Add play button to calibrations
+7. Add collection buttons to calibrations (exit button may not be added)
+8. If main gui closes close every other gui
 
 - Random
 9. Finish auto updater
@@ -26,7 +25,7 @@
 18. Add complete macro exception handling with message box and logging
 19. Add msgbox for when something is being downloaded from the repo
 20. Make requirements file and check what its file type should be 
-21. Add current auto add potion enabled check (after pause / unpause) and every 10 mins
+21. Add current auto add potion enabled check (after pause / unpause) and every 10 mins (or a way to check without clicking auto add button)
 22. Add stuff for potions that have only requires manual crafting
 23. Make potion menu item button be clicked with search for potion function
 24. Add log path variable instead of hardcoding the path in multiple places
