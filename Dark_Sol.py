@@ -2844,6 +2844,7 @@ class Dark_Sol(QMainWindow):
                     "description": message,
                     "color": int(0x00FFFF),  # Discord expects decimal int
                     "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "footer": {"text": f"Dark Sol v{current_version}"}
                 }
             ],
         }
