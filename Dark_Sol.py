@@ -5,9 +5,10 @@
 # Logging
 import logging, pathlib, os
 from logging.handlers import RotatingFileHandler
-local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"]) / "Dark Sol"
-os.makedirs(local_appdata_directory, exist_ok=True)
-log_path = local_appdata_directory / "Dark Sol Log.log"
+local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"])
+dark_sol_appdata_directory = local_appdata_directory / "Dark Sol"
+os.makedirs(dark_sol_appdata_directory, exist_ok=True)
+log_path = dark_sol_appdata_directory / "Dark Sol Log.log"
 
 logger = logging.getLogger("DarkSol")
 logger.setLevel(logging.DEBUG)
@@ -63,24 +64,27 @@ screen_width, screen_height = user32.GetSystemMetrics(0), user32.GetSystemMetric
 log.debug("DPI Tools Loaded")
 
 # Imports
-import os, sys, threading, pyautogui, time, ctypes, pathlib, json, win32gui, win32con, re, requests, io, zipfile, socket, subprocess
+import sys, threading, pyautogui, time, ctypes, json, win32gui, win32con, re, requests, io, zipfile, socket, subprocess
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout,
 QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QComboBox, QLineEdit, QDialog, QGridLayout,
-    QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QSizePolicy, QLineEdit)
+    QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QSizePolicy, QLineEdit, QListWidget)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices, QRegularExpressionValidator
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl, QFileSystemWatcher, QRegularExpression
 from pyscreeze import ImageNotFoundException as pyscreeze_ImageNotFoundException
-from packaging import version
+from datetime import datetime, timezone
 from PIL import Image, ImageGrab
-from pynput import keyboard
+from packaging import version
 from mousekey import MouseKey
+from pynput import keyboard
+from typing import Any
 from copy import deepcopy
+
 import numpy as np
 log.debug("Imports Loaded", " Hi This is an easter egg lol 🥚")
                    
 # Setup Imports
 mkey = MouseKey()
-config_path = local_appdata_directory / "Dark Sol config.json"
+config_path = dark_sol_appdata_directory / "Dark Sol config.json"
 log.debug("Imports Initalized")
 
 # Constants
@@ -91,6 +95,7 @@ images_to_check = ("add button.png", "amount box.png", "auto add button.png", "c
                     "potion menu item button.png", "zeus potion selection button.png",
                     "poseidon potion selection button.png","hades potion selection button.png",
                     "add completed checkmark.png","play button.png")
+roblox_log_path = local_appdata_directory / "Roblox" / "logs"
 log.debug("Constants Loaded")
 
 # File Verification
@@ -154,16 +159,16 @@ def verify_files(file, path, tag=f"v{current_version}"):
     else:
         log.debug(f"{file} already exists, skipping download")
 
-verify_folders("Lib", local_appdata_directory)
+verify_folders("Lib", dark_sol_appdata_directory)
 
 for folder_to_check in folders_to_check:
-    verify_folders(folder_to_check, local_appdata_directory / "Lib")
+    verify_folders(folder_to_check, dark_sol_appdata_directory / "Lib")
 
 for image_file in images_to_check:
-    verify_files(image_file, local_appdata_directory / "Lib" / "Images")
+    verify_files(image_file, dark_sol_appdata_directory / "Lib" / "Images")
 
 for icon_file in icons_to_check:
-    verify_files(icon_file, local_appdata_directory / "Lib" / "Icons")
+    verify_files(icon_file, dark_sol_appdata_directory / "Lib" / "Icons")
 
 log.info("File Verification Completed")
 
@@ -327,36 +332,89 @@ hidden_config = {
                         }
                     }
                 },
-                "calibrated positions": {"path": False,
-                                        "scroll amounts": False,
-                                        "add completed checkmarks": {"bbox": False},
-                                        "play button": {"bbox": False, "center": False},
-                                        "potion menu item button": {"bbox": False, "center": False},
-                                        "potion search bar": {"bbox": False, "center": False},
-                                        "potion selection button 1": {"bbox": False, "center": False},
-                                        "potion selection button 2": {"bbox": False, "center": False},
-                                        "potion selection button 3": {"bbox": False, "center": False},
-                                        "open recipe button": {"bbox": False, "center": False},
-                                        "add button 1": {"bbox": False, "center": False},
-                                        "add button 2": {"bbox": False, "center": False},
-                                        "add button 3": {"bbox": False, "center": False},
-                                        "add button 4": {"bbox": False, "center": False},
-                                        "add button 5": {"bbox": False, "center": False},
-                                        "amount box 1": {"bbox": False, "center": False},
-                                        "amount box 2": {"bbox": False, "center": False},
-                                        "amount box 3": {"bbox": False, "center": False},
-                                        "amount box 4": {"bbox": False, "center": False},   
-                                        "amount box 5": {"bbox": False, "center": False},
-                                        "auto add button": {"bbox": False, "center": False},
-                                        "craft button": {"bbox": False, "center": False},
-                                        },
+                "calibrated positions": {
+                    "path": False,
+                    "scroll amounts": False,
+                    "add completed checkmarks": {"bbox": False},
+                    "play button": {"bbox": False, "center": False},
+                    "potion menu item button": {"bbox": False, "center": False},
+                    "potion search bar": {"bbox": False, "center": False},
+                    "potion selection button 1": {"bbox": False, "center": False},
+                    "potion selection button 2": {"bbox": False, "center": False},
+                    "potion selection button 3": {"bbox": False, "center": False},
+                    "open recipe button": {"bbox": False, "center": False},
+                    "add button 1": {"bbox": False, "center": False},
+                    "add button 2": {"bbox": False, "center": False},
+                    "add button 3": {"bbox": False, "center": False},
+                    "add button 4": {"bbox": False, "center": False},
+                    "add button 5": {"bbox": False, "center": False},
+                    "amount box 1": {"bbox": False, "center": False},
+                    "amount box 2": {"bbox": False, "center": False},
+                    "amount box 3": {"bbox": False, "center": False},
+                    "amount box 4": {"bbox": False, "center": False},   
+                    "amount box 5": {"bbox": False, "center": False},
+                    "auto add button": {"bbox": False, "center": False},
+                    "craft button": {"bbox": False, "center": False},
+                    },
+                "biome detection": {
+                    "WINDY": {
+                        "message type": "message",
+                        "ping id": "",
+                        "id type": "role"
+                    },
+                    "RAINY": {
+                        "message type": "message",
+                        "ping id": "",
+                        "id type": "role"
+                    },
+                    "SNOWY": {
+                        "message type": "message",
+                        "ping id": "",
+                        "id type": "role"
+                    },
+                    "SAND STORM": {
+                        "message type": "message",
+                        "ping id": "",
+                        "id type": "role"
+                    },
+                    "HELL": {
+                        "message type": "message",
+                        "ping id": "",
+                        "id type": "role"
+                    },
+                    "STARFALL": {
+                        "message type": "message",
+                        "ping id": "",
+                        "id type": "role"
+                    },
+                    "HEAVEN": {
+                        "message type": "message",
+                        "ping id": "",
+                        "id type": "role"
+                    },
+                    "CORRUPTION": {
+                        "message type": "message",
+                        "ping id": "",
+                        "id type": "role"
+                    },
+                    "NULL": {
+                        "message type": "message",
+                        "ping id": "",
+                        "id type": "role"
+                    }
+                },
+                "webhooks": [],
+                "sections to calibrate": {
+                    "potion crafting": True,
+                    "auto path": True,
+                    "auto rejoin": True
+                },
                 "current preset": "Main",
                 "private server link": "",
                 "wrap log area": False,
                 "gui log levels": ["INFO", "WARNING", "ERROR", "CRITICAL"],
                 "show only current logs": True,
-                "path": "vip",
-                "sections to calibrate": {"potion crafting": True, "auto path": True, "auto rejoin": True}
+                "path": "vip",       
             }
 
 if use_built_in_config:
@@ -373,182 +431,182 @@ else:
     log.info("Config file created with default settings")
 
 data = {
-            "position data": {
-                    "add button": {
-                        "sub positions": ["add button 1", "add button 2", "add button 3", "add button 4", "add button 5"],
-                        "image path": "add button.png"
-                        },
-                    "amount box": {
-                        "sub positions": ["amount box 1", "amount box 2", "amount box 3", "amount box 4", "amount box 5"],
-                        "image path": "amount box.png"
-                        },
-                    "auto add button": {
-                        "image path": "auto add button.png"
-                        },
-                    "craft button": {
-                        "image path": "craft button.png"
-                        },
-                    "potion search bar": {
-                        "image path": "potion search bar.png"
-                        },
-                    "open recipe button": {
-                        "image path": "open recipe button.png"
-                        },
-                    "potion menu item button": {
-                        "image path": "potion menu item button.png"
-                        },
-                    "potion selection button 1": {
-                        "image path": "zeus potion selection button.png"
-                        },
-                    "potion selection button 2": {
-                        "image path": "poseidon potion selection button.png"
-                        },
-                    "potion selection button 3": {
-                        "image path": "hades potion selection button.png"
-                        },
-                    "add completed checkmark": {
-                        "sub positions": ["add completed checkmark 1", "add completed checkmark 2", "add completed checkmark 3", "add completed checkmark 4", "add completed checkmark 5"],
-                        "image path": "add completed checkmark.png"
-                        },
-                    "play button": {
-                        "image path": "play button.png"
-                        }
-                    },
-                "template data": {
-                    "add button.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "amount box.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "auto add button.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "craft button.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "potion search bar.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "open recipe button.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "potion menu item button.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "zeus potion selection button.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "poseidon potion selection button.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "hades potion selection button.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "add completed checkmark.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        },
-                    "play button.png": {
-                        "scale": 1.25,
-                        "resolution": (1920, 1200)
-                        }
-                    },
-
-            "item data": {
-                    "bound": {
-                        "name to search": "bound",
-                        "button names": {
-                            "add button 1": "Bounded",
-                            "add button 2": "Permafrost",
-                            "add button 3": "Lost Soul",
-                            "add button 4": "Lucky Potion"
-                        },
-                        "amounts to add": {"add button 2": 3, "add button 4": 100},
-                        "crafting slots": 4
-                    },
-                    "heavenly": {
-                        "name to search": "heavenly",
-                        "button names": {
-                            "add button 1": "Lucky Potion",
-                            "add button 2": "Celestial",
-                            "add button 3": "Exotic",
-                            "add button 4": "Powered",
-                            "add button 5": "Quartz"
-                        },
-                        "amounts to add": {"add button 1": 250, "add button 2": 2},
-                        "crafting slots": 5
-                    },
-                    "zeus": {
-                        "name to search": "godly",
-                        "button names": {
-                            "add button 1": "Lucky Potion",
-                            "add button 2": "Speed Potion",
-                            "add button 3": "Zeus",
-                            "add button 4": "Stormal",
-                            "add button 5": "Wind"
-                        },
-                        "amounts to add": {"add button 1": 25, "add button 2": 25},
-                        "crafting slots": 5,
-                        "potion selection button": "1"
-                    },
-                    "poseidon": {
-                        "name to search": "godly",
-                        "button names": {
-                            "add button 1": "Speed Potion",
-                            "add button 2": "Poseidon",
-                            "add button 3": "Nautilus",
-                            "add button 4": "Aquatic"
-                        },
-                        "amounts to add": {"add button 1": 50},
-                        "crafting slots": 4,
-                        "potion selection button": "2"
-                    },
-                    "hades": {
-                        "name to search": "godly",
-                        "button names": {
-                            "add button 1": "Lucky Potion",
-                            "add button 2": "Hades",
-                            "add button 3": "Diaboli",
-                            "add button 4": "Bleeding"
-                        },
-                        "amounts to add": {"add button 1": 50},
-                        "crafting slots": 4,
-                        "potion selection button": "3"
-                    },
-                    "warp": {
-                        "name to search": "warp",
-                        "button names": {
-                            "add button 1": "<PLACEHOLDER NAME>",  # PLACEHOLDER: replace
-                            "add button 2": "<PLACEHOLDER NAME>",  # PLACEHOLDER: replace
-                            "add button 3": "<PLACEHOLDER NAME>",  # PLACEHOLDER: replace
-                            "add button 4": "<PLACEHOLDER NAME>",  # PLACEHOLDER: replace
-                            "add button 5": "<PLACEHOLDER NAME>",  # PLACEHOLDER: replace
-                            "add button 6": "<PLACEHOLDER NAME>"  # PLACEHOLDER: replace
-                        },
-                        "amounts to add": {},
-                        "crafting slots": 6
-                    },
+    "position data": {
+            "add button": {
+                "sub positions": ["add button 1", "add button 2", "add button 3", "add button 4", "add button 5"],
+                "image path": "add button.png"
+                },
+            "amount box": {
+                "sub positions": ["amount box 1", "amount box 2", "amount box 3", "amount box 4", "amount box 5"],
+                "image path": "amount box.png"
+                },
+            "auto add button": {
+                "image path": "auto add button.png"
+                },
+            "craft button": {
+                "image path": "craft button.png"
+                },
+            "potion search bar": {
+                "image path": "potion search bar.png"
+                },
+            "open recipe button": {
+                "image path": "open recipe button.png"
+                },
+            "potion menu item button": {
+                "image path": "potion menu item button.png"
+                },
+            "potion selection button 1": {
+                "image path": "zeus potion selection button.png"
+                },
+            "potion selection button 2": {
+                "image path": "poseidon potion selection button.png"
+                },
+            "potion selection button 3": {
+                "image path": "hades potion selection button.png"
+                },
+            "add completed checkmark": {
+                "sub positions": ["add completed checkmark 1", "add completed checkmark 2", "add completed checkmark 3", "add completed checkmark 4", "add completed checkmark 5"],
+                "image path": "add completed checkmark.png"
+                },
+            "play button": {
+                "image path": "play button.png"
                 }
-            }
+            },
+        "template data": {
+            "add button.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "amount box.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "auto add button.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "craft button.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "potion search bar.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "open recipe button.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "potion menu item button.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "zeus potion selection button.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "poseidon potion selection button.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "hades potion selection button.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "add completed checkmark.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                },
+            "play button.png": {
+                "scale": 1.25,
+                "resolution": (1920, 1200)
+                }
+            },
+    "item data": {
+            "bound": {
+                "name to search": "bound",
+                "button names": {
+                    "add button 1": "Bounded",
+                    "add button 2": "Permafrost",
+                    "add button 3": "Lost Soul",
+                    "add button 4": "Lucky Potion"
+                },
+                "amounts to add": {"add button 2": 3, "add button 4": 100},
+                "crafting slots": 4
+            },
+            "heavenly": {
+                "name to search": "heavenly",
+                "button names": {
+                    "add button 1": "Lucky Potion",
+                    "add button 2": "Celestial",
+                    "add button 3": "Exotic",
+                    "add button 4": "Powered",
+                    "add button 5": "Quartz"
+                },
+                "amounts to add": {"add button 1": 250, "add button 2": 2},
+                "crafting slots": 5
+            },
+            "zeus": {
+                "name to search": "godly",
+                "button names": {
+                    "add button 1": "Lucky Potion",
+                    "add button 2": "Speed Potion",
+                    "add button 3": "Zeus",
+                    "add button 4": "Stormal",
+                    "add button 5": "Wind"
+                },
+                "amounts to add": {"add button 1": 25, "add button 2": 25},
+                "crafting slots": 5,
+                "potion selection button": "1"
+            },
+            "poseidon": {
+                "name to search": "godly",
+                "button names": {
+                    "add button 1": "Speed Potion",
+                    "add button 2": "Poseidon",
+                    "add button 3": "Nautilus",
+                    "add button 4": "Aquatic"
+                },
+                "amounts to add": {"add button 1": 50},
+                "crafting slots": 4,
+                "potion selection button": "2"
+            },
+            "hades": {
+                "name to search": "godly",
+                "button names": {
+                    "add button 1": "Lucky Potion",
+                    "add button 2": "Hades",
+                    "add button 3": "Diaboli",
+                    "add button 4": "Bleeding"
+                },
+                "amounts to add": {"add button 1": 50},
+                "crafting slots": 4,
+                "potion selection button": "3"
+            },
+            "warp": {
+                "name to search": "warp",
+                "button names": {
+                    "add button 1": "<PLACEHOLDER NAME>",  # PLACEHOLDER: replace
+                    "add button 2": "<PLACEHOLDER NAME>",  # PLACEHOLDER: replace
+                    "add button 3": "<PLACEHOLDER NAME>",  # PLACEHOLDER: replace
+                    "add button 4": "<PLACEHOLDER NAME>",  # PLACEHOLDER: replace
+                    "add button 5": "<PLACEHOLDER NAME>",  # PLACEHOLDER: replace
+                    "add button 6": "<PLACEHOLDER NAME>"  # PLACEHOLDER: replace
+                },
+                "amounts to add": {},
+                "crafting slots": 6
+            },
+        },
+        "ping everyone biomes": ["GLITCHED", "DREAMSPACE", "CYBERSPACE", "SNOWY"],
+    }
 
 # Auto Updater
 class auto_updater():
     latest_updateable_version = str()
     def __init__(self):
-        if not (local_appdata_directory / "Dark_Sol_Updater.exe").exists():
+        if not (dark_sol_appdata_directory / "Dark_Sol_Updater.exe").exists():
             log.info("Updater not found")
-            download_from_repo("Dark_Sol_Updater.exe", local_appdata_directory,)
+            download_from_repo("Dark_Sol_Updater.exe", dark_sol_appdata_directory,)
         if "--updated" in sys.argv:
             log.info("Macro updated successfully")
             self.create_msg_box("Update Successful", f"Dark Sol has been updated to version {current_version} successfully!", msg_box_type=QMessageBox.Icon.Information)
@@ -574,7 +632,7 @@ class auto_updater():
             self.ask_to_update()
 
     def send_update_signal(self):
-        subprocess.Popen([str(local_appdata_directory / "Dark_Sol_Updater.exe")])
+        subprocess.Popen([str(dark_sol_appdata_directory / "Dark_Sol_Updater.exe")])
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
             server.bind(("localhost", 5296))
             server.listen(1)
@@ -684,8 +742,7 @@ class loading_screen(QWidget):
 
     def on_loaded(self):
         self.close()
-        main_window = Dark_Sol()
-        main_window.show()
+        run_main_script()
 
 # Main Dark Sol Script
 class Dark_Sol(QMainWindow):
@@ -747,9 +804,9 @@ class Dark_Sol(QMainWindow):
         self.delete_preset_button = QPushButton("Delete")
         self.presets_tab_scroller = QScrollArea()
         self.presets_tab_content = QWidget()
-        self.up_chevron_svg = str(local_appdata_directory / "Lib" / "Icons" / "up chevron.svg")
-        self.down_chevron_svg = str(local_appdata_directory / "Lib" / "Icons" / "down chevron.svg")
-        self.up_chevron_disabled_svg = str(local_appdata_directory / "Lib" / "Icons" / "up chevron disabled.svg")
+        self.up_chevron_svg = str(dark_sol_appdata_directory / "Lib" / "Icons" / "up chevron.svg")
+        self.down_chevron_svg = str(dark_sol_appdata_directory / "Lib" / "Icons" / "down chevron.svg")
+        self.up_chevron_disabled_svg = str(dark_sol_appdata_directory / "Lib" / "Icons" / "up chevron disabled.svg")
         # Settings Tab
         self.ps_link_label = QLabel("Private Server Link:")
         self.ps_link_line = QLineEdit()
@@ -757,6 +814,15 @@ class Dark_Sol(QMainWindow):
         self.ps_link_join_button = QPushButton("Join Private Server")
         self.reset_add_button_template_button = QPushButton("Reset Add Button Template")
         self.reset_amount_box_template_button = QPushButton("Reset Amount Box Template")
+        self.webhook_settings_button = QPushButton("Webhook Settings")
+        self.webhook_settings_widget = QWidget()
+        self.webhook_settings_widget.setWindowTitle("Webhook Settings")
+        self.webhook_input = QLineEdit()
+        self.webhook_add_button = QPushButton("Add")
+        self.webhook_edit_button = QPushButton("Edit")
+        self.webhook_remove_button = QPushButton("Remove")
+        self.webhook_list = QListWidget()
+        # Biome Detection
         # Calibration Elements
         self.calibrations_widget_button = QPushButton("Calibrations")
         self.show_calibration_overlays_button = QPushButton("Show Calibration Overlays")
@@ -1129,8 +1195,104 @@ class Dark_Sol(QMainWindow):
         self.settings_tab_vbox.addWidget(self.ps_link_join_button)
         self.settings_tab_vbox.addWidget(self.reset_add_button_template_button)
         self.settings_tab_vbox.addWidget(self.reset_amount_box_template_button)
-        # Calibrations
+        # Biome Detection
+        def check_if_pings_enabled():
+            sender = self.sender()
+            if not isinstance(sender, QComboBox):
+                return
+            id_line = sender.property("id_line")
+            id_type_combo = sender.property("id_type_combo")
+            if not isinstance(id_line, QLineEdit):
+                    return
+            if id_type_combo is not None and not isinstance(id_type_combo, QComboBox):
+                    return
+            if sender.currentText() == "Ping":
+                id_line.setEnabled(True)
+                if isinstance(id_type_combo, QComboBox):
+                    id_type_combo.setEnabled(True)
+            else:  
+                id_line.setDisabled(True)
+                if isinstance(id_type_combo, QComboBox):
+                    id_type_combo.setDisabled(True)
+        self.biome_detection_settings_widget = QWidget()
+        row = 0
+        self.biome_detection_settings_widget_layout = QGridLayout(self.biome_detection_settings_widget)
+        self.biome_detection_settings_widget_button = QPushButton("Biome Detection Settings")
         self.settings_tab_vbox.addStretch(1)
+        self.settings_tab_vbox.addWidget(self.biome_detection_settings_widget_button, alignment=Qt.AlignmentFlag.AlignBottom)
+        self.settings_tab_vbox.addWidget(self.webhook_settings_button, alignment=Qt.AlignmentFlag.AlignBottom)
+        self.biome_detection_settings_widget_button.clicked.connect(lambda: self.biome_detection_settings_widget.show())
+        self.webhook_settings_button.clicked.connect(lambda: self.webhook_settings_widget.show())
+
+        self.webhook_settings_widget.setStyleSheet(
+            "QWidget {background-color: black; color: cyan;} "
+            "QLineEdit {background-color: #171717; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 3px;} "
+            "QListWidget {background-color: #101010; color: cyan; border: 1px solid cyan; border-radius: 5px;} "
+            "QPushButton {background-color: black; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 4px;}"
+        )
+        webhook_layout = QVBoxLayout(self.webhook_settings_widget)
+        webhook_layout.addWidget(self.webhook_list)
+
+        webhook_input_row = QHBoxLayout()
+        self.webhook_input.setPlaceholderText("Paste Discord webhook URL")
+        webhook_input_row.addWidget(self.webhook_input)
+        webhook_input_row.addWidget(self.webhook_add_button)
+        webhook_input_row.addWidget(self.webhook_edit_button)
+        webhook_input_row.addWidget(self.webhook_remove_button)
+        webhook_layout.addLayout(webhook_input_row)
+
+        self.webhook_add_button.clicked.connect(self.add_webhook_from_input)
+        self.webhook_edit_button.clicked.connect(self.open_edit_webhook_dialog)
+        self.webhook_remove_button.clicked.connect(self.remove_selected_webhook)
+        self.refresh_webhook_list_widget()
+        
+        for biome in config["biome settings"]:
+            label = QLabel(biome.title())
+            combo_box = QComboBox()
+            combo_box.addItems(("Ping", "Message", "Off"))
+            combo_box.setCurrentText((config["biome settings"][biome]["message type"]).title())
+            
+            combo_box.currentTextChanged.connect(lambda text, biome=biome: (config["biome settings"][biome].__setitem__("message type", text.lower()), nice_config_save(), check_if_pings_enabled()))
+            id_line = QLineEdit()
+            id_line.setPlaceholderText("Enter ID for Biome Pings")
+            id_line.setText(config["biome settings"][biome]["ping id"])
+            id_line.editingFinished.connect(lambda biome=biome, id_line=id_line: (config["biome settings"][biome].__setitem__("ping id", id_line.text()), nice_config_save()))
+
+            id_type_combo = QComboBox()
+            id_type_combo.addItems(("Role", "User"))
+            id_type_combo.setCurrentText(str(config["biome settings"][biome]["id type"]).title())
+            id_type_combo.currentTextChanged.connect(lambda text, biome=biome: (config["biome settings"][biome].__setitem__("id type", text.lower()), nice_config_save()))
+
+            if config["biome settings"][biome]["message type"] == "ping":
+                id_line.setEnabled(True)
+                id_type_combo.setEnabled(True)
+            else:
+                id_line.setDisabled(True)
+                id_type_combo.setDisabled(True)
+            combo_box.setProperty("id_line", id_line)
+            combo_box.setProperty("id_type_combo", id_type_combo)
+            # add labels above saying what each widget does
+            self.biome_detection_settings_widget_layout.addWidget(label,  row, 0)
+            self.biome_detection_settings_widget_layout.addWidget(combo_box,  row, 1)
+            self.biome_detection_settings_widget_layout.addWidget(id_line,row, 2)
+            self.biome_detection_settings_widget_layout.addWidget(id_type_combo, row, 3)
+            row += 1
+            check_if_pings_enabled()
+
+        for biome in data["ping everyone biomes"]:
+            label = QLabel(biome.title())
+            combo_box = QComboBox()
+            combo_box.addItem("Everyone")
+            combo_box.setDisabled(True)
+            self.biome_detection_settings_widget_layout.addWidget(label,  row, 0)
+            self.biome_detection_settings_widget_layout.addWidget(combo_box,  row, 1)
+            row += 1
+        self.biome_detection_settings_widget.setStyleSheet("""QWidget {background-color: black; color: cyan;} QComboBox {background-color: #171717;} QComboBox:disabled {background-color: #111; color: #048f8f;}
+                                                                QLineEdit {background-color: #171717; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 3px;}
+                                                                QLineEdit:disabled {background-color: #101010;color: #5f9ea0;border: 1px solid #2c5f5f; selection-background-color: #2a2a2a;}
+                                                                """)
+   
+        # Calibrations
         self.settings_tab_vbox.addWidget(self.calibrations_widget_button)
         # Donations Layout
         self.main_tab_bottom_header_qh_layout.addWidget(self.donate_label)
@@ -1156,8 +1318,8 @@ class Dark_Sol(QMainWindow):
         # Settings Buttons
         self.ps_link_save_button.clicked.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
         self.ps_link_join_button.clicked.connect(lambda: self.open_roblox(config["private server link"]))
-        self.reset_add_button_template_button.clicked.connect(lambda: verify_files("add_button.png", local_appdata_directory / "Lib" / "Images"))
-        self.reset_amount_box_template_button.clicked.connect(lambda: verify_files("amount_box.png", local_appdata_directory / "Lib" / "Images"))
+        self.reset_add_button_template_button.clicked.connect(lambda: verify_files("add_button.png", dark_sol_appdata_directory / "Lib" / "Images"))
+        self.reset_amount_box_template_button.clicked.connect(lambda: verify_files("amount_box.png", dark_sol_appdata_directory / "Lib" / "Images"))
         # Calibration Buttons
         self.show_calibration_overlays_button.clicked.connect(lambda: self.show_calibration_overlays())
         self.calibrate_macro_button.clicked.connect(lambda: self.calibrate_macro())
@@ -1189,15 +1351,101 @@ class Dark_Sol(QMainWindow):
             QTabBar {color: cyan;}
             QWidget {background-color: black;}
             QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt; }
-            
+            QPushButton:hover {background-color: #0d2c33;}
             QPushButton#start_button {font-size: 22pt;}
             QPushButton#stop_button {font-size: 22pt;}
             QLabel {color: cyan; font-size: 14pt;}
             QLabel#status_label {color: cyan; font-size: 38pt;}
-            QPushButton:hover {background-color: #0d2c33;}
         """)
         log.info("Ui Initialized")
         self.update_gui_log()
+
+    def refresh_webhook_list_widget(self):
+        webhooks = config["webhooks"]
+
+        self.webhook_list.clear()
+        for webhook in webhooks:
+            self.webhook_list.addItem(str(webhook))
+
+    def add_webhook_from_input(self):
+        webhook = self.webhook_input.text().strip()
+        if not webhook:
+            return
+        if not self.is_valid_webhook_url(webhook):
+            QMessageBox.warning(self.webhook_settings_widget, "Invalid Webhook", "Please enter a valid Discord webhook URL.")
+            return
+
+        webhooks = config["webhooks"]
+        if webhook in webhooks:
+            return
+
+        webhooks.append(webhook)
+        nice_config_save()
+        self.refresh_webhook_list_widget()
+        self.webhook_input.clear()
+
+    def open_edit_webhook_dialog(self):
+        selected_row = self.webhook_list.currentRow()
+        if selected_row < 0:
+            return
+
+        webhooks = config["webhooks"]
+        if selected_row >= len(webhooks):
+            return
+
+        dialog = QDialog(self.webhook_settings_widget)
+        dialog.setWindowTitle("Edit Webhook")
+        dialog.setStyleSheet(
+            "QWidget {background-color: black; color: cyan;} "
+            "QLineEdit {background-color: #171717; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 3px;} "
+            "QPushButton {background-color: black; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 4px;}"
+        )
+
+        layout = QVBoxLayout(dialog)
+        edit_line = QLineEdit(webhooks[selected_row])
+        edit_line.setPlaceholderText("Paste Discord webhook URL")
+        save_button = QPushButton("Save")
+        layout.addWidget(edit_line)
+        layout.addWidget(save_button)
+
+        def save_edit():
+            new_webhook = edit_line.text().strip()
+            if not new_webhook:
+                return
+            if not self.is_valid_webhook_url(new_webhook):
+                QMessageBox.warning(dialog, "Invalid Webhook", "Please enter a valid Discord webhook URL.")
+                return
+
+            current_webhook = webhooks[selected_row]
+            if new_webhook in webhooks and new_webhook != current_webhook:
+                return
+
+            webhooks[selected_row] = new_webhook
+            nice_config_save()
+            self.refresh_webhook_list_widget()
+            self.webhook_list.setCurrentRow(selected_row)
+            dialog.accept()
+
+        save_button.clicked.connect(save_edit)
+        dialog.exec()
+
+    def is_valid_webhook_url(self, webhook: str) -> bool:
+        webhook_pattern = r"^https://(?:canary\.|ptb\.)?discord(?:app)?\.com/api/webhooks/\d+/[A-Za-z0-9._-]+/?$"
+        return bool(re.match(webhook_pattern, webhook.strip()))
+
+    def remove_selected_webhook(self):
+        selected_row = self.webhook_list.currentRow()
+        if selected_row < 0:
+            return
+
+        webhooks = config["webhooks"]
+        if selected_row >= len(webhooks):
+            return
+
+        webhooks.pop(selected_row)
+        nice_config_save()
+        self.refresh_webhook_list_widget()
+        self.webhook_input.clear()
 
     def reset_template(self):
         pass
@@ -1251,7 +1499,7 @@ class Dark_Sol(QMainWindow):
     
     def replace_template(self, template_name):
         image_location = data["position data"][template_name]["image path"]
-        image_path = str(local_appdata_directory / "Lib" / "Images" / image_location)
+        image_path = str(dark_sol_appdata_directory / "Lib" / "Images" / image_location)
         if not (new_template_bbox := self.select_region()):
             return
         else:
@@ -2416,7 +2664,7 @@ class Dark_Sol(QMainWindow):
                         ignore_match_not_found=False,
                         region=None):
         
-        template_path = f"{local_appdata_directory}\\Lib\\Images\\{data['position data'][calibration if calibration in data['position data'] else calibration[:-1].strip()]['image path']}"
+        template_path = f"{dark_sol_appdata_directory}\\Lib\\Images\\{data['position data'][calibration if calibration in data['position data'] else calibration[:-1].strip()]['image path']}"
         return_bool = False
         if what_to_save != None:
             tuple(what_to_save)
@@ -2471,7 +2719,7 @@ class Dark_Sol(QMainWindow):
         return return_bool
 
     def calibrate_scrolling(self):
-        template_path = self.rescale_template("add button.png", f"{local_appdata_directory}\\Lib\\Images\\add button.png")
+        template_path = self.rescale_template("add button.png", f"{dark_sol_appdata_directory}\\Lib\\Images\\add button.png")
         def count_scrolls(find=True):
             scrolls = 0
             found = False
@@ -2539,19 +2787,174 @@ class Dark_Sol(QMainWindow):
         app.processEvents()
         return True
             
+    def check_roblox_logs_for(self, *logs_to_check_for):
+        texts = [logs_to_check_for] if isinstance(logs_to_check_for, str) else list(logs_to_check_for)
+        if not texts:
+            return None
+
+        if not roblox_log_path.exists():
+            return False
+
+        latest_roblox_log_file = max(roblox_log_path.glob("*.log"), key=lambda p: p.stat().st_mtime, default=None)
+        if not latest_roblox_log_file:
+            return False
+
+        with latest_roblox_log_file.open("rb") as f:
+            f.seek(0, 2)
+            pos, carry = f.tell(), b""
+
+            while pos > 0:
+                n = min(8192, pos)
+                pos -= n
+                f.seek(pos)
+                carry = f.read(n) + carry
+                *lines, carry = carry.split(b"\n")
+
+                for raw in reversed(lines):  # newest -> oldest
+                    line = raw.decode("utf-8", errors="replace")
+                    hits = [(line.find(t), t) for t in texts if t in line]
+                    if hits:
+                        x, found = min(hits, key=lambda x: x[0])  # first text in that line
+                        return found
+
+            if carry:
+                line = carry.decode("utf-8", errors="replace")
+                hits = [(line.find(t), t) for t in texts if t in line]
+                if hits:
+                    x, found = min(hits, key=lambda x: x[0])
+                    return found
+        return False
+
+    def send_discord_webhook(self, webhook_url, title, message=None, ping_mode=None, ping_id=None):
+        if ping_mode == "everyone":
+            mention = "@everyone"
+        elif ping_mode == "user":
+            mention = f"<@{ping_id}>"
+        elif ping_mode == "role":
+            mention = f"<@&{ping_id}>"
+        else:
+            mention = None
+
+        payload: dict[str, Any] = {
+            "username": "Dark Sol",
+            "content": mention,
+            "embeds": [
+                {
+                    "title": title,
+                    "description": message,
+                    "color": int(0x00FFFF),  # Discord expects decimal int
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            ],
+        }
+
+        r = requests.post(webhook_url, json=payload, timeout=10)
+        r.raise_for_status()
+        return True
+
+    def detect_biome_loop(self):
+        # place 15532962292
+        latest_biome = None
+        
+        def check_roblox_logs_for_biome():
+                if not roblox_log_path.exists():
+                    return False
+
+                latest_roblox_log_file = max(roblox_log_path.glob("*.log"), key=lambda p: p.stat().st_mtime, default=None)
+                if not latest_roblox_log_file:
+                    return "Roblox file not found"
+
+                with latest_roblox_log_file.open("rb") as f:
+                    f.seek(0, 2)
+                    pos, carry = f.tell(), b""
+
+                    while pos > 0:
+                        n = min(8192, pos)
+                        pos -= n
+                        f.seek(pos)
+                        carry = f.read(n) + carry
+                        *lines, carry = carry.split(b"\n")
+
+                        for raw in reversed(lines):  # newest -> oldest
+                            line = raw.decode("utf-8", errors="replace")
+
+                            if "Disconnect" in line:
+                                return "Disconnected"
+
+                            if '[FLog::Output] [BloxstrapRPC]' in line and '"command":"SetRichPresence"' in line:
+                                json_start = line.find("{")
+                                if json_start == -1:
+                                    continue
+                                try:
+                                    payload = json.loads(line[json_start:])
+                                except json.JSONDecodeError:
+                                    continue
+
+                                biome = payload.get("data", {}).get("largeImage", {}).get("hoverText")
+                                if biome:
+                                    return biome
+
+                    if carry:
+                        line = carry.decode("utf-8", errors="replace")
+
+                        if "Disconnected - stop() called" in line or "Disconnected from server for reason:" in line:
+                                return "Disconnected"
+
+                        if '[FLog::Output] [BloxstrapRPC]' in line and '"command":"SetRichPresence"' in line:
+                            json_start = line.find("{")
+                            if json_start != -1:
+                                try:
+                                    payload = json.loads(line[json_start:])
+                                except json.JSONDecodeError:
+                                    return False
+                                biome = payload.get("data", {}).get("largeImage", {}).get("hoverText")
+                                if biome:
+                                    return biome
+                return "Entire biome detection log went through without finding any info"
+        
+        while self.run_event.is_set():
+            biome_from_roblox_logs = check_roblox_logs_for_biome()
+            if biome_from_roblox_logs == False:
+                log.debug("No information found in Roblox logs.")
+            elif biome_from_roblox_logs in ("Roblox file not found", "Disconnected", "Entire biome detection log went through without finding any info"):
+                log.info(biome_from_roblox_logs)
+            else:
+                log.debug("Detected biome from Roblox logs:", biome_from_roblox_logs)
+                if biome_from_roblox_logs != latest_biome:
+                    latest_biome = biome_from_roblox_logs
+                    log.info("Biome changed to:", latest_biome)
+                    if latest_biome == "NORMAL":
+                        continue
+                    if latest_biome in data["ping everyone biomes"]:
+                        for webhook in config["webhooks"]:
+                            self.send_discord_webhook(webhook, f"Biome Started - {latest_biome}", ping_mode="everyone")
+                    elif config["biome settings"][latest_biome]["message type"] == "ping":
+                        for webhook in config["webhooks"]:
+                            self.send_discord_webhook(webhook, f"Biome Started - {latest_biome}", ping_mode="role" if config["biome settings"][latest_biome]["id type"] == "role" else "user", ping_id=config["biome settings"][latest_biome]["ping id"])
+                    elif config["biome settings"][latest_biome]["message type"] == "message":
+                        for webhook in config["webhooks"]:
+                            self.send_discord_webhook(webhook, f"Biome Started - {latest_biome}")
+                    else:
+                        pass
+            time.sleep(3)
+            if not self.run_event.wait(0.1):
+                break
+                                    
     def start_macro(self):
         if self.worker is not None and self.worker.is_alive():
             return
         self.mini_status_widget.show()
         self.update_status("Running", what_to_update="Both")
         self.run_event.set()
-        self.worker = threading.Thread(target=self.macro_worker, daemon=True)
-        self.worker.start()
+        #self.macro_worker = threading.Thread(target=self.macro_worker_function, daemon=True)
+        self.biome_detector = threading.Thread(target=self.detect_biome_loop, daemon=True)
+        #self.macro_worker.start()
+        self.biome_detector.start()
 
     def stop_macro(self):
         self.run_event.clear()
 
-    def macro_worker(self):
+    def macro_worker_function(self):
         while self.run_event.is_set():
             self.main_macro_loop()
             if not self.run_event.wait(0.1):
@@ -2835,11 +3238,14 @@ class Dark_Sol(QMainWindow):
                 if config["item presets"][self.current_preset][item]["enabled"]:
                     macro_loop_iteration(item)
 
+def run_main_script():
+    main_window = Dark_Sol()
+    main_window.show()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     if skip_loading:
-        main_window = Dark_Sol()
-        main_window.show()
+        run_main_script()
     else:
         loader = loading_screen()
         loader.show()
