@@ -1,6 +1,6 @@
 # Logging
 from asyncio import subprocess
-import logging, pathlib, os, json, time
+import logging, pathlib, os, json
 from logging.handlers import RotatingFileHandler
 local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"]) / "Dark Sol"
 
