@@ -807,6 +807,12 @@ class Dark_Sol(QMainWindow):
         self.up_chevron_svg = str(dark_sol_appdata_directory / "Lib" / "Icons" / "up chevron.svg")
         self.down_chevron_svg = str(dark_sol_appdata_directory / "Lib" / "Icons" / "down chevron.svg")
         self.up_chevron_disabled_svg = str(dark_sol_appdata_directory / "Lib" / "Icons" / "up chevron disabled.svg")
+        # Themes Tab Elements
+        self.theme_not_made_yet_label = QLabel("Themes tab has not been made yet, check back in a future update!")
+        self.theme_not_made_yet_label.setWordWrap(True)
+        self.theme_not_made_yet_label.setStyleSheet("border: 1px solid cyan; border-radius: 5px; padding: 10px;")
+        self.theme_tab_layout = QVBoxLayout(self.theme_tab)
+        self.theme_tab_layout.addWidget(self.theme_not_made_yet_label, alignment=Qt.AlignmentFlag.AlignCenter)
         # Settings Tab
         self.ps_link_label = QLabel("Private Server Link:")
         self.ps_link_line = QLineEdit()
