@@ -597,7 +597,7 @@ data = {
                 "crafting slots": 6
             },
         },
-        "ping everyone biomes": ["GLITCHED", "DREAMSPACE", "CYBERSPACE", "SNOWY"],
+        "ping everyone biomes": ["GLITCHED", "DREAMSPACE", "CYBERSPACE"]
     }
 
 # Auto Updater
@@ -1077,7 +1077,7 @@ class Dark_Sol(QMainWindow):
         self.current_auto_add_potion = None
         self.macro_timer = QTimer(self)
         self.run_event = threading.Event()
-        self.worker = None
+        self.macro_worker = None
         self.macro_stopped_signal.connect(self.on_macro_stopped)
         self.status_signal.connect(self.inner_update_status)
         self.init_ui()
@@ -2948,14 +2948,14 @@ class Dark_Sol(QMainWindow):
                 break
                                     
     def start_macro(self):
-        if self.worker is not None and self.worker.is_alive():
+        if self.macro_worker is not None and self.macro_worker.is_alive():
             return
         self.mini_status_widget.show()
         self.update_status("Running", what_to_update="Both")
         self.run_event.set()
-        #self.macro_worker = threading.Thread(target=self.macro_worker_function, daemon=True)
+        self.macro_worker = threading.Thread(target=self.macro_worker_function, daemon=True)
         self.biome_detector = threading.Thread(target=self.detect_biome_loop, daemon=True)
-        #self.macro_worker.start()
+        self.macro_worker.start()
         self.biome_detector.start()
 
     def stop_macro(self):
