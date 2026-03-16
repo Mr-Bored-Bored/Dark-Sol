@@ -232,53 +232,88 @@ def nice_config_save(ind=4):
 hidden_config = {
                 "data": {
                     "scroll amounts": {"to_5": 16, "past_5": 50},
-                    "position data": {
-                        "add button 1": {"confidence": 0.75},
-                        "add button 2": {"confidence": 0.75},
-                        "add button 3": {"confidence": 0.75},
-                        "add button 4": {"confidence": 0.75},
-                        "add button 5": {"confidence": 0.75, "scroll check confidence": 0.75},
-                        "amount box 1": {"confidence": 0.75},
-                        "amount box 2": {"confidence": 0.75},
-                        "amount box 3": {"confidence": 0.75},
-                        "amount box 4": {"confidence": 0.75},
-                        "amount box 5": {"confidence": 0.75},
-                        "auto add button": {"confidence": 0.75},
-                        "craft button": {"confidence": 0.75},
-                        "potion search bar": {"confidence": 0.75},
-                        "open recipe button": {"confidence": 0.75},
-                        "potion menu item button": {"confidence": 0.75},
-                        "potion selection button 1": {"confidence": 0.75},
-                        "potion selection button 2": {"confidence": 0.9},
-                        "potion selection button 3": {"confidence": 0.9},
-                        "add completed checkmark 1": {"confidence": 0.8},
-                        "play button": {"confidence": 0.4}
-                    }
+                "position data": {
+                    "add button 1": {"confidence": 0.75},
+                    "add button 2": {"confidence": 0.75},
+                    "add button 3": {"confidence": 0.75},
+                    "add button 4": {"confidence": 0.75},
+                    "add button 5": {"confidence": 0.75, "scroll check confidence": 0.75},
+                    "amount box 1": {"confidence": 0.75},
+                    "amount box 2": {"confidence": 0.75},
+                    "amount box 3": {"confidence": 0.75},
+                    "amount box 4": {"confidence": 0.75},
+                    "amount box 5": {"confidence": 0.75},
+                    "potion selection button 1": {"confidence": 0.75},
+                    "potion selection button 2": {"confidence": 0.9},
+                    "potion selection button 3": {"confidence": 0.9},
+                    "add completed checkmark 1": {"confidence": 0.8},
+                    "collection menu button": {"confidence": 0.75},
+                    "collection exit button": {"confidence": 0.75},
+                    "auto add button": {"confidence": 0.75},
+                    "craft button": {"confidence": 0.75},
+                    "potion search bar": {"confidence": 0.75},
+                    "open recipe button": {"confidence": 0.75},
+                    "potion menu item button": {"confidence": 0.75},
+                    "play button": {"confidence": 0.75}
+                    },
+                },
+                "calibrated positions": {
+                    "path": False,
+                    "play button": False,
+                    "scroll amounts": False,
+                    "private server link": False,
+                    "add button 1": {"center": False, "bbox": False},
+                    "add button 2": {"center": False, "bbox": False},
+                    "add button 3": {"center": False, "bbox": False},
+                    "add button 4": {"center": False, "bbox": False},
+                    "add button 5": {"center": False, "bbox": False},
+                    "amount box 1": {"center": False, "bbox": False},
+                    "amount box 2": {"center": False, "bbox": False},
+                    "amount box 3": {"center": False, "bbox": False},
+                    "amount box 4": {"center": False, "bbox": False},
+                    "amount box 5": {"center": False, "bbox": False},
+                    "potion selection button 1": {"center": False, "bbox": False},
+                    "potion selection button 2": {"center": False, "bbox": False},
+                    "potion selection button 3": {"center": False, "bbox": False},
+                    "add completed checkmark 1": {"bbox": False},
+                    "add completed checkmark 2": {"bbox": False},
+                    "add completed checkmark 3": {"bbox": False},
+                    "add completed checkmark 4": {"bbox": False},
+                    "add completed checkmark 5": {"bbox": False},
+                    "collection menu button": {"center": False, "bbox": False},
+                    "collection exit button": {"center": False, "bbox": False},
+                    "potion menu item button": {"center": False, "bbox": True},
+                    "potion search bar": {"center": False, "bbox": False},
+                    "open recipe button": {"center": False, "bbox": False},
+                    "auto add button": {"center": False, "bbox": False},
+                    "craft button": {"center": False, "bbox": False}
                 },
                 "positions": {
                     "add button 1": {"bbox": [1080, 460, 1185, 487], "center": [1132, 473]},
                     "add button 2": {"bbox": [1081, 514, 1186, 541], "center": [1133, 527]},
-                    "add button 3": {"bbox": [1080, 569, 1185, 596], "center": [1132, 582]},
-                    "add button 4": {"bbox": [1081, 623, 1186, 650], "center": [1133, 636]},
-                    "add button 5": {"bbox": [1081, 660, 1186, 687], "center": [1133, 673]},
+                    "add button 3": {"bbox": [1081, 568, 1186, 595], "center": [1133, 581]},
+                    "add button 4": {"bbox": [1081, 622, 1186, 649], "center": [1133, 635]},
+                    "add button 5": {"bbox": [1081, 659, 1186, 686], "center": [1133, 672]},
                     "amount box 1": {"bbox": [969, 458, 1076, 488], "center": [1022, 473]},
                     "amount box 2": {"bbox": [969, 512, 1076, 542], "center": [1022, 527]},
                     "amount box 3": {"bbox": [969, 566, 1076, 596], "center": [1022, 581]},
                     "amount box 4": {"bbox": [969, 620, 1076, 650], "center": [1022, 635]},
                     "amount box 5": {"bbox": [969, 657, 1076, 687], "center": [1022, 672]},
-                    "potion menu item button": {"bbox": [1393, 250, 1630, 285], "center": [1511, 267]},
                     "potion selection button 1": {"bbox": [1407, 337, 1857, 465], "center": [1632, 401]},
                     "potion selection button 2": {"bbox": [1408, 473, 1855, 600], "center": [1631, 536]},
                     "potion selection button 3": {"bbox": [1407, 605, 1855, 735], "center": [1631, 670]},
-                    "auto add button": {"bbox": [371, 848, 508, 893], "center": [439, 870]},
-                    "craft button": {"bbox": [960, 716, 1208, 749], "center": [1084, 732]},
-                    "potion search bar": {"bbox": [1405, 293, 1857, 325], "center": [1631, 309]},
-                    "open recipe button": {"bbox": [68, 842, 366, 897], "center": [217, 869]},
-                    "add completed checkmark 1": {"bbox": [942, 467, 978, 493], "center": [960, 480]},
+                    "add completed checkmark 1": {"bbox": [942, 467, 978, 493]},
                     "add completed checkmark 2": {"bbox": [942, 521, 978, 547]},
                     "add completed checkmark 3": {"bbox": [942, 575, 978, 601]},
                     "add completed checkmark 4": {"bbox": [942, 629, 978, 655]},
-                    "add completed checkmark 5": {"bbox": [942, 666, 978, 692]}
+                    "add completed checkmark 5": {"bbox": [942, 666, 978, 692]},
+                    "collection menu button": {"bbox": [1720, 15, 1780, 75], "center": [1750, 45]},
+                    "collection exit button": {"bbox": [1720, 15, 1780, 75], "center": [1750, 45]},
+                    "potion menu item button": {"bbox": [1393, 250, 1630, 285], "center": [1511, 267]},
+                    "auto add button": {"bbox": [371, 848, 508, 893], "center": [439, 870]},
+                    "craft button": {"bbox": [960, 716, 1208, 749], "center": [1084, 732]},
+                    "potion search bar": {"bbox": [1405, 293, 1857, 325], "center": [1631, 309]},
+                    "open recipe button": {"bbox": [68, 842, 366, 897], "center": [217, 869]}
                 },
                 "item presets": {
                     "Main": {
@@ -332,30 +367,6 @@ hidden_config = {
                         }
                     }
                 },
-                "calibrated positions": {
-                    "path": False,
-                    "scroll amounts": False,
-                    "add completed checkmarks": {"bbox": False},
-                    "play button": {"bbox": False, "center": False},
-                    "potion menu item button": {"bbox": False, "center": False},
-                    "potion search bar": {"bbox": False, "center": False},
-                    "potion selection button 1": {"bbox": False, "center": False},
-                    "potion selection button 2": {"bbox": False, "center": False},
-                    "potion selection button 3": {"bbox": False, "center": False},
-                    "open recipe button": {"bbox": False, "center": False},
-                    "add button 1": {"bbox": False, "center": False},
-                    "add button 2": {"bbox": False, "center": False},
-                    "add button 3": {"bbox": False, "center": False},
-                    "add button 4": {"bbox": False, "center": False},
-                    "add button 5": {"bbox": False, "center": False},
-                    "amount box 1": {"bbox": False, "center": False},
-                    "amount box 2": {"bbox": False, "center": False},
-                    "amount box 3": {"bbox": False, "center": False},
-                    "amount box 4": {"bbox": False, "center": False},   
-                    "amount box 5": {"bbox": False, "center": False},
-                    "auto add button": {"bbox": False, "center": False},
-                    "craft button": {"bbox": False, "center": False},
-                    },
                 "biome detection": {
                     "WINDY": {
                         "message type": "message",
@@ -853,7 +864,7 @@ class Dark_Sol(QMainWindow):
         right_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.advanced_calibrations_button = QPushButton("Advanced Calibrations")
-        self.advanced_calibrations_button.clicked.connect(lambda: self.advanced_calibrations_widget.show())
+        self.advanced_calibrations_widget = QWidget()
 
         self.calibrate_potion_crafting_checkbox = QCheckBox("Potion Crafting")
         self.calibrate_auto_path_checkbox = QCheckBox("Auto Path")
@@ -896,175 +907,178 @@ class Dark_Sol(QMainWindow):
         grid.addWidget(self.calibrate_auto_rejoin_checkbox, 4, 2)
 
         self.calibrations_widget_button.clicked.connect(lambda: self.calibrations_widget.show())
-        self.advanced_calibrations_widget = QWidget()
-        self.advanced_calibrations_widget.setWindowTitle("Advanced Calibrations")
-        self.advanced_calibrations_widget.setStyleSheet(
-            "QWidget {background-color: black; color: cyan; font-size: 12px;} "
-            "QLineEdit { border: 1px solid cyan; border-radius: 5px; padding: 3px; color: cyan;} "
-            "QPushButton { border: 1px solid cyan; border-radius: 5px; padding: 3px;}"
-        )
-        self.advanced_calibrations_button.clicked.connect(lambda: self.advanced_calibrations_widget.show())
-
-        advanced_calibrations_layout = QVBoxLayout(self.advanced_calibrations_widget)
-
-        advanced_calibrations_scroll_area = QScrollArea()
-        advanced_calibrations_scroll_area.setWidgetResizable(True)
-        advanced_calibrations_scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        advanced_calibrations_layout.addWidget(advanced_calibrations_scroll_area)
-
-        advanced_calibrations_content = QWidget()
-        advanced_calibrations_grid = QGridLayout(advanced_calibrations_content)
-        advanced_calibrations_scroll_area.setWidget(advanced_calibrations_content)
-
-        header_position = QLabel("Position")
-        header_center = QLabel("Center (x, y)")
-        header_bbox = QLabel("bbox (x1, y1, x2, y2)")
-        header_font = header_position.font()
-        header_font.setBold(True)
-        header_position.setFont(header_font)
-        header_center.setFont(header_font)
-        header_bbox.setFont(header_font)
-        advanced_calibrations_grid.addWidget(header_position, 0, 0)
-        advanced_calibrations_grid.addWidget(header_center, 0, 2)
-        advanced_calibrations_grid.addWidget(header_bbox, 0, 4)
-
-        int_list_validator = QRegularExpressionValidator(QRegularExpression(r"^-?\d+(\s*,\s*-?\d+)*$"))
-
-        def format_values(values: list[int]) -> str:
-            return ", ".join(str(v) for v in values)
-
-        def parse_int_list(text: str, expected_len: int) -> list[int] | None:
-            values = [int(v) for v in re.findall(r"-?\d+", text)]
-            if len(values) != expected_len:
-                return None
-            return values
         
-        def show_invalid_message(title: str, message: str, edit: QLineEdit):
-            QMessageBox.warning(self.advanced_calibrations_widget, title, message)
-            edit.setFocus()
-            edit.selectAll()
-
-        def save_center(position, edit):
-            text = edit.text().strip()
-            if not text:
-                show_invalid_message("Invalid Center", f"Center for {position} cannot be empty.", edit)
-                return
-            values = parse_int_list(text, 2)
-            if values is None:
-                show_invalid_message("Invalid Center", f"Center for {position} must be two integers.", edit)
-                return
-            config["positions"][position]["center"] = values
-            nice_config_save()
-
-        def save_bbox(position: str, edit: QLineEdit):
-            text = edit.text().strip()
-            if not text:
-                show_invalid_message("Invalid BBox", f"BBox for {position} cannot be empty.", edit)
-                return
-            values = parse_int_list(text, 4)
-            if values is None:
-                show_invalid_message("Invalid BBox", f"BBox for {position} must be four integers.", edit)
-                return
-            config["positions"][position]["bbox"] = values
-            nice_config_save()
-
-        set_row = 1
-        for position, calibration_value in config["calibrated positions"].items():
-            if isinstance(calibration_value, dict):
-                continue
-            position_label = QLabel(f"{str(position).strip()}:")
-            position_font = position_label.font()
-            position_font.setBold(True)
-            position_label.setFont(position_font)
-
-            cb = QCheckBox()
-            cb.setChecked(bool(calibration_value))
-            cb.stateChanged.connect(lambda state, position=position: [config["calibrated positions"].__setitem__(position, True if state == 2 else False), nice_config_save()])
-
-            tooltip = QLabel("i")
-            tooltip.setToolTip(
-                "This checkbox is for the overall calibration as this calibration isn't a normal one that uses coordinates"
+        def build_advanced_calibrations_ui():
+            self.advanced_calibrations_widget = QWidget()
+            self.advanced_calibrations_widget.setWindowTitle("Advanced Calibrations")
+            self.advanced_calibrations_widget.setStyleSheet(
+                "QWidget {background-color: black; color: cyan; font-size: 12px;} "
+                "QLineEdit { border: 1px solid cyan; border-radius: 5px; padding: 3px; color: cyan;} "
+                "QPushButton { border: 1px solid cyan; border-radius: 5px; padding: 3px;}"
             )
-            tooltip.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            tooltip.setFixedSize(14, 14)
-            tooltip.setStyleSheet(
-                "QLabel { border: 1px solid cyan; border-radius: 7px; font-size: 10px; color: cyan; }"
-            )
+            advanced_calibrations_layout = QVBoxLayout(self.advanced_calibrations_widget)
 
-            checkbox_container = QWidget()
-            layout = QGridLayout(checkbox_container)
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.addWidget(cb, 0, 0)
-            layout.addWidget(tooltip, 0, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
+            advanced_calibrations_scroll_area = QScrollArea()
+            advanced_calibrations_scroll_area.setWidgetResizable(True)
+            advanced_calibrations_scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+            advanced_calibrations_layout.addWidget(advanced_calibrations_scroll_area)
 
-            center_edit = QLineEdit("Unused")
-            center_edit.setDisabled(True)
-            bbox_edit = QLineEdit("Unused")
-            bbox_edit.setDisabled(True)
+            advanced_calibrations_content = QWidget()
+            advanced_calibrations_grid = QGridLayout(advanced_calibrations_content)
+            advanced_calibrations_scroll_area.setWidget(advanced_calibrations_content)
 
-            advanced_calibrations_grid.addWidget(position_label, set_row, 0)
-            advanced_calibrations_grid.addWidget(checkbox_container, set_row, 1)
-            advanced_calibrations_grid.addWidget(center_edit, set_row, 2)
-            advanced_calibrations_grid.addWidget(bbox_edit, set_row, 4)
-            set_row += 1
+            header_position = QLabel("Position")
+            header_center = QLabel("Center (x, y)")
+            header_bbox = QLabel("bbox (x1, y1, x2, y2)")
+            header_font = header_position.font()
+            header_font.setBold(True)
+            header_position.setFont(header_font)
+            header_center.setFont(header_font)
+            header_bbox.setFont(header_font)
+            advanced_calibrations_grid.addWidget(header_position, 0, 0)
+            advanced_calibrations_grid.addWidget(header_center, 0, 2)
+            advanced_calibrations_grid.addWidget(header_bbox, 0, 4)
 
-        for position, calibration_value in config["positions"].items():
-            if not isinstance(calibration_value, dict):
-                continue
-            position_label = QLabel(f"{str(position).strip()}:")
-            position_font = position_label.font()
-            position_font.setBold(True)
-            position_label.setFont(position_font)
+            int_list_validator = QRegularExpressionValidator(QRegularExpression(r"^-?\d+(\s*,\s*-?\d+)*$"))
 
-            position_dict = config["calibrated positions"][position]
+            def format_values(values: list[int]) -> str:
+                return ", ".join(str(v) for v in values)
 
-            center_edit = QLineEdit()
-            center_edit.setValidator(int_list_validator)
-            if calibration_value.get("center") is not None:
-                center_edit.setPlaceholderText("x, y")
-                center_edit.setText(format_values(calibration_value.get("center", [])))
-                center_edit.editingFinished.connect(lambda position=position, edit=center_edit: save_center(position, edit))
-            else:
+            def parse_int_list(text: str, expected_len: int) -> list[int] | None:
+                values = [int(v) for v in re.findall(r"-?\d+", text)]
+                if len(values) != expected_len:
+                    return None
+                return values
+            
+            def show_invalid_message(title: str, message: str, edit: QLineEdit):
+                QMessageBox.warning(self.advanced_calibrations_widget, title, message)
+                edit.setFocus()
+                edit.selectAll()
+
+            def save_center(position, edit):
+                text = edit.text().strip()
+                if not text:
+                    show_invalid_message("Invalid Center", f"Center for {position} cannot be empty.", edit)
+                    return
+                values = parse_int_list(text, 2)
+                if values is None:
+                    show_invalid_message("Invalid Center", f"Center for {position} must be two integers.", edit)
+                    return
+                config["positions"][position]["center"] = values
+                nice_config_save()
+
+            def save_bbox(position: str, edit: QLineEdit):
+                text = edit.text().strip()
+                if not text:
+                    show_invalid_message("Invalid BBox", f"BBox for {position} cannot be empty.", edit)
+                    return
+                values = parse_int_list(text, 4)
+                if values is None:
+                    show_invalid_message("Invalid BBox", f"BBox for {position} must be four integers.", edit)
+                    return
+                config["positions"][position]["bbox"] = values
+                nice_config_save()
+
+            set_row = 1
+            for position, calibration_value in config["calibrated positions"].items():
+                if isinstance(calibration_value, dict):
+                    continue
+                position_label = QLabel(f"{str(position).strip()}:")
+                position_font = position_label.font()
+                position_font.setBold(True)
+                position_label.setFont(position_font)
+
+                cb = QCheckBox()
+                cb.setChecked(bool(calibration_value))
+                cb.stateChanged.connect(lambda state, position=position: [config["calibrated positions"].__setitem__(position, True if state == 2 else False), nice_config_save()])
+
+                tooltip = QLabel("i")
+                tooltip.setToolTip(
+                    "This checkbox is for the overall calibration as this calibration isn't a normal one that uses coordinates"
+                )
+                tooltip.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                tooltip.setFixedSize(14, 14)
+                tooltip.setStyleSheet(
+                    "QLabel { border: 1px solid cyan; border-radius: 7px; font-size: 10px; color: cyan; }"
+                )
+
+                checkbox_container = QWidget()
+                layout = QGridLayout(checkbox_container)
+                layout.setContentsMargins(0, 0, 0, 0)
+                layout.addWidget(cb, 0, 0)
+                layout.addWidget(tooltip, 0, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
+
+                center_edit = QLineEdit("Unused")
                 center_edit.setDisabled(True)
-                center_edit.setText("Unused")
-
-            bbox_edit = QLineEdit()
-            bbox_edit.setValidator(int_list_validator)
-            if calibration_value.get("bbox") is not None:
-                bbox_edit.setPlaceholderText("x1, y1, x2, y2")
-                bbox_edit.setText(format_values(calibration_value.get("bbox", [])))
-                bbox_edit.editingFinished.connect(lambda position=position, edit=bbox_edit: save_bbox(position, edit))
-            else:
+                bbox_edit = QLineEdit("Unused")
                 bbox_edit.setDisabled(True)
-                bbox_edit.setText("Unused")
 
-            center_cb = None
-            if center_edit.isEnabled():
-                center_cb = QCheckBox()
-                center_cb.setChecked(position_dict["center"])
-                center_cb.setToolTip("Is Center Calibrated")
-                center_cb.stateChanged.connect(lambda state, pos=position: (config["calibrated positions"][pos].__setitem__("center", True if state == 2 else False), nice_config_save()))
+                advanced_calibrations_grid.addWidget(position_label, set_row, 0)
+                advanced_calibrations_grid.addWidget(checkbox_container, set_row, 1)
+                advanced_calibrations_grid.addWidget(center_edit, set_row, 2)
+                advanced_calibrations_grid.addWidget(bbox_edit, set_row, 4)
+                set_row += 1
 
-            bbox_cb = None
-            if bbox_edit.isEnabled():
-                bbox_cb = QCheckBox()
-                bbox_cb.setChecked(position_dict["bbox"])
-                bbox_cb.setToolTip("Is bbox Calibrated")
-                bbox_cb.stateChanged.connect(lambda state, pos=position: (config["calibrated positions"][pos].__setitem__("bbox", True if state == 2 else False), nice_config_save()))
+            for position, calibration_value in config["positions"].items():
+                if not isinstance(calibration_value, dict):
+                    continue
+                position_label = QLabel(f"{str(position).strip()}:")
+                position_font = position_label.font()
+                position_font.setBold(True)
+                position_label.setFont(position_font)
 
-            advanced_calibrations_grid.addWidget(position_label, set_row, 0)
-            if center_cb is not None:
-                advanced_calibrations_grid.addWidget(center_cb, set_row, 1)
-            advanced_calibrations_grid.addWidget(center_edit, set_row, 2)
-            if bbox_cb is not None:
-                advanced_calibrations_grid.addWidget(bbox_cb, set_row, 3)
-            advanced_calibrations_grid.addWidget(bbox_edit, set_row, 4)
-            set_row += 1
+                position_dict = config["calibrated positions"][position]
 
-        advanced_calibrations_content.adjustSize()
-        min_width = advanced_calibrations_content.sizeHint().width() + 40
-        self.advanced_calibrations_widget.setMinimumWidth(min_width)
-           
+                center_edit = QLineEdit()
+                center_edit.setValidator(int_list_validator)
+                if calibration_value.get("center") is not None:
+                    center_edit.setPlaceholderText("x, y")
+                    center_edit.setText(format_values(calibration_value.get("center", [])))
+                    center_edit.editingFinished.connect(lambda position=position, edit=center_edit: save_center(position, edit))
+                else:
+                    center_edit.setDisabled(True)
+                    center_edit.setText("Unused")
+
+                bbox_edit = QLineEdit()
+                bbox_edit.setValidator(int_list_validator)
+                if calibration_value.get("bbox") is not None:
+                    bbox_edit.setPlaceholderText("x1, y1, x2, y2")
+                    bbox_edit.setText(format_values(calibration_value.get("bbox", [])))
+                    bbox_edit.editingFinished.connect(lambda position=position, edit=bbox_edit: save_bbox(position, edit))
+                else:
+                    bbox_edit.setDisabled(True)
+                    bbox_edit.setText("Unused")
+
+                center_cb = None
+                if center_edit.isEnabled():
+                    center_cb = QCheckBox()
+                    center_cb.setChecked(position_dict["center"])
+                    center_cb.setToolTip("Is Center Calibrated")
+                    center_cb.stateChanged.connect(lambda state, pos=position: (config["calibrated positions"][pos].__setitem__("center", True if state == 2 else False), nice_config_save()))
+
+                bbox_cb = None
+                if bbox_edit.isEnabled():
+                    bbox_cb = QCheckBox()
+                    bbox_cb.setChecked(position_dict["bbox"])
+                    bbox_cb.setToolTip("Is bbox Calibrated")
+                    bbox_cb.stateChanged.connect(lambda state, pos=position: (config["calibrated positions"][pos].__setitem__("bbox", True if state == 2 else False), nice_config_save()))
+
+                advanced_calibrations_grid.addWidget(position_label, set_row, 0)
+                if center_cb is not None:
+                    advanced_calibrations_grid.addWidget(center_cb, set_row, 1)
+                advanced_calibrations_grid.addWidget(center_edit, set_row, 2)
+                if bbox_cb is not None:
+                    advanced_calibrations_grid.addWidget(bbox_cb, set_row, 3)
+                advanced_calibrations_grid.addWidget(bbox_edit, set_row, 4)
+                set_row += 1
+
+            advanced_calibrations_content.adjustSize()
+            min_width = advanced_calibrations_content.sizeHint().width() + 40
+            self.advanced_calibrations_widget.setMinimumWidth(min_width)
+            self.advanced_calibrations_widget.show()
+            self.advanced_calibrations_widget.raise_()
+            self.advanced_calibrations_widget.activateWindow()
+        self.advanced_calibrations_button.clicked.connect(build_advanced_calibrations_ui)
         # Create Donations Stuff
         self.donate_label = QLabel("Donate")
         # Mini Status Label 
@@ -1537,16 +1551,17 @@ class Dark_Sol(QMainWindow):
         main_url = convert_roblox_link(link)
         QDesktopServices.openUrl(QUrl(main_url))
 
-    def reload_potion_gui(self):
-        self.open_roblox(config["private server link"])
-
+    def wait_for_and_click_play_button(self):
         while True:
             self.focus_roblox(ignore_roblox_not_found=True)
-            if self.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True):
-                self.move_and_click((270,1050))
+            if where_to_click := self.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True, return_coordinates=True):
+                self.move_and_click(where_to_click[1]) # (270,1050)
                 break
             time.sleep(1)
-        
+
+    def reload_potion_gui(self):
+        self.open_roblox(config["private server link"])
+        self.wait_for_and_click_play_button()
         time.sleep(2)
         self.path_to_potion_gui()
 
@@ -1559,8 +1574,8 @@ class Dark_Sol(QMainWindow):
             keyboard.Controller().press(keyboard.Key.enter)
             keyboard.Controller().release(keyboard.Key.enter)
 
-        self.move_and_click((40,500))
-        self.move_and_click((414,163))
+        self.move_and_click(config["positions"]["collection menu button"]["center"])
+        self.move_and_click(config["positions"]["collection exit button"]["center"])
 
         time.sleep(0.2)
         mkey.right_mouse_down()
@@ -2257,45 +2272,138 @@ class Dark_Sol(QMainWindow):
         return True
 
     def calibrate_macro(self):
-        def calibrate_position(calibration, what_to_save=("center", "bbox"), multiple=False, ignore_match_not_found=False, region=None, area_required=False, dont_save_center=False, save_calibrated_position=True):
+        def calibrate_position(calibration, need_to_save=("center",), multiple=False, ignore_match_not_found=False, region=None):
+            if not isinstance(need_to_save, (tuple)):
+                need_to_save = (need_to_save,)
+            if "center" in need_to_save:
+                what_to_save = ("center", "bbox")
+            elif "bbox" in need_to_save and "center" not in need_to_save:
+                what_to_save = ("bbox",)
+            else:
+                what_to_save = None
+                
             if self.safe_image_find(calibration, what_to_save=what_to_save, multiple=multiple, ignore_match_not_found=ignore_match_not_found, region=region):
-                if save_calibrated_position:
-                    config["calibrated positions"][calibration] = {key: True for key in what_to_save}
+                if need_to_save != None:
+                    config["calibrated positions"][calibration] = {key: True for key in need_to_save}
                     nice_config_save()
                 return True
             if not str(self.create_msg_box("Calibrations", f"Auto calibration for '{calibration}' either failed or was canceled. \n Would you like to manually calibrate this position?", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No, msg_box_type=QMessageBox.Icon.Question)).removeprefix("&") == "Yes":
                 return False
                 
-            if area_required:
+            if "bbox" in need_to_save:
                 self.create_msg_box("Calibrations", "This calibration requires the entire area to be highlighted for the macro to work")
-                if not dont_save_center:
+                if "center" in need_to_save:
                     if self.manual_area_calibration(calibration, what_to_save=("bbox", "center")):
-                        if save_calibrated_position:
-                            config["calibrated positions"][calibration] = {"bbox": True, "center": True}
-                            nice_config_save()
+                        config["calibrated positions"][calibration] = {"bbox": True, "center": True}
+                        nice_config_save()
                         return True
                 else:
                     if self.manual_area_calibration(calibration, what_to_save="bbox"):
-                        if save_calibrated_position:
-                            config["calibrated positions"][calibration] = {"bbox": True}
-                            nice_config_save()
+                        config["calibrated positions"][calibration] = {"bbox": True}
+                        nice_config_save()
                         return True
-            else:
+            elif "center" in need_to_save:
                 if self.create_msg_box("Calibrations", " Would you like to select the area or just use the click coordinate for this position?", "Area", "Click Position", msg_box_type=QMessageBox.Icon.Question) == "Area":
                     if self.manual_area_calibration(calibration, what_to_save=("bbox", "center")):
-                        if save_calibrated_position:
-                            config["calibrated positions"][calibration] = {"bbox": True, "center": True}
-                            nice_config_save()
+                        config["calibrated positions"][calibration] = {"bbox": True, "center": True}
+                        nice_config_save()
                         return True
                 else:
                     if self.manual_point_calibration(calibration):
-                        if save_calibrated_position:
-                            config["calibrated positions"][calibration] = {"center": True}
-                            nice_config_save()
+                        config["calibrated positions"][calibration] = {"center": True}
+                        nice_config_save()
                         return True   
             return False
         
-        if not config["calibrated positions"]["path"] and config["sections to calibrate"]["auto path"] == True:
+        def force_manual_calibration(calibration, need_to_save=("center",)):
+            self.create_msg_box("Calibrations", f"{calibration} cannot be auto calibrated due to the fact that it is too small and does not have enough unique features for the template matching to reliably find it. Please manually select the point")
+            if "bbox" in need_to_save:
+                self.create_msg_box("Calibrations", "This calibration requires the entire area to be highlighted for the macro to work")
+                if "center" in need_to_save:
+                    if self.manual_area_calibration(calibration, what_to_save=("bbox", "center")):
+                        config["calibrated positions"][calibration] = {"bbox": True, "center": True}
+                        nice_config_save()
+                        return True
+                else:
+                    if self.manual_area_calibration(calibration, what_to_save="bbox"):
+                        config["calibrated positions"][calibration] = {"bbox": True}
+                        nice_config_save()
+                        return True
+            elif "center" in need_to_save:
+                if self.create_msg_box("Calibrations", " Would you like to select the area or just use the click coordinate for this position?", "Area", "Click Position", msg_box_type=QMessageBox.Icon.Question) == "Area":
+                    if self.manual_area_calibration(calibration, what_to_save=("bbox", "center")):
+                        config["calibrated positions"][calibration] = {"bbox": True, "center": True}
+                        nice_config_save()
+                        return True
+                else:
+                    if self.manual_point_calibration(calibration):
+                        config["calibrated positions"][calibration] = {"center": True}
+                        nice_config_save()
+                        return True   
+            return False
+        
+        if config["sections to calibrate"]["auto rejoin"]:
+            if not config["calibrated positions"]["private server link"]:
+                private_server_dialog = QDialog(self)
+                private_server_dialog.setWindowTitle("Private Server Link")
+                private_server_dialog.setStyleSheet(
+                    "QWidget {background-color: black; color: cyan;} "
+                    "QLineEdit {background-color: #171717; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 4px;} "
+                    "QPushButton {background-color: black; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 4px;}"
+                )
+
+                dialog_layout = QVBoxLayout(private_server_dialog)
+                dialog_layout.addWidget(QLabel("Enter private server link:"))
+
+                ps_link_edit = QLineEdit()
+                ps_link_edit.setPlaceholderText("Enter private server link here")
+                ps_link_edit.setText(config["private server link"])
+                dialog_layout.addWidget(ps_link_edit)
+
+                save_button = QPushButton("Save")
+                dialog_layout.addWidget(save_button)
+
+                def save_private_server_link():
+                    link = ps_link_edit.text().strip()
+                    if not link:
+                        QMessageBox.warning(private_server_dialog, "Invalid Link", "Private server link cannot be empty.")
+                        return
+                    config["private server link"] = link
+                    config["calibrated positions"]["private server link"] = True
+                    nice_config_save()
+                    private_server_dialog.accept()
+
+                save_button.clicked.connect(save_private_server_link)
+
+                if private_server_dialog.exec() != QDialog.DialogCode.Accepted:
+                    return
+                
+            self.close_roblox()
+            time.sleep(5)
+            self.open_roblox(config["private server link"])
+            time.sleep(1)
+            while not self.focus_roblox(True):
+                time.sleep(1)
+            time.sleep(0.5)
+            self.raise_()
+            self.activateWindow()
+
+            if not config["calibrated positions"]["play button"]:
+                self.create_msg_box("Calibrations", "You must auto calibrate the play button. Please make sure it is detected consistently. Click okay once you see the play button after roblox has restarted.")
+                if not self.safe_image_find("play button", what_to_save=None) is True:
+                    return
+                self.create_msg_box("Calibrations", "Play button detected and calibrated successfully.")
+                config["calibrated positions"]["play button"] = True
+                nice_config_save()
+            self.wait_for_and_click_play_button()
+            if not config["calibrated positions"]["collection menu button"] and config["sections to calibrate"]["auto rejoin"]:
+                if not calibrate_position("collection menu button"):
+                    return
+            if not config["calibrated positions"]["collection exit button"] and config["sections to calibrate"]["auto rejoin"]:
+                if not force_manual_calibration("collection exit button"):
+                    return
+
+        if not config["calibrated positions"]["path"] and (config["sections to calibrate"]["auto path"] or config["sections to calibrate"]["auto rejoin"]):
             def choose_path():
                 if path_selector.currentText() == "Normal":
                     config["path"] = "normal"
@@ -2322,10 +2430,10 @@ class Dark_Sol(QMainWindow):
 
         if not self.focus_roblox():
             return
-        time.sleep(0.2)
-        if config["sections to calibrate"]["auto rejoin"] == True:
-            pass
-        if config["sections to calibrate"]["Potion Crafting"] == True:
+        time.sleep(2)
+        self.path_to_potion_gui()
+        time.sleep(2)
+        if config["sections to calibrate"]["potion crafting"] == True:
             if not config["calibrated positions"]["potion menu item button"]["center"]:
                 if not calibrate_position("potion menu item button"):
                     return
@@ -2360,7 +2468,7 @@ class Dark_Sol(QMainWindow):
                 if not calibrate_position("craft button"):
                     return
             if not config["calibrated positions"]["auto add button"]["bbox"] or not config["calibrated positions"]["auto add button"]["center"]:
-                if not calibrate_position("auto add button", area_required=True):
+                if not calibrate_position("auto add button", need_to_save=("bbox", "center")):
                     return
             if not config["calibrated positions"]["amount box 1"]["center"]:
                 if not calibrate_position("amount box 1"):
@@ -2404,11 +2512,15 @@ class Dark_Sol(QMainWindow):
             keyboard.Controller().type("20")
             self.move_and_click(config["positions"]["add button 1"]["center"])
             time.sleep(0.1)
+            add_completed_checkmarks_calibrated = True
             for count in range(1, 6):
                 if not config["calibrated positions"][f"add completed checkmark {count}"]["bbox"]:
-                    if not calibrate_position(f"add completed checkmark {count}", area_required=True, dont_save_center=True, save_calibrated_position=False):
-                        return
-                self.calibrate_checkmarks()
+                    add_completed_checkmarks_calibrated = False
+            if not add_completed_checkmarks_calibrated:
+                if not calibrate_position(f"add completed checkmark 1", need_to_save=("bbox")):
+                    return
+                if not self.calibrate_checkmarks():
+                    return
             
             self.move_and_click(config["positions"]["potion search bar"]["center"])
             mkey.left_click()
@@ -2429,14 +2541,15 @@ class Dark_Sol(QMainWindow):
         for count in range(2, 6):
             amount_box_bbox = config["positions"][f"amount box {count}"]["bbox"]
             bbox = (checkmark_width_1, amount_box_bbox[1] + checkmark_height_difference_top, checkmark_width_2, amount_box_bbox[3] + checkmark_height_difference_bottom)
-            config["positions"].setdefault(f"add completed checkmark {count}", {})["bbox"] = bbox
+            config["positions"][f"add completed checkmark {count}"] = {"bbox": bbox}
         nice_config_save()
         for count in range(5):
             self.create_overlay(bbox=config["positions"][f"add completed checkmark {count + 1}"]["bbox"])
         checkmarks_calibrated_correctly = str(self.create_msg_box("Checkmark Calibration Complete", "checkmark calibration is complete. Please verify the positions are correct.", QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No, internal=False)).removeprefix("&")
         self.create_overlay(disabled=True)
         if checkmarks_calibrated_correctly == "Yes":
-            config["calibrated positions"]["add completed checkmarks"] = True
+            for count in range(2, 6):
+                config["calibrated positions"][f"add completed checkmark {count}"]["bbox"] = True
             nice_config_save()
             return True
         else:
@@ -2668,10 +2781,12 @@ class Dark_Sol(QMainWindow):
                         what_to_save=("center", "bbox"),
                         multiple=False,
                         ignore_match_not_found=False,
-                        region=None):
+                        region=None,
+                        return_coordinates=False):
         
         template_path = f"{dark_sol_appdata_directory}\\Lib\\Images\\{data['position data'][calibration if calibration in data['position data'] else calibration[:-1].strip()]['image path']}"
         return_bool = False
+        bbox, center = None, None
         if what_to_save != None:
             tuple(what_to_save)
 
@@ -2694,8 +2809,7 @@ class Dark_Sol(QMainWindow):
             if not ignore_match_not_found:
                 self.focus_roblox()
             time.sleep(0.2)
-            bbox, center = None, None
-            nonlocal return_bool
+            nonlocal return_bool, bbox, center
             return_bool = True
             try:
                 match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["position data"][calibration]["confidence"], region=region)
@@ -2722,7 +2836,7 @@ class Dark_Sol(QMainWindow):
 
         template_scaled = self.rescale_template(data["position data"][calibration if calibration in data["position data"] else calibration[:-1].strip()]["image path"], template_path)
         find_template()
-        return return_bool
+        return return_bool if return_coordinates == False or return_bool == False else (bbox, center)
 
     def calibrate_scrolling(self):
         template_path = self.rescale_template("add button.png", f"{dark_sol_appdata_directory}\\Lib\\Images\\add button.png")
