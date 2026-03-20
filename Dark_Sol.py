@@ -1934,7 +1934,7 @@ class dark_sol_gui(QMainWindow):
         biome_detection()
 
         self.mini_status_widget.show()
-        self.update_status("Running", what_to_update="Both")
+        self.update_status("Running", what_to_update="both")
 
     def stop_macro(self):
         macro.run_event.clear()
@@ -1947,19 +1947,19 @@ class dark_sol_gui(QMainWindow):
         if log_scroll_bar is not None:
             log_scroll_bar.setValue(log_scroll_bar.maximum())
 
-    def update_status(self, *args, what_to_update="Task"):
+    def update_status(self, *args, what_to_update="task"):
         status_text = " ".join(str(a) for a in args)
         self.status_signal.emit(status_text, str(what_to_update))
         
-    def inner_update_status(self, status_text, what_to_update="Task"):
-        if what_to_update in ("General", "Both"):
+    def inner_update_status(self, status_text, what_to_update="task"):
+        if what_to_update in ("general", "both"):
             log.info("Status:", status_text)
             self.status_label.setText(f"Status: {status_text}")
             if self.general_mini_status_label != None:
                 self.general_mini_status_label.setText(f"Status: {status_text}")
                 self.general_mini_status_label.adjustSize()
 
-        if what_to_update in ("Task", "Both"):
+        if what_to_update in ("task", "both"):
             log.info("Current Task:", status_text)
             if self.mini_status_label != None:
                 self.mini_status_label.setText(f"Current Task: {status_text}")
@@ -2164,7 +2164,7 @@ class calibrations():
 
         helper_functions.focus_roblox()
         dark_sol.show_status_widget_signal.emit()
-        dark_sol.update_status("Calibrating", what_to_update="General")
+        dark_sol.update_status("Calibrating", what_to_update="general")
         dark_sol.update_status("Calibrating scrolling")
         app.processEvents()
         helper_functions.move_and_click(config["positions"]["amount box 5"]["center"], False)
@@ -3073,11 +3073,7 @@ class macro():
     macro_thread = None
 
     def __init__(self) -> None:
-        log.info(f"macro run event: {macro.run_event}")
         macro.run_event.set()
-        log.info(f"macro run event after set: {macro.run_event}")
-        log.info(f"Does macro thread exist? {'Yes' if macro.macro_thread else 'No'}")
-        log.info(f"is macro thread alive? {macro.macro_thread.is_alive() if macro.macro_thread else 'No thread'}")
         if macro.macro_thread is None or not macro.macro_thread.is_alive():
             macro.macro_thread = threading.Thread(target=self.macro_loop, daemon=True)
             macro.macro_thread.start()
