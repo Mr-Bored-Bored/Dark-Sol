@@ -1966,8 +1966,339 @@ class dark_sol_gui(QMainWindow):
                 self.mini_status_label.adjustSize()
 
         self.mini_status_widget.adjustSize()
-class other_functions():
+class image_processing():
+    @staticmethod
+    def rescale_template(template, template_path):
+        image_scale = data["template data"][template]["scale"]   
+        image_resolution =data["template data"][template]["resolution"]
+        scale_ratio = scale / image_scale
+        image_ratio_x = screen_width / image_resolution[0]
+        image_ratio_y = screen_height / image_resolution[1]
+        total_image_scale_x = scale_ratio * image_ratio_x
+        total_image_scale_y = scale_ratio * image_ratio_y
+        log.debug(f"Total Scale X: {total_image_scale_x}, Total Scale Y: {total_image_scale_y}")
 
+        template_img = Image.open(template_path)
+        template_scaled = template_img.resize((int(template_img.width * total_image_scale_x), int(template_img.height * total_image_scale_y)), Image.Resampling.LANCZOS)
+        return template_scaled
+    
+    @staticmethod
+    def auto_find_image(calibration,
+                        what_to_save=("center", "bbox"),
+                        multiple=False,
+                        ignore_match_not_found=False,
+                        region=None,
+                        return_coordinates=False):
+        
+        template_path = f"{dark_sol_appdata_directory}\\Lib\\Images\\{data['position data'][calibration if calibration in data['position data'] else calibration[:-1].strip()]['image path']}"
+        return_bool = False
+        bbox, center = None, None
+        if what_to_save != None:
+            tuple(what_to_save)
+
+        if region == None and multiple and int(calibration[-1]) > 1:
+            region = (0, config["positions"][calibration.replace(calibration[-1], str(int(calibration[-1]) - 1))]["bbox"][3], screen_width, screen_height)
+
+        def save_position(position_name, center=None, bbox=None):
+            log.debug(f"Proposed position for '{position_name}': Center: {center}, bbox: {bbox}")
+            if dark_sol.create_msg_box("Save Position", f"Save position for '{position_name}'?", "Yes", "No", internal=False) != "Yes":
+                return False
+            if "bbox" in what_to_save and bbox != None:
+                config["positions"][position_name]["bbox"] = bbox
+            if "center" in what_to_save and center != None:
+                config["positions"][position_name]["center"] = center
+            nice_config_save()
+            log.info(f"Coordinates for '{position_name}' saved.")
+            return True
+                
+        def find_template():
+            if not ignore_match_not_found:
+                helper_functions.focus_roblox()
+            time.sleep(0.2)
+            nonlocal return_bool, bbox, center
+            return_bool = True
+            try:
+                match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["position data"][calibration]["confidence"], region=region)
+                bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))  # type: ignore[reportOptionalMemberAccess]
+                center = (int(match.left + match.width // 2), int(match.top + match.height // 2))  # type: ignore[reportOptionalMemberAccess]
+                if what_to_save != None:
+                    helper_functions.create_overlay(bbox, text=calibration)
+                    return_bool = save_position(calibration, center, bbox)
+                    helper_functions.create_overlay(bbox, text=calibration, disabled=True)
+                if return_bool == False:
+                    return
+            except Exception as exception:
+                helper_functions.create_overlay(disabled=True)
+
+                if isinstance(exception, (pyautogui.ImageNotFoundException, pyscreeze_ImageNotFoundException))and ignore_match_not_found:
+                    pass
+                elif isinstance(exception, (pyautogui.ImageNotFoundException, pyscreeze_ImageNotFoundException)):
+                    log.debug(f"No matches found for template: {template_path}")
+                    dark_sol.create_msg_box("No Matches Found", f"No Matches Found For: {calibration}", internal=False)
+                else:
+                    log.error(f"Error finding matches: {exception}")
+                    dark_sol.create_msg_box("Error Finding Matches", f"Error Finding Matches: {exception}")
+                return_bool = False
+
+        template_scaled = image_processing.rescale_template(data["position data"][calibration if calibration in data["position data"] else calibration[:-1].strip()]["image path"], template_path)
+        find_template()
+        return return_bool if return_coordinates == False or return_bool == False else (bbox, center)
+class helper_functions():
+    @staticmethod
+    def check_roblox_logs_for(*logs_to_check_for):
+        texts = [logs_to_check_for] if isinstance(logs_to_check_for, str) else list(logs_to_check_for)
+        if not texts:
+            return None
+
+        if not roblox_log_path.exists():
+            return False
+
+        latest_roblox_log_file = max(roblox_log_path.glob("*.log"), key=lambda p: p.stat().st_mtime, default=None)
+        if not latest_roblox_log_file:
+            return False
+
+        with latest_roblox_log_file.open("rb") as f:
+            f.seek(0, 2)
+            pos, carry = f.tell(), b""
+
+            while pos > 0:
+                n = min(8192, pos)
+                pos -= n
+                f.seek(pos)
+                carry = f.read(n) + carry
+                *lines, carry = carry.split(b"\n")
+
+                for raw in reversed(lines):  # newest -> oldest
+                    line = raw.decode("utf-8", errors="replace")
+                    hits = [(line.find(t), t) for t in texts if t in line]
+                    if hits:
+                        x, found = min(hits, key=lambda x: x[0])  # first text in that line
+                        return found
+
+            if carry:
+                line = carry.decode("utf-8", errors="replace")
+                hits = [(line.find(t), t) for t in texts if t in line]
+                if hits:
+                    x, found = min(hits, key=lambda x: x[0])
+                    return found
+        return False
+    
+    @staticmethod
+    def check_region_for_colors(*targets, bbox=None):
+        if bbox == None:
+            img = ImageGrab.grab()
+        else:
+            img = ImageGrab.grab(bbox)
+
+        pixels = np.asarray(img, dtype=np.uint8)
+        mask = np.zeros((pixels.shape[0], pixels.shape[1]), dtype=bool)
+
+        for target in targets:
+            if isinstance(target, str):
+                clean = target.strip()
+                if clean.startswith("#"):
+                    clean = clean[1:]
+                value = int(clean, 16)
+                r = (value >> 16) & 0xFF
+                g = (value >> 8) & 0xFF
+                b = value & 0xFF
+            else:
+                r, g, b = target
+
+            mask |= ((pixels[:, :, 0] == r) & (pixels[:, :, 1] == g) & (pixels[:, :, 2] == b))
+
+        match_count = int(mask.sum())
+        return match_count
+    
+    @staticmethod
+    def create_overlay(bbox=None, color=(0,255,0,255), text=None, text_color="#00FF00", font_size=10, thickness=3, disabled=False):
+        global overlay_windows
+        if "overlay_windows" not in globals():
+            overlay_windows = {}
+
+        if disabled:
+            for overlay_window in overlay_windows.values():
+                overlay_window.close()
+            overlay_windows.clear()
+            return
+        
+        if bbox == None:
+            return
+        
+        overlay_key = tuple(bbox)
+        if overlay_key in overlay_windows:
+            log.debug("Overlay already exists for this region.")
+            return
+
+        x, y, x2, y2 = bbox
+        w = x2 - x
+        h = y2 - y
+
+        # Scale coordinates for logical/physical match
+        x_scaled = int(x / scale)
+        y_scaled = int(y / scale)
+        w_scaled = int(w / scale)
+        h_scaled = int(h / scale)
+
+        screen = QGuiApplication.screenAt(QPoint(x_scaled + w_scaled // 2, y_scaled + h_scaled // 2))
+        if screen is None:
+            QMessageBox.warning(dark_sol, "Screen Not Found", "Could not find a screen at the specified coordinates.")
+            return
+
+        screen_geo = screen.geometry()
+
+        overlay_window = QWidget()
+        overlay_window.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool | Qt.WindowType.WindowTransparentForInput)
+        overlay_window.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        overlay_window.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        overlay_window.setGeometry(screen_geo)
+        overlay_window.show()
+        overlay_window.raise_()
+
+        local_x = x_scaled - screen_geo.x()
+        local_y = y_scaled - screen_geo.y()
+        outline_frame = QFrame(overlay_window)
+        outline_frame.setGeometry(QRect(local_x, local_y, w_scaled, h_scaled))
+
+        if isinstance(color, tuple):
+            outline_frame.setStyleSheet(f"background: transparent; border: {thickness}px solid rgba({color[0]},{color[1]},{color[2]},{color[3] if len(color) == 4 else 255});")
+        elif isinstance(color, str):
+            outline_frame.setStyleSheet(f"background: transparent; border: {thickness}px solid {color};")
+
+        outline_frame.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        outline_frame.show()
+        outline_frame.raise_()
+
+        if text:
+            label = QLabel(text, overlay_window)
+            
+            if isinstance(text_color, tuple):
+                label.setStyleSheet(f"color: rgba({text_color[0]},{text_color[1]},{text_color[2]},{text_color[3] if len(text_color) == 4 else 255}); background: transparent; font-size: {font_size}pt;")
+            elif isinstance(text_color, str):
+                label.setStyleSheet(f"color: {text_color}; background: transparent; font-size: {font_size}pt;")
+
+            label.adjustSize()
+            label.move(local_x, local_y - label.height())
+            label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+            label.show()
+            label.raise_()
+
+        overlay_windows[overlay_key] = overlay_window
+
+    @staticmethod
+    def open_roblox(link):
+        def convert_roblox_link(url):
+            game_pattern = r"https://www.roblox.com/games/(\d+)/[^?]+\?privateServerLinkCode=(\d+)"
+            share_pattern = r"https://www.roblox.com/share\?code=([a-f0-9]+)&type=([A-Za-z]+)"
+            match_game = re.match(game_pattern, url)
+            if match_game:
+                place_id = match_game.group(1)
+                link_code = match_game.group(2)
+                if place_id != "15532962292":
+                    return None
+                link_code = "".join(filter(str.isdigit, link_code))
+                return f"roblox://placeID={place_id}&linkCode={link_code}"
+
+            match_share = re.match(share_pattern, url)
+            if match_share:
+                code = match_share.group(1)
+                share_type = match_share.group(2)
+                if "Server" in share_type:
+                    share_type = "Server"
+                elif "ExperienceInvite" in share_type:
+                    share_type = "ExperienceInvite"
+                return f"roblox://navigation/share_links?code={code}&type={share_type}"
+            
+        main_url = convert_roblox_link(link)
+        QDesktopServices.openUrl(QUrl(main_url))
+
+    @staticmethod
+    def send_discord_webhook(webhook_url, title, message=None, ping_mode=None, ping_id=None):
+        if ping_mode == "everyone":
+            mention = "@everyone"
+        elif ping_mode == "user":
+            mention = f"<@{ping_id}>"
+        elif ping_mode == "role":
+            mention = f"<@&{ping_id}>"
+        else:
+            mention = None
+
+        payload: dict[str, Any] = {
+            "username": "Dark Sol",
+            "content": mention,
+            "embeds": [
+                {
+                    "title": title,
+                    "description": message,
+                    "color": int(0x00FFFF),  # Discord expects decimal int
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "footer": {"text": f"Dark Sol v{current_version}"}
+                }
+            ],
+        }
+
+        r = requests.post(webhook_url, json=payload, timeout=10)
+        r.raise_for_status()
+        return True
+    
+    @staticmethod
+    def move_and_click(position, click=True):
+        try:
+            if click:
+                mkey.left_click_xy_natural(*position)
+            elif not click:
+                mkey.move_to_natural(*position)
+        except Exception:
+            if click:
+                mkey.left_click_xy(*position)
+            elif not click:
+                mkey.move_to(*position)
+
+    @staticmethod
+    def focus_roblox(ignore_roblox_not_found=False):
+        hwnd = win32gui.FindWindow(None, "Roblox")
+        if not hwnd:
+            if not ignore_roblox_not_found:
+                log.warning("Roblox window not found!")
+                QMessageBox.warning(dark_sol, "Roblox Not Found", "Could not find a Roblox window. Please make sure Roblox is running.")
+            return False
+
+        if win32gui.IsIconic(hwnd):
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        if win32gui.GetForegroundWindow() != hwnd:
+            try:
+                win32gui.BringWindowToTop(hwnd)
+                win32gui.SetForegroundWindow(hwnd)
+            except Exception:
+                log.error("Failed to bring Roblox to the foreground. It may be minimized or not responding.")
+        if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
+            win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+        return True
+
+    @staticmethod
+    def close_roblox():
+        hwnd = ctypes.windll.user32.FindWindowW(None, "Roblox")
+        if hwnd:
+            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
+            time.sleep(0.2)
+            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
+
+    @staticmethod
+    def search_for_potion(potion):
+        helper_functions.move_and_click(config["positions"]["potion search bar"]["center"])
+        mkey.left_click()
+        mkey.left_click()
+        log.debug("Search bar clicked")
+        keyboard.Controller().type(data["item data"][potion]["name to search"])
+        log.debug("Item searched:", data["item data"][potion]["name to search"].capitalize())
+        time.sleep(0.5)
+        keyboard.Controller().press(keyboard.Key.enter)
+        potion_selection_button = ("potion selection button " + data["item data"][potion].get("potion selection button", "1"))
+        log.debug(potion_selection_button)
+        helper_functions.move_and_click(config["positions"][potion_selection_button]["center"])
+        helper_functions.move_and_click(config["positions"]["open recipe button"]["center"])
+        log.debug("Clicked to open recipe button")
+class other_functions():
     @staticmethod
     def reload_potion_gui():
         helper_functions.open_roblox(config["private server link"])
@@ -2732,340 +3063,101 @@ class calibrations():
                 nice_config_save()
                 log.info(f"Manual Calibration Coordinates for {calibration_name} saved to config.")
             return bbox, center
-class helper_functions():
-    @staticmethod
-    def check_roblox_logs_for(*logs_to_check_for):
-        texts = [logs_to_check_for] if isinstance(logs_to_check_for, str) else list(logs_to_check_for)
-        if not texts:
-            return None
+class biome_detection():
+    run_event = threading.Event()
+    biome_detection_thread = None
 
-        if not roblox_log_path.exists():
-            return False
+    def __init__(self):
+        biome_detection.run_event.set()
+        if biome_detection.biome_detection_thread is None or not biome_detection.biome_detection_thread.is_alive():
+            biome_detection.biome_detection_thread = threading.Thread(target=self.biome_detection_loop, daemon=True)
+            biome_detection.biome_detection_thread.start()
 
-        latest_roblox_log_file = max(roblox_log_path.glob("*.log"), key=lambda p: p.stat().st_mtime, default=None)
-        if not latest_roblox_log_file:
-            return False
+    def biome_detection_loop(self):
+        # place 15532962292
+        latest_biome = None
+        
+        def check_roblox_logs_for_biome():
+                if not roblox_log_path.exists():
+                    return False
 
-        with latest_roblox_log_file.open("rb") as f:
-            f.seek(0, 2)
-            pos, carry = f.tell(), b""
+                latest_roblox_log_file = max(roblox_log_path.glob("*.log"), key=lambda p: p.stat().st_mtime, default=None)
+                if not latest_roblox_log_file:
+                    return "Roblox file not found"
 
-            while pos > 0:
-                n = min(8192, pos)
-                pos -= n
-                f.seek(pos)
-                carry = f.read(n) + carry
-                *lines, carry = carry.split(b"\n")
+                with latest_roblox_log_file.open("rb") as f:
+                    f.seek(0, 2)
+                    pos, carry = f.tell(), b""
 
-                for raw in reversed(lines):  # newest -> oldest
-                    line = raw.decode("utf-8", errors="replace")
-                    hits = [(line.find(t), t) for t in texts if t in line]
-                    if hits:
-                        x, found = min(hits, key=lambda x: x[0])  # first text in that line
-                        return found
+                    while pos > 0:
+                        n = min(8192, pos)
+                        pos -= n
+                        f.seek(pos)
+                        carry = f.read(n) + carry
+                        *lines, carry = carry.split(b"\n")
 
-            if carry:
-                line = carry.decode("utf-8", errors="replace")
-                hits = [(line.find(t), t) for t in texts if t in line]
-                if hits:
-                    x, found = min(hits, key=lambda x: x[0])
-                    return found
-        return False
-    
-    @staticmethod
-    def check_region_for_colors(*targets, bbox=None):
-        if bbox == None:
-            img = ImageGrab.grab()
-        else:
-            img = ImageGrab.grab(bbox)
+                        for raw in reversed(lines):  # newest -> oldest
+                            line = raw.decode("utf-8", errors="replace")
 
-        pixels = np.asarray(img, dtype=np.uint8)
-        mask = np.zeros((pixels.shape[0], pixels.shape[1]), dtype=bool)
+                            if "Disconnect" in line:
+                                return "Disconnected"
 
-        for target in targets:
-            if isinstance(target, str):
-                clean = target.strip()
-                if clean.startswith("#"):
-                    clean = clean[1:]
-                value = int(clean, 16)
-                r = (value >> 16) & 0xFF
-                g = (value >> 8) & 0xFF
-                b = value & 0xFF
+                            if '[FLog::Output] [BloxstrapRPC]' in line and '"command":"SetRichPresence"' in line:
+                                json_start = line.find("{")
+                                if json_start == -1:
+                                    continue
+                                try:
+                                    payload = json.loads(line[json_start:])
+                                except json.JSONDecodeError:
+                                    continue
+
+                                biome = payload.get("data", {}).get("largeImage", {}).get("hoverText")
+                                if biome:
+                                    return biome
+
+                    if carry:
+                        line = carry.decode("utf-8", errors="replace")
+
+                        if "Disconnected - stop() called" in line or "Disconnected from server for reason:" in line:
+                                return "Disconnected"
+
+                        if '[FLog::Output] [BloxstrapRPC]' in line and '"command":"SetRichPresence"' in line:
+                            json_start = line.find("{")
+                            if json_start != -1:
+                                try:
+                                    payload = json.loads(line[json_start:])
+                                except json.JSONDecodeError:
+                                    return False
+                                biome = payload.get("data", {}).get("largeImage", {}).get("hoverText")
+                                if biome:
+                                    return biome
+                return "Entire biome detection log went through without finding any info"
+        
+        while biome_detection.run_event.is_set():
+            biome_from_roblox_logs = check_roblox_logs_for_biome()
+            if biome_from_roblox_logs == False:
+                log.debug("No information found in Roblox logs.")
+            elif biome_from_roblox_logs in ("Roblox file not found", "Disconnected", "Entire biome detection log went through without finding any info"):
+                log.info(biome_from_roblox_logs)
             else:
-                r, g, b = target
-
-            mask |= ((pixels[:, :, 0] == r) & (pixels[:, :, 1] == g) & (pixels[:, :, 2] == b))
-
-        match_count = int(mask.sum())
-        return match_count
-    
-    @staticmethod
-    def create_overlay(bbox=None, color=(0,255,0,255), text=None, text_color="#00FF00", font_size=10, thickness=3, disabled=False):
-        global overlay_windows
-        if "overlay_windows" not in globals():
-            overlay_windows = {}
-
-        if disabled:
-            for overlay_window in overlay_windows.values():
-                overlay_window.close()
-            overlay_windows.clear()
-            return
-        
-        if bbox == None:
-            return
-        
-        overlay_key = tuple(bbox)
-        if overlay_key in overlay_windows:
-            log.debug("Overlay already exists for this region.")
-            return
-
-        x, y, x2, y2 = bbox
-        w = x2 - x
-        h = y2 - y
-
-        # Scale coordinates for logical/physical match
-        x_scaled = int(x / scale)
-        y_scaled = int(y / scale)
-        w_scaled = int(w / scale)
-        h_scaled = int(h / scale)
-
-        screen = QGuiApplication.screenAt(QPoint(x_scaled + w_scaled // 2, y_scaled + h_scaled // 2))
-        if screen is None:
-            QMessageBox.warning(dark_sol, "Screen Not Found", "Could not find a screen at the specified coordinates.")
-            return
-
-        screen_geo = screen.geometry()
-
-        overlay_window = QWidget()
-        overlay_window.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool | Qt.WindowType.WindowTransparentForInput)
-        overlay_window.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        overlay_window.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-        overlay_window.setGeometry(screen_geo)
-        overlay_window.show()
-        overlay_window.raise_()
-
-        local_x = x_scaled - screen_geo.x()
-        local_y = y_scaled - screen_geo.y()
-        outline_frame = QFrame(overlay_window)
-        outline_frame.setGeometry(QRect(local_x, local_y, w_scaled, h_scaled))
-
-        if isinstance(color, tuple):
-            outline_frame.setStyleSheet(f"background: transparent; border: {thickness}px solid rgba({color[0]},{color[1]},{color[2]},{color[3] if len(color) == 4 else 255});")
-        elif isinstance(color, str):
-            outline_frame.setStyleSheet(f"background: transparent; border: {thickness}px solid {color};")
-
-        outline_frame.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-        outline_frame.show()
-        outline_frame.raise_()
-
-        if text:
-            label = QLabel(text, overlay_window)
-            
-            if isinstance(text_color, tuple):
-                label.setStyleSheet(f"color: rgba({text_color[0]},{text_color[1]},{text_color[2]},{text_color[3] if len(text_color) == 4 else 255}); background: transparent; font-size: {font_size}pt;")
-            elif isinstance(text_color, str):
-                label.setStyleSheet(f"color: {text_color}; background: transparent; font-size: {font_size}pt;")
-
-            label.adjustSize()
-            label.move(local_x, local_y - label.height())
-            label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-            label.show()
-            label.raise_()
-
-        overlay_windows[overlay_key] = overlay_window
-
-    @staticmethod
-    def open_roblox(link):
-        def convert_roblox_link(url):
-            game_pattern = r"https://www.roblox.com/games/(\d+)/[^?]+\?privateServerLinkCode=(\d+)"
-            share_pattern = r"https://www.roblox.com/share\?code=([a-f0-9]+)&type=([A-Za-z]+)"
-            match_game = re.match(game_pattern, url)
-            if match_game:
-                place_id = match_game.group(1)
-                link_code = match_game.group(2)
-                if place_id != "15532962292":
-                    return None
-                link_code = "".join(filter(str.isdigit, link_code))
-                return f"roblox://placeID={place_id}&linkCode={link_code}"
-
-            match_share = re.match(share_pattern, url)
-            if match_share:
-                code = match_share.group(1)
-                share_type = match_share.group(2)
-                if "Server" in share_type:
-                    share_type = "Server"
-                elif "ExperienceInvite" in share_type:
-                    share_type = "ExperienceInvite"
-                return f"roblox://navigation/share_links?code={code}&type={share_type}"
-            
-        main_url = convert_roblox_link(link)
-        QDesktopServices.openUrl(QUrl(main_url))
-
-    @staticmethod
-    def send_discord_webhook(webhook_url, title, message=None, ping_mode=None, ping_id=None):
-        if ping_mode == "everyone":
-            mention = "@everyone"
-        elif ping_mode == "user":
-            mention = f"<@{ping_id}>"
-        elif ping_mode == "role":
-            mention = f"<@&{ping_id}>"
-        else:
-            mention = None
-
-        payload: dict[str, Any] = {
-            "username": "Dark Sol",
-            "content": mention,
-            "embeds": [
-                {
-                    "title": title,
-                    "description": message,
-                    "color": int(0x00FFFF),  # Discord expects decimal int
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "footer": {"text": f"Dark Sol v{current_version}"}
-                }
-            ],
-        }
-
-        r = requests.post(webhook_url, json=payload, timeout=10)
-        r.raise_for_status()
-        return True
-    
-    @staticmethod
-    def move_and_click(position, click=True):
-        try:
-            if click:
-                mkey.left_click_xy_natural(*position)
-            elif not click:
-                mkey.move_to_natural(*position)
-        except Exception:
-            if click:
-                mkey.left_click_xy(*position)
-            elif not click:
-                mkey.move_to(*position)
-
-    @staticmethod
-    def focus_roblox(ignore_roblox_not_found=False):
-        hwnd = win32gui.FindWindow(None, "Roblox")
-        if not hwnd:
-            if not ignore_roblox_not_found:
-                log.warning("Roblox window not found!")
-                QMessageBox.warning(dark_sol, "Roblox Not Found", "Could not find a Roblox window. Please make sure Roblox is running.")
-            return False
-
-        if win32gui.IsIconic(hwnd):
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        if win32gui.GetForegroundWindow() != hwnd:
-            try:
-                win32gui.BringWindowToTop(hwnd)
-                win32gui.SetForegroundWindow(hwnd)
-            except Exception:
-                log.error("Failed to bring Roblox to the foreground. It may be minimized or not responding.")
-        if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
-            win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
-        return True
-
-    @staticmethod
-    def close_roblox():
-        hwnd = ctypes.windll.user32.FindWindowW(None, "Roblox")
-        if hwnd:
-            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
-            time.sleep(0.2)
-            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
-
-    @staticmethod
-    def search_for_potion(potion):
-        helper_functions.move_and_click(config["positions"]["potion search bar"]["center"])
-        mkey.left_click()
-        mkey.left_click()
-        log.debug("Search bar clicked")
-        keyboard.Controller().type(data["item data"][potion]["name to search"])
-        log.debug("Item searched:", data["item data"][potion]["name to search"].capitalize())
-        time.sleep(0.5)
-        keyboard.Controller().press(keyboard.Key.enter)
-        potion_selection_button = ("potion selection button " + data["item data"][potion].get("potion selection button", "1"))
-        log.debug(potion_selection_button)
-        helper_functions.move_and_click(config["positions"][potion_selection_button]["center"])
-        helper_functions.move_and_click(config["positions"]["open recipe button"]["center"])
-        log.debug("Clicked to open recipe button")
-
-class image_processing():
-    @staticmethod
-    def rescale_template(template, template_path):
-        image_scale = data["template data"][template]["scale"]   
-        image_resolution =data["template data"][template]["resolution"]
-        scale_ratio = scale / image_scale
-        image_ratio_x = screen_width / image_resolution[0]
-        image_ratio_y = screen_height / image_resolution[1]
-        total_image_scale_x = scale_ratio * image_ratio_x
-        total_image_scale_y = scale_ratio * image_ratio_y
-        log.debug(f"Total Scale X: {total_image_scale_x}, Total Scale Y: {total_image_scale_y}")
-
-        template_img = Image.open(template_path)
-        template_scaled = template_img.resize((int(template_img.width * total_image_scale_x), int(template_img.height * total_image_scale_y)), Image.Resampling.LANCZOS)
-        return template_scaled
-    
-    @staticmethod
-    def auto_find_image(calibration,
-                        what_to_save=("center", "bbox"),
-                        multiple=False,
-                        ignore_match_not_found=False,
-                        region=None,
-                        return_coordinates=False):
-        
-        template_path = f"{dark_sol_appdata_directory}\\Lib\\Images\\{data['position data'][calibration if calibration in data['position data'] else calibration[:-1].strip()]['image path']}"
-        return_bool = False
-        bbox, center = None, None
-        if what_to_save != None:
-            tuple(what_to_save)
-
-        if region == None and multiple and int(calibration[-1]) > 1:
-            region = (0, config["positions"][calibration.replace(calibration[-1], str(int(calibration[-1]) - 1))]["bbox"][3], screen_width, screen_height)
-
-        def save_position(position_name, center=None, bbox=None):
-            log.debug(f"Proposed position for '{position_name}': Center: {center}, bbox: {bbox}")
-            if dark_sol.create_msg_box("Save Position", f"Save position for '{position_name}'?", "Yes", "No", internal=False) != "Yes":
-                return False
-            if "bbox" in what_to_save and bbox != None:
-                config["positions"][position_name]["bbox"] = bbox
-            if "center" in what_to_save and center != None:
-                config["positions"][position_name]["center"] = center
-            nice_config_save()
-            log.info(f"Coordinates for '{position_name}' saved.")
-            return True
-                
-        def find_template():
-            if not ignore_match_not_found:
-                helper_functions.focus_roblox()
-            time.sleep(0.2)
-            nonlocal return_bool, bbox, center
-            return_bool = True
-            try:
-                match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["position data"][calibration]["confidence"], region=region)
-                bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))  # type: ignore[reportOptionalMemberAccess]
-                center = (int(match.left + match.width // 2), int(match.top + match.height // 2))  # type: ignore[reportOptionalMemberAccess]
-                if what_to_save != None:
-                    helper_functions.create_overlay(bbox, text=calibration)
-                    return_bool = save_position(calibration, center, bbox)
-                    helper_functions.create_overlay(bbox, text=calibration, disabled=True)
-                if return_bool == False:
-                    return
-            except Exception as exception:
-                helper_functions.create_overlay(disabled=True)
-
-                if isinstance(exception, (pyautogui.ImageNotFoundException, pyscreeze_ImageNotFoundException))and ignore_match_not_found:
-                    pass
-                elif isinstance(exception, (pyautogui.ImageNotFoundException, pyscreeze_ImageNotFoundException)):
-                    log.debug(f"No matches found for template: {template_path}")
-                    dark_sol.create_msg_box("No Matches Found", f"No Matches Found For: {calibration}", internal=False)
-                else:
-                    log.error(f"Error finding matches: {exception}")
-                    dark_sol.create_msg_box("Error Finding Matches", f"Error Finding Matches: {exception}")
-                return_bool = False
-
-        template_scaled = image_processing.rescale_template(data["position data"][calibration if calibration in data["position data"] else calibration[:-1].strip()]["image path"], template_path)
-        find_template()
-        return return_bool if return_coordinates == False or return_bool == False else (bbox, center)
-    
+                log.debug("Detected biome from Roblox logs:", biome_from_roblox_logs)
+                if biome_from_roblox_logs != latest_biome:
+                    latest_biome = biome_from_roblox_logs
+                    log.info("Biome changed to:", latest_biome)
+                    if latest_biome == "NORMAL":
+                        continue
+                    if latest_biome in data["ping everyone biomes"]:
+                        for webhook in config["webhooks"]:
+                            helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}", ping_mode="everyone")
+                    elif config["biome settings"][latest_biome]["message type"] == "ping":
+                        for webhook in config["webhooks"]:
+                            helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}", ping_mode="role" if config["biome settings"][latest_biome]["id type"] == "role" else "user", ping_id=config["biome settings"][latest_biome]["ping id"])
+                    elif config["biome settings"][latest_biome]["message type"] == "message":
+                        for webhook in config["webhooks"]:
+                            helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}")
+                    else:
+                        pass
+            time.sleep(3)
 class macro():
     run_event = threading.Event()
     auto_add_waitlist = []
@@ -3077,7 +3169,7 @@ class macro():
         if macro.macro_thread is None or not macro.macro_thread.is_alive():
             macro.macro_thread = threading.Thread(target=self.macro_loop, daemon=True)
             macro.macro_thread.start()
-            log.info("heilo")
+            log.debug("Macro thread started.")
         
     def macro_loop(self, slowdown=0.01, slowdown2=0.1):
         def add_to_button(button_to_add_to):
@@ -3305,102 +3397,6 @@ class macro():
                         potion_loop_iteration(item)
         except Exception as e:
             log.error("Error in macro loop:", e)
-                        
-class biome_detection():
-    run_event = threading.Event()
-    biome_detection_thread = None
-
-    def __init__(self):
-        biome_detection.run_event.set()
-        if biome_detection.biome_detection_thread is None or not biome_detection.biome_detection_thread.is_alive():
-            biome_detection.biome_detection_thread = threading.Thread(target=self.biome_detection_loop, daemon=True)
-            biome_detection.biome_detection_thread.start()
-
-    def biome_detection_loop(self):
-        # place 15532962292
-        latest_biome = None
-        
-        def check_roblox_logs_for_biome():
-                if not roblox_log_path.exists():
-                    return False
-
-                latest_roblox_log_file = max(roblox_log_path.glob("*.log"), key=lambda p: p.stat().st_mtime, default=None)
-                if not latest_roblox_log_file:
-                    return "Roblox file not found"
-
-                with latest_roblox_log_file.open("rb") as f:
-                    f.seek(0, 2)
-                    pos, carry = f.tell(), b""
-
-                    while pos > 0:
-                        n = min(8192, pos)
-                        pos -= n
-                        f.seek(pos)
-                        carry = f.read(n) + carry
-                        *lines, carry = carry.split(b"\n")
-
-                        for raw in reversed(lines):  # newest -> oldest
-                            line = raw.decode("utf-8", errors="replace")
-
-                            if "Disconnect" in line:
-                                return "Disconnected"
-
-                            if '[FLog::Output] [BloxstrapRPC]' in line and '"command":"SetRichPresence"' in line:
-                                json_start = line.find("{")
-                                if json_start == -1:
-                                    continue
-                                try:
-                                    payload = json.loads(line[json_start:])
-                                except json.JSONDecodeError:
-                                    continue
-
-                                biome = payload.get("data", {}).get("largeImage", {}).get("hoverText")
-                                if biome:
-                                    return biome
-
-                    if carry:
-                        line = carry.decode("utf-8", errors="replace")
-
-                        if "Disconnected - stop() called" in line or "Disconnected from server for reason:" in line:
-                                return "Disconnected"
-
-                        if '[FLog::Output] [BloxstrapRPC]' in line and '"command":"SetRichPresence"' in line:
-                            json_start = line.find("{")
-                            if json_start != -1:
-                                try:
-                                    payload = json.loads(line[json_start:])
-                                except json.JSONDecodeError:
-                                    return False
-                                biome = payload.get("data", {}).get("largeImage", {}).get("hoverText")
-                                if biome:
-                                    return biome
-                return "Entire biome detection log went through without finding any info"
-        
-        while biome_detection.run_event.is_set():
-            biome_from_roblox_logs = check_roblox_logs_for_biome()
-            if biome_from_roblox_logs == False:
-                log.debug("No information found in Roblox logs.")
-            elif biome_from_roblox_logs in ("Roblox file not found", "Disconnected", "Entire biome detection log went through without finding any info"):
-                log.info(biome_from_roblox_logs)
-            else:
-                log.debug("Detected biome from Roblox logs:", biome_from_roblox_logs)
-                if biome_from_roblox_logs != latest_biome:
-                    latest_biome = biome_from_roblox_logs
-                    log.info("Biome changed to:", latest_biome)
-                    if latest_biome == "NORMAL":
-                        continue
-                    if latest_biome in data["ping everyone biomes"]:
-                        for webhook in config["webhooks"]:
-                            helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}", ping_mode="everyone")
-                    elif config["biome settings"][latest_biome]["message type"] == "ping":
-                        for webhook in config["webhooks"]:
-                            helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}", ping_mode="role" if config["biome settings"][latest_biome]["id type"] == "role" else "user", ping_id=config["biome settings"][latest_biome]["ping id"])
-                    elif config["biome settings"][latest_biome]["message type"] == "message":
-                        for webhook in config["webhooks"]:
-                            helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}")
-                    else:
-                        pass
-            time.sleep(3)
 
 def run_main_script():
     global dark_sol
