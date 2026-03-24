@@ -2776,7 +2776,7 @@ class calibrations():
             path_selector_layout = QVBoxLayout(path_selector_widget)
             path_selector_layout.addWidget(QLabel("Select the path you want to calibrate:"))
             path_selector = QComboBox()
-            path_selector.addItems(["Normal", "VIP", "Abyssal Hunter (VIP)", "Abyssal Hunter (Normal)"])
+            path_selector.addItems(["Normal", "VIP"]) # "Abyssal Hunter (VIP)", "Abyssal Hunter (Normal)"
             path_selector_done_button = QPushButton("Select")
             path_selector_done_button.clicked.connect(lambda: (choose_path(), path_selector_widget.close()))
             path_selector_layout.addWidget(path_selector)
