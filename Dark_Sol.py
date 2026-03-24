@@ -67,7 +67,8 @@ log.debug("DPI Tools Loaded")
 import sys, threading, pyautogui, time, ctypes, json, win32gui, win32con, re, requests, io, zipfile, socket, subprocess
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout,
 QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QComboBox, QLineEdit, QDialog, QGridLayout,
-    QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QSizePolicy, QLineEdit, QListWidget)
+QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QSizePolicy,
+QLineEdit, QListWidget)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices, QRegularExpressionValidator
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl, QFileSystemWatcher, QRegularExpression
 from pyscreeze import ImageNotFoundException as pyscreeze_ImageNotFoundException
@@ -90,7 +91,7 @@ log.debug("Imports Initalized")
 # Constants
 current_version = "0.0.0.5"
 folders_to_check = ("Icons", "Images")
-icons_to_check = ("up chevron.svg", "down chevron.svg", "up chevron disabled.svg")
+icons_to_check = ("up chevron.svg", "down chevron.svg", "up chevron disabled.svg", "discord_icon.svg")
 images_to_check = ("add button.png", "amount box.png", "auto add button.png", "craft button.png", "potion search bar.png", "open recipe button.png",
                     "potion menu item button.png", "zeus potion selection button.png",
                     "poseidon potion selection button.png","hades potion selection button.png",
@@ -1111,6 +1112,16 @@ class dark_sol_gui(QMainWindow):
         self.main_gui_footer_layout = QHBoxLayout(self.main_gui_footer)
         self.main_gui_footer_layout.setContentsMargins(0, 0, 0, 0)
         self.central_widget_vbox.addWidget(self.main_gui_footer)
+        # Discord Stuff
+        self.main_gui_footer_layout.addStretch(1)
+        discord_btn = QPushButton()
+        discord_btn.setIcon(QIcon(f"{dark_sol_appdata_directory}/Lib/Icons/discord_icon.svg"))
+        discord_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        discord_btn.setStyleSheet("background-color: transparent; border: none;")
+        discord_btn.setToolTip("Join Our Discord")
+        discord_url = "https://discord.gg/fAHjGzpD"
+        discord_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(discord_url)))
+        self.main_gui_footer_layout.addWidget(discord_btn)
         # Donations Layout
         self.main_gui_footer_layout.addWidget(self.donate_label)
         self.donate_label.setAlignment(Qt.AlignmentFlag.AlignRight)
