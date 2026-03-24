@@ -781,9 +781,7 @@ class dark_sol_gui(QMainWindow):
         self.status_label = QLabel("Status: Stopped")
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
-        self.main_tab_bottom_header = QWidget()
-        self.main_tab_bottom_header_qh_layout = QHBoxLayout(self.main_tab_bottom_header)
-        self.main_tab_bottom_header_qh_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_tab_footer_qh_layout = QHBoxLayout()
         # Create Main Tab Logging Elements 
         self.log_area = QPlainTextEdit()
         self.log_read_pos = 0
@@ -795,18 +793,10 @@ class dark_sol_gui(QMainWindow):
         self.logging_settings_gui_qv_layout = QVBoxLayout(self.logging_settings_gui)
         self.logging_settings_gui_qh_layout = QHBoxLayout()
         self.logging_settings_gui_qh_layout2 = QHBoxLayout()
-        def change_gui_log_levels(log_level):
-            if log_level in self.gui_log_levels:
-                self.gui_log_levels.remove(log_level)
-            else:
-                self.gui_log_levels.append(log_level)
-            config["gui log levels"] = self.gui_log_levels
-            nice_config_save()
-            self.update_gui_log(True)
         for log_level in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
             checkbox = QCheckBox(log_level.lower().capitalize())
             checkbox.setChecked(log_level in self.gui_log_levels)
-            checkbox.stateChanged.connect(lambda state, log_level=log_level: change_gui_log_levels(log_level))
+            checkbox.stateChanged.connect(lambda state, log_level=log_level: self.change_gui_log_levels(state, log_level))
             self.logging_settings_gui_qh_layout.addWidget(checkbox)
         # Create Presets Tab Elements
         self.current_preset = config["current preset"]
@@ -900,10 +890,322 @@ class dark_sol_gui(QMainWindow):
         grid.addWidget(self.calibrate_potion_crafting_checkbox, 2, 2)
         grid.addWidget(self.calibrate_auto_path_checkbox, 3, 2)
         grid.addWidget(self.calibrate_auto_rejoin_checkbox, 4, 2)
-
         self.calibrations_widget_button.clicked.connect(lambda: self.calibrations_widget.show())
+        self.advanced_calibrations_button.clicked.connect(self.build_advanced_calibrations_ui)
+        # Create Donations Stuff
+        self.donate_label = QLabel("Donate")
+        # Mini Status Label 
+        self.mini_status_widget = QWidget()
+        self.general_mini_status_label = QLabel("Stopped")
+        self.mini_status_label = QLabel()
+        # Create Running Variables
+        self.macro = None
+        self.biome_detector = None
+        self.status_signal.connect(self.inner_update_status)
+        self.show_status_widget_signal.connect(lambda: self.mini_status_widget.show())
+        self.hide_status_widget_signal.connect(lambda: self.mini_status_widget.hide())
+        self.init_ui()
+        self.setup_hotkeys()
+        auto_updater()
+
+        if create_debug_test_buttons:
+            self.debug_tab = QWidget()
+            self.tabs_widget.addTab(self.debug_tab, "Debug")
+            self.debug_tab_qv_layout = QVBoxLayout()
+            self.debug_test_button_1 = QPushButton("Test Button 1", self)
+            self.debug_test_button_2 = QPushButton("Test Button 2", self)
+            self.debug_test_button_3 = QPushButton("Test Button 3", self)
+            self.debug_test_button_4 = QPushButton("Test Button 4", self)
+            self.debug_test_button_5 = QPushButton("Test Button 5", self)
+            self.debug_tab_qv_layout.addWidget(self.debug_test_button_1)
+            self.debug_tab_qv_layout.addWidget(self.debug_test_button_2)
+            self.debug_tab_qv_layout.addWidget(self.debug_test_button_3)
+            self.debug_tab_qv_layout.addWidget(self.debug_test_button_4)
+            self.debug_tab_qv_layout.addWidget(self.debug_test_button_5)
+            self.debug_tab.setStyleSheet("QPushButton {font-size: 22pt;}")
+            self.debug_tab_qv_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+            self.debug_tab.setLayout(self.debug_tab_qv_layout)
+
+            self.debug_test_button_1.clicked.connect(lambda: log.debug("Test Button 1 Pressed"))
+            self.debug_test_button_2.clicked.connect(lambda: log.debug("Test Button 2 Pressed"))
+            self.debug_test_button_3.clicked.connect(lambda: log.debug("Test Button 3 Pressed"))
+            self.debug_test_button_4.clicked.connect(lambda: log.debug("Test Button 4 Pressed"))
+            self.debug_test_button_5.clicked.connect(lambda: log.debug("Test Button 5 Pressed"))
+
+    def init_ui(self):
+        # Initalize Main Gui
+        self.setCentralWidget(self.central_widget)
+        self.central_widget.setLayout(self.central_widget_vbox)
+        self.central_widget_vbox.addWidget(self.tabs_widget)
+        self.central_widget_vbox.setContentsMargins(0, 0, 0, 0)
+        # Initialize Tabs
+        self.tabs_widget.addTab(self.main_tab, "Main")
+        self.tabs_widget.addTab(self.presets_tab, "Presets")
+        #self.tabs_widget.addTab(self.theme_tab, "Theme")
+        self.tabs_widget.addTab(self.settings_tab, "Settings")
+        # Set Main Tab Layout
+        main_tab_vbox = QVBoxLayout()
+        main_tab_hbox = QHBoxLayout()
+        main_tab_hbox.addWidget(self.start_button)
+        main_tab_hbox.addWidget(self.stop_button)
+        main_tab_vbox.addWidget(self.status_label)
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_tab_vbox.addLayout(main_tab_hbox)
+        main_tab_vbox.addWidget(self.log_area)
+        self.log_area.setReadOnly(True)
+        main_tab_vbox.addLayout(self.main_tab_footer_qh_layout)
+        self.main_tab.setLayout(main_tab_vbox)
+        # Set Main Tab Logging Layout
+        self.log_area.setStyleSheet("background-color: #0f0f0f; color: white; font-size: 11pt; padding: 1px;")
+        if not config["wrap log area"]:
+            self.log_area.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+            self.log_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.log_watcher = QFileSystemWatcher([f"{log_path}"])
+        self.log_watcher.fileChanged.connect(self.update_gui_log)
+        self.update_gui_log(reset_log=True)
+        self.logging_settings_gui.setWindowTitle("Dark Sol Logging Settings")
+        self.logging_settings_gui_qv_layout.addLayout(self.logging_settings_gui_qh_layout)
+        self.logging_settings_gui_qv_layout.addLayout(self.logging_settings_gui_qh_layout2)
+        self.main_tab_footer_qh_layout.addStretch(1)
+        self.main_tab_footer_qh_layout.addWidget(self.logging_settings_gui_button, alignment=Qt.AlignmentFlag.AlignRight)
+        self.main_tab_footer_qh_layout.setContentsMargins(0, 0, 0, 0)
+        self.logging_settings_gui.setStyleSheet("""QWidget {background-color: black; color: cyan;}""")
+        self.logging_settings_gui_qh_layout2.addWidget(self.wrap_log_checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.logging_settings_gui_qh_layout2.addWidget(self.show_only_current_logs_checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.wrap_log_checkbox.setChecked(config["wrap log area"])
+        self.wrap_log_checkbox.stateChanged.connect(self.toggle_log_wrap)
+        self.show_only_current_logs_checkbox.setChecked(config["show only current logs"])
+        self.show_only_current_logs_checkbox.stateChanged.connect(lambda state: (config.update({"show only current logs": True if state == 2 else False}), nice_config_save(), self.update_gui_log(True)))
+        #Set Presets Tab Layout
+        self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
+        self.preset_selector.setStyleSheet("color: cyan; background: #111; font-size: 18pt; padding: 6px;")
+        self.preset_selector.setMinimumHeight(52)
+        self.preset_selector.blockSignals(True)
+        self.preset_selector.setCurrentText(self.current_preset)
+        self.preset_selector.blockSignals(False)
+        self.rename_preset_button.setStyleSheet("color: cyan; background: #111; font-size: 18pt; padding: 6px;")
+        self.delete_preset_button.setStyleSheet("color: red; background: #111; font-size: 18pt; padding: 6px; border: 1px solid red;")
+        presets_header = QWidget()
+        presets_header_layout = QHBoxLayout(presets_header)
+        presets_header_layout.setContentsMargins(0, 0, 0, 0)
+        presets_header_layout.setSpacing(10)
+        presets_header_layout.addWidget(self.preset_selector, 1)
+        presets_header_layout.addWidget(self.rename_preset_button)
+        presets_header_layout.addWidget(self.delete_preset_button)
+        self.presets_tab_scroller.setWidget(self.presets_tab_content)
+        self.presets_tab_scroller.setFrameShape(QFrame.Shape.NoFrame)
+        self.presets_tab_scroller.setWidgetResizable(True)
+        self.presets_tab_scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.presets_tab_scroller.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.presets_tab_content_layout = QVBoxLayout(self.presets_tab_content)
+        self.presets_tab_content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.presets_tab_main_vbox = QVBoxLayout()
+        self.presets_tab_main_vbox.addWidget(presets_header)
+        self.presets_tab_main_vbox.addWidget(self.presets_tab_scroller)
+        self.presets_tab.setStyleSheet("""
+                    QWidget { background-color: black; }
+                    QLabel { color: cyan; font-size: 14pt; }
+                    QCheckBox { color: cyan; font-size: 11pt; }
+                    QScrollArea { border: 0px; }
+                """)
+        self.presets_tab.setLayout(self.presets_tab_main_vbox)
+        self.build_potions_ui()
+        # Settings Tab Layout
+        self.settings_tab_vbox = QVBoxLayout(self.settings_tab)
+        self.private_server_hbox = QHBoxLayout()
+        self.ps_link_line.setPlaceholderText("Enter private server link here")
+        if config["private server link"] != "":
+            self.ps_link_line.setText(config["private server link"])
+        self.private_server_hbox.addWidget(self.ps_link_label)
+        self.private_server_hbox.addWidget(self.ps_link_line)
+        self.ps_link_join_button.setStyleSheet("padding: 3px;")
+        self.private_server_hbox.addWidget(self.ps_link_join_button)
+        self.settings_tab_vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.settings_tab_vbox.addLayout(self.private_server_hbox)
+        self.ps_link_join_button.setToolTip("Must save private server before clicking")
+        self.settings_tab_vbox.addWidget(self.reset_add_button_template_button)
+        self.settings_tab_vbox.addWidget(self.reset_amount_box_template_button)
+        # Biome Detection
+        self.biome_detection_settings_widget = QWidget()
+        row = 0
+        self.biome_detection_settings_widget_layout = QGridLayout(self.biome_detection_settings_widget)
+        self.biome_detection_settings_widget_button = QPushButton("Biome Detection Settings")
+        self.settings_tab_vbox.addStretch(1)
+        self.settings_tab_vbox.addWidget(self.biome_detection_settings_widget_button, alignment=Qt.AlignmentFlag.AlignBottom)
+        self.settings_tab_vbox.addWidget(self.webhook_settings_button, alignment=Qt.AlignmentFlag.AlignBottom)
+        self.biome_detection_settings_widget_button.clicked.connect(lambda: self.biome_detection_settings_widget.show())
+        self.webhook_settings_button.clicked.connect(lambda: self.webhook_settings_widget.show())
+
+        self.webhook_settings_widget.setStyleSheet(
+            "QWidget {background-color: black; color: cyan;} "
+            "QLineEdit {background-color: #171717; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 3px;} "
+            "QListWidget {background-color: #101010; color: cyan; border: 1px solid cyan; border-radius: 5px;} "
+            "QPushButton {background-color: black; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 4px;}"
+        )
+        webhook_layout = QVBoxLayout(self.webhook_settings_widget)
+        webhook_layout.addWidget(self.webhook_list)
+
+        webhook_input_row = QHBoxLayout()
+        self.webhook_input.setPlaceholderText("Paste Discord webhook URL")
+        webhook_input_row.addWidget(self.webhook_input)
+        webhook_input_row.addWidget(self.webhook_add_button)
+        webhook_input_row.addWidget(self.webhook_edit_button)
+        webhook_input_row.addWidget(self.webhook_remove_button)
+        webhook_layout.addLayout(webhook_input_row)
+
+        self.webhook_add_button.clicked.connect(self.add_webhook_from_input)
+        self.webhook_edit_button.clicked.connect(self.open_edit_webhook_dialog)
+        self.webhook_remove_button.clicked.connect(self.remove_selected_webhook)
+        self.refresh_webhook_list_widget()
         
-        def build_advanced_calibrations_ui():
+        for biome in config["biome settings"]:
+            label = QLabel(biome.title())
+            combo_box = QComboBox()
+            combo_box.addItems(("Ping", "Message", "Off"))
+            combo_box.setCurrentText((config["biome settings"][biome]["message type"]).title())
+            
+            combo_box.currentTextChanged.connect(lambda text, biome=biome: (config["biome settings"][biome].__setitem__("message type", text.lower()), nice_config_save(), self.check_if_pings_enabled()))
+            id_line = QLineEdit()
+            id_line.setPlaceholderText("Enter ID for Biome Pings")
+            id_line.setText(config["biome settings"][biome]["ping id"])
+            id_line.editingFinished.connect(lambda biome=biome, id_line=id_line: (config["biome settings"][biome].__setitem__("ping id", id_line.text()), nice_config_save()))
+
+            id_type_combo = QComboBox()
+            id_type_combo.addItems(("Role", "User"))
+            id_type_combo.setCurrentText(str(config["biome settings"][biome]["id type"]).title())
+            id_type_combo.currentTextChanged.connect(lambda text, biome=biome: (config["biome settings"][biome].__setitem__("id type", text.lower()), nice_config_save()))
+
+            if config["biome settings"][biome]["message type"] == "ping":
+                id_line.setEnabled(True)
+                id_type_combo.setEnabled(True)
+            else:
+                id_line.setDisabled(True)
+                id_type_combo.setDisabled(True)
+            combo_box.setProperty("id_line", id_line)
+            combo_box.setProperty("id_type_combo", id_type_combo)
+            # add labels above saying what each widget does
+            self.biome_detection_settings_widget_layout.addWidget(label,  row, 0)
+            self.biome_detection_settings_widget_layout.addWidget(combo_box,  row, 1)
+            self.biome_detection_settings_widget_layout.addWidget(id_line,row, 2)
+            self.biome_detection_settings_widget_layout.addWidget(id_type_combo, row, 3)
+            row += 1
+            self.check_if_pings_enabled()
+
+        for biome in data["ping everyone biomes"]:
+            label = QLabel(biome.title())
+            combo_box = QComboBox()
+            combo_box.addItem("Everyone")
+            combo_box.setDisabled(True)
+            self.biome_detection_settings_widget_layout.addWidget(label,  row, 0)
+            self.biome_detection_settings_widget_layout.addWidget(combo_box,  row, 1)
+            row += 1
+        self.biome_detection_settings_widget.setStyleSheet("""QWidget {background-color: black; color: cyan;} QComboBox {background-color: #171717;} QComboBox:disabled {background-color: #111; color: #048f8f;}
+                                                                QLineEdit {background-color: #171717; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 3px;}
+                                                                QLineEdit:disabled {background-color: #101010;color: #5f9ea0;border: 1px solid #2c5f5f; selection-background-color: #2a2a2a;}
+                                                                """)
+   
+        # Calibrations
+        self.settings_tab_vbox.addWidget(self.calibrations_widget_button)
+        # Footer
+        self.main_gui_footer = QWidget()
+        self.main_gui_footer_layout = QHBoxLayout(self.main_gui_footer)
+        self.main_gui_footer_layout.setContentsMargins(0, 0, 0, 0)
+        self.central_widget_vbox.addWidget(self.main_gui_footer)
+        # Donations Layout
+        self.main_gui_footer_layout.addWidget(self.donate_label)
+        self.donate_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.donate_label.setTextFormat(Qt.TextFormat.RichText)
+        self.donate_label.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
+        self.donate_label.setOpenExternalLinks(True)
+        self.donate_label.setStyleSheet("padding-right: 12px; padding-bottom: 6px;")
+        self.donate_label.setMouseTracking(True)
+        self.donate_label.setCursor(Qt.CursorShape.ArrowCursor)
+        self.donate_label_color = 0
+        self.donate_timer = QTimer(self)
+        self.donate_timer.timeout.connect(self.change_donate_label_color)
+        self.donate_timer.start(30)
+        self.change_donate_label_color()
+        # Button Connectors
+        # Main Tab Buttons
+        self.start_button.clicked.connect(self.start_macro)
+        self.stop_button.clicked.connect(self.stop_macro)
+        self.logging_settings_gui_button.clicked.connect(lambda: self.logging_settings_gui.show())
+        # Settings Buttons
+        self.ps_link_line.editingFinished.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
+        self.ps_link_join_button.clicked.connect(lambda: helper_functions.open_roblox(config["private server link"]))
+        self.reset_add_button_template_button.clicked.connect(lambda: verify_files("add_button.png", dark_sol_appdata_directory / "Lib" / "Images"))
+        self.reset_amount_box_template_button.clicked.connect(lambda: verify_files("amount_box.png", dark_sol_appdata_directory / "Lib" / "Images"))
+        # Calibration Buttons
+        self.show_calibration_overlays_button.clicked.connect(lambda: calibrations.show_calibration_overlays())
+        self.calibrate_macro_button.clicked.connect(lambda: calibrations.calibrate_macro())
+        # Preset Buttons
+        self.preset_selector.currentTextChanged.connect(lambda: self.switch_preset(self.preset_selector.currentText()) if self.preset_selector.currentText() != "Create New Preset" else self.create_new_preset())
+        self.rename_preset_button.clicked.connect(self.rename_preset)
+        self.delete_preset_button.clicked.connect(self.delete_preset)
+        #Status Label Setup
+        self.mini_status_widget.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
+        self.mini_status_widget.setStyleSheet("background-color: black; border: 2px solid cyan; border-radius: 6px;")
+        self.general_mini_status_label.setStyleSheet("color: cyan; font-size: 15pt;")
+        self.mini_status_label.setStyleSheet("color: cyan; font-size: 15pt;")
+        self.mini_status_qv = QVBoxLayout(self.mini_status_widget)
+        self.mini_status_qv.setContentsMargins(0, 0, 0, 0)
+        self.mini_status_qv.addWidget(self.general_mini_status_label)
+        self.mini_status_qv.addWidget(self.mini_status_label)
+        self.mini_status_widget.move(600, 75)
+        self.mini_status_qv.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.general_mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        # Set Ui Theme
+        self.status_label.setObjectName("status_label")
+        self.start_button.setObjectName("start_button")
+        self.stop_button.setObjectName("stop_button")
+        self.setStyleSheet("""
+            QMainWindow {background-color: black; }
+            QTabBar::tab { background-color: #222; }
+            QTabBar::tab:selected { background-color: black; }
+            QTabBar {color: cyan;}
+            QWidget {background-color: black;}
+            QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt; }
+            QPushButton:hover {background-color: #0d2c33;}
+            QPushButton#start_button {font-size: 22pt;}
+            QPushButton#stop_button {font-size: 22pt;}
+            QLabel {color: cyan; font-size: 14pt;}
+            QLabel#status_label {color: cyan; font-size: 38pt;}
+        """)
+        log.info("Ui Initialized")
+        self.update_gui_log()
+
+    def check_if_pings_enabled(self):
+            sender = self.sender()
+            if not isinstance(sender, QComboBox):
+                return
+            id_line = sender.property("id_line")
+            id_type_combo = sender.property("id_type_combo")
+            if not isinstance(id_line, QLineEdit):
+                    return
+            if id_type_combo is not None and not isinstance(id_type_combo, QComboBox):
+                    return
+            if sender.currentText() == "Ping":
+                id_line.setEnabled(True)
+                if isinstance(id_type_combo, QComboBox):
+                    id_type_combo.setEnabled(True)
+            else:  
+                id_line.setDisabled(True)
+                if isinstance(id_type_combo, QComboBox):
+                    id_type_combo.setDisabled(True)
+
+    def change_gui_log_levels(self, state, log_level):
+            if state == 2:
+                if log_level not in self.gui_log_levels:
+                    self.gui_log_levels.append(log_level)
+            else:
+                if log_level in self.gui_log_levels:
+                    self.gui_log_levels.remove(log_level)
+            config["gui log levels"] = self.gui_log_levels
+            nice_config_save()
+            self.update_gui_log(True)
+
+    def build_advanced_calibrations_ui(self):
             self.advanced_calibrations_widget = QWidget()
             self.advanced_calibrations_widget.setWindowTitle("Advanced Calibrations")
             self.advanced_calibrations_widget.setStyleSheet(
@@ -1073,301 +1375,6 @@ class dark_sol_gui(QMainWindow):
             self.advanced_calibrations_widget.show()
             self.advanced_calibrations_widget.raise_()
             self.advanced_calibrations_widget.activateWindow()
-        self.advanced_calibrations_button.clicked.connect(build_advanced_calibrations_ui)
-        # Create Donations Stuff
-        self.donate_label = QLabel("Donate")
-        # Mini Status Label 
-        self.mini_status_widget = QWidget()
-        self.general_mini_status_label = QLabel("Stopped")
-        self.mini_status_label = QLabel()
-        # Create Running Variables
-        self.macro = None
-        self.biome_detector = None
-        self.status_signal.connect(self.inner_update_status)
-        self.show_status_widget_signal.connect(lambda: self.mini_status_widget.show())
-        self.hide_status_widget_signal.connect(lambda: self.mini_status_widget.hide())
-        self.init_ui()
-        self.setup_hotkeys()
-        auto_updater()
-
-        if create_debug_test_buttons:
-            self.debug_tab = QWidget()
-            self.tabs_widget.addTab(self.debug_tab, "Debug")
-            self.debug_tab_qv_layout = QVBoxLayout()
-            self.debug_test_button_1 = QPushButton("Test Button 1", self)
-            self.debug_test_button_2 = QPushButton("Test Button 2", self)
-            self.debug_test_button_3 = QPushButton("Test Button 3", self)
-            self.debug_test_button_4 = QPushButton("Test Button 4", self)
-            self.debug_test_button_5 = QPushButton("Test Button 5", self)
-            self.debug_tab_qv_layout.addWidget(self.debug_test_button_1)
-            self.debug_tab_qv_layout.addWidget(self.debug_test_button_2)
-            self.debug_tab_qv_layout.addWidget(self.debug_test_button_3)
-            self.debug_tab_qv_layout.addWidget(self.debug_test_button_4)
-            self.debug_tab_qv_layout.addWidget(self.debug_test_button_5)
-            self.debug_tab.setStyleSheet("QPushButton {font-size: 22pt;}")
-            self.debug_tab_qv_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-            self.debug_tab.setLayout(self.debug_tab_qv_layout)
-
-            self.debug_test_button_1.clicked.connect(lambda: log.debug("Test Button 1 Pressed"))
-            self.debug_test_button_2.clicked.connect(lambda: log.debug("Test Button 2 Pressed"))
-            self.debug_test_button_3.clicked.connect(lambda: log.debug("Test Button 3 Pressed"))
-            self.debug_test_button_4.clicked.connect(lambda: log.debug("Test Button 4 Pressed"))
-            self.debug_test_button_5.clicked.connect(lambda: log.debug("Test Button 5 Pressed"))
-
-    def init_ui(self):
-        # Initalize Main Gui
-        self.setCentralWidget(self.central_widget)
-        self.central_widget.setLayout(self.central_widget_vbox)
-        self.central_widget_vbox.addWidget(self.tabs_widget)
-        self.central_widget_vbox.setContentsMargins(0,0,0,0)
-        # Initialize Tabs
-        self.tabs_widget.addTab(self.main_tab, "Main")
-        self.tabs_widget.addTab(self.presets_tab, "Presets")
-        #self.tabs_widget.addTab(self.theme_tab, "Theme")
-        self.tabs_widget.addTab(self.settings_tab, "Settings")
-        # Set Main Tab Layout
-        main_tab_vbox = QVBoxLayout()
-        main_tab_hbox = QHBoxLayout()
-        main_tab_hbox.addWidget(self.start_button)
-        main_tab_hbox.addWidget(self.stop_button)
-        main_tab_vbox.addWidget(self.status_label)
-        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_tab_vbox.addLayout(main_tab_hbox)
-        main_tab_vbox.addWidget(self.log_area)
-        self.log_area.setReadOnly(True)
-        self.main_tab.setLayout(main_tab_vbox)
-        # Set Main Tab Logging Layout
-        self.log_area.setStyleSheet("background-color: #0f0f0f; color: white; font-size: 11pt; padding: 1px;")
-        if not config["wrap log area"]:
-            self.log_area.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-            self.log_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.log_watcher = QFileSystemWatcher([f"{log_path}"])
-        self.log_watcher.fileChanged.connect(self.update_gui_log)
-        self.update_gui_log(reset_log=True)
-        self.logging_settings_gui.setWindowTitle("Dark Sol Logging Settings")
-        self.logging_settings_gui_qv_layout.addLayout(self.logging_settings_gui_qh_layout)
-        self.logging_settings_gui_qv_layout.addLayout(self.logging_settings_gui_qh_layout2)
-        self.main_tab_bottom_header_qh_layout.addWidget(self.logging_settings_gui_button, alignment=Qt.AlignmentFlag.AlignLeft)
-        self.main_tab_bottom_header_qh_layout.addStretch(1)
-        self.logging_settings_gui.setStyleSheet("""QWidget {background-color: black; color: cyan;}""")
-        self.logging_settings_gui_qh_layout2.addWidget(self.wrap_log_checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
-        self.logging_settings_gui_qh_layout2.addWidget(self.show_only_current_logs_checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
-        self.wrap_log_checkbox.setChecked(config["wrap log area"])
-        self.wrap_log_checkbox.stateChanged.connect(self.toggle_log_wrap)
-        self.show_only_current_logs_checkbox.setChecked(config["show only current logs"])
-        self.show_only_current_logs_checkbox.stateChanged.connect(lambda state: (config.update({"show only current logs": True if state == 2 else False}), nice_config_save(), self.update_gui_log(True)))
-        #Set Presets Tab Layout
-        self.preset_selector.addItems(list(config["item presets"].keys()) + ["Create New Preset"])
-        self.preset_selector.setStyleSheet("color: cyan; background: #111; font-size: 18pt; padding: 6px;")
-        self.preset_selector.setMinimumHeight(52)
-        self.preset_selector.blockSignals(True)
-        self.preset_selector.setCurrentText(self.current_preset)
-        self.preset_selector.blockSignals(False)
-        self.rename_preset_button.setStyleSheet("color: cyan; background: #111; font-size: 18pt; padding: 6px;")
-        self.delete_preset_button.setStyleSheet("color: red; background: #111; font-size: 18pt; padding: 6px; border: 1px solid red;")
-        presets_header = QWidget()
-        presets_header_layout = QHBoxLayout(presets_header)
-        presets_header_layout.setContentsMargins(0, 0, 0, 0)
-        presets_header_layout.setSpacing(10)
-        presets_header_layout.addWidget(self.preset_selector, 1)
-        presets_header_layout.addWidget(self.rename_preset_button)
-        presets_header_layout.addWidget(self.delete_preset_button)
-        self.presets_tab_scroller.setWidget(self.presets_tab_content)
-        self.presets_tab_scroller.setFrameShape(QFrame.Shape.NoFrame)
-        self.presets_tab_scroller.setWidgetResizable(True)
-        self.presets_tab_scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.presets_tab_scroller.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.presets_tab_content_layout = QVBoxLayout(self.presets_tab_content)
-        self.presets_tab_content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.presets_tab_main_vbox = QVBoxLayout()
-        self.presets_tab_main_vbox.addWidget(presets_header)
-        self.presets_tab_main_vbox.addWidget(self.presets_tab_scroller)
-        self.presets_tab.setStyleSheet("""
-                    QWidget { background-color: black; }
-                    QLabel { color: cyan; font-size: 14pt; }
-                    QCheckBox { color: cyan; font-size: 11pt; }
-                    QScrollArea { border: 0px; }
-                """)
-        self.presets_tab.setLayout(self.presets_tab_main_vbox)
-        self.build_potions_ui()
-        # Settings Tab Layout
-        self.settings_tab_vbox = QVBoxLayout(self.settings_tab)
-        self.private_server_hbox = QHBoxLayout()
-        self.ps_link_line.setPlaceholderText("Enter private server link here")
-        if config["private server link"] != "":
-            self.ps_link_line.setText(config["private server link"])
-        self.private_server_hbox.addWidget(self.ps_link_label)
-        self.private_server_hbox.addWidget(self.ps_link_line)
-        self.ps_link_join_button.setStyleSheet("padding: 3px;")
-        self.private_server_hbox.addWidget(self.ps_link_join_button)
-        self.settings_tab_vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.settings_tab_vbox.addLayout(self.private_server_hbox)
-        self.ps_link_join_button.setToolTip("Must save private server before clicking")
-        self.settings_tab_vbox.addWidget(self.reset_add_button_template_button)
-        self.settings_tab_vbox.addWidget(self.reset_amount_box_template_button)
-        # Biome Detection
-        def check_if_pings_enabled():
-            sender = self.sender()
-            if not isinstance(sender, QComboBox):
-                return
-            id_line = sender.property("id_line")
-            id_type_combo = sender.property("id_type_combo")
-            if not isinstance(id_line, QLineEdit):
-                    return
-            if id_type_combo is not None and not isinstance(id_type_combo, QComboBox):
-                    return
-            if sender.currentText() == "Ping":
-                id_line.setEnabled(True)
-                if isinstance(id_type_combo, QComboBox):
-                    id_type_combo.setEnabled(True)
-            else:  
-                id_line.setDisabled(True)
-                if isinstance(id_type_combo, QComboBox):
-                    id_type_combo.setDisabled(True)
-        self.biome_detection_settings_widget = QWidget()
-        row = 0
-        self.biome_detection_settings_widget_layout = QGridLayout(self.biome_detection_settings_widget)
-        self.biome_detection_settings_widget_button = QPushButton("Biome Detection Settings")
-        self.settings_tab_vbox.addStretch(1)
-        self.settings_tab_vbox.addWidget(self.biome_detection_settings_widget_button, alignment=Qt.AlignmentFlag.AlignBottom)
-        self.settings_tab_vbox.addWidget(self.webhook_settings_button, alignment=Qt.AlignmentFlag.AlignBottom)
-        self.biome_detection_settings_widget_button.clicked.connect(lambda: self.biome_detection_settings_widget.show())
-        self.webhook_settings_button.clicked.connect(lambda: self.webhook_settings_widget.show())
-
-        self.webhook_settings_widget.setStyleSheet(
-            "QWidget {background-color: black; color: cyan;} "
-            "QLineEdit {background-color: #171717; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 3px;} "
-            "QListWidget {background-color: #101010; color: cyan; border: 1px solid cyan; border-radius: 5px;} "
-            "QPushButton {background-color: black; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 4px;}"
-        )
-        webhook_layout = QVBoxLayout(self.webhook_settings_widget)
-        webhook_layout.addWidget(self.webhook_list)
-
-        webhook_input_row = QHBoxLayout()
-        self.webhook_input.setPlaceholderText("Paste Discord webhook URL")
-        webhook_input_row.addWidget(self.webhook_input)
-        webhook_input_row.addWidget(self.webhook_add_button)
-        webhook_input_row.addWidget(self.webhook_edit_button)
-        webhook_input_row.addWidget(self.webhook_remove_button)
-        webhook_layout.addLayout(webhook_input_row)
-
-        self.webhook_add_button.clicked.connect(self.add_webhook_from_input)
-        self.webhook_edit_button.clicked.connect(self.open_edit_webhook_dialog)
-        self.webhook_remove_button.clicked.connect(self.remove_selected_webhook)
-        self.refresh_webhook_list_widget()
-        
-        for biome in config["biome settings"]:
-            label = QLabel(biome.title())
-            combo_box = QComboBox()
-            combo_box.addItems(("Ping", "Message", "Off"))
-            combo_box.setCurrentText((config["biome settings"][biome]["message type"]).title())
-            
-            combo_box.currentTextChanged.connect(lambda text, biome=biome: (config["biome settings"][biome].__setitem__("message type", text.lower()), nice_config_save(), check_if_pings_enabled()))
-            id_line = QLineEdit()
-            id_line.setPlaceholderText("Enter ID for Biome Pings")
-            id_line.setText(config["biome settings"][biome]["ping id"])
-            id_line.editingFinished.connect(lambda biome=biome, id_line=id_line: (config["biome settings"][biome].__setitem__("ping id", id_line.text()), nice_config_save()))
-
-            id_type_combo = QComboBox()
-            id_type_combo.addItems(("Role", "User"))
-            id_type_combo.setCurrentText(str(config["biome settings"][biome]["id type"]).title())
-            id_type_combo.currentTextChanged.connect(lambda text, biome=biome: (config["biome settings"][biome].__setitem__("id type", text.lower()), nice_config_save()))
-
-            if config["biome settings"][biome]["message type"] == "ping":
-                id_line.setEnabled(True)
-                id_type_combo.setEnabled(True)
-            else:
-                id_line.setDisabled(True)
-                id_type_combo.setDisabled(True)
-            combo_box.setProperty("id_line", id_line)
-            combo_box.setProperty("id_type_combo", id_type_combo)
-            # add labels above saying what each widget does
-            self.biome_detection_settings_widget_layout.addWidget(label,  row, 0)
-            self.biome_detection_settings_widget_layout.addWidget(combo_box,  row, 1)
-            self.biome_detection_settings_widget_layout.addWidget(id_line,row, 2)
-            self.biome_detection_settings_widget_layout.addWidget(id_type_combo, row, 3)
-            row += 1
-            check_if_pings_enabled()
-
-        for biome in data["ping everyone biomes"]:
-            label = QLabel(biome.title())
-            combo_box = QComboBox()
-            combo_box.addItem("Everyone")
-            combo_box.setDisabled(True)
-            self.biome_detection_settings_widget_layout.addWidget(label,  row, 0)
-            self.biome_detection_settings_widget_layout.addWidget(combo_box,  row, 1)
-            row += 1
-        self.biome_detection_settings_widget.setStyleSheet("""QWidget {background-color: black; color: cyan;} QComboBox {background-color: #171717;} QComboBox:disabled {background-color: #111; color: #048f8f;}
-                                                                QLineEdit {background-color: #171717; color: cyan; border: 1px solid cyan; border-radius: 5px; padding: 3px;}
-                                                                QLineEdit:disabled {background-color: #101010;color: #5f9ea0;border: 1px solid #2c5f5f; selection-background-color: #2a2a2a;}
-                                                                """)
-   
-        # Calibrations
-        self.settings_tab_vbox.addWidget(self.calibrations_widget_button)
-        # Donations Layout
-        self.main_tab_bottom_header_qh_layout.addWidget(self.donate_label)
-        self.central_widget_vbox.addWidget(self.main_tab_bottom_header)
-        self.donate_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.donate_label.setTextFormat(Qt.TextFormat.RichText)
-        self.donate_label.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
-        self.donate_label.setOpenExternalLinks(True)
-        self.donate_label.setStyleSheet("padding-right: 12px; padding-bottom: 6px;")
-        self.donate_label.setMouseTracking(True)
-        self.donate_label.setCursor(Qt.CursorShape.ArrowCursor)
-        self.donate_label_color = 0
-        self.donate_timer = QTimer(self)
-        self.donate_timer.timeout.connect(self.change_donate_label_color)
-        self.donate_timer.start(30)
-        self.change_donate_label_color()
-        # Button Connectors
-        # Main Tab Buttons
-        self.start_button.clicked.connect(self.start_macro)
-        self.stop_button.clicked.connect(self.stop_macro)
-        self.logging_settings_gui_button.clicked.connect(lambda: self.logging_settings_gui.show())
-        # Settings Buttons
-        self.ps_link_line.editingFinished.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
-        self.ps_link_join_button.clicked.connect(lambda: helper_functions.open_roblox(config["private server link"]))
-        self.reset_add_button_template_button.clicked.connect(lambda: verify_files("add_button.png", dark_sol_appdata_directory / "Lib" / "Images"))
-        self.reset_amount_box_template_button.clicked.connect(lambda: verify_files("amount_box.png", dark_sol_appdata_directory / "Lib" / "Images"))
-        # Calibration Buttons
-        self.show_calibration_overlays_button.clicked.connect(lambda: calibrations.show_calibration_overlays())
-        self.calibrate_macro_button.clicked.connect(lambda: calibrations.calibrate_macro())
-        # Preset Buttons
-        self.preset_selector.currentTextChanged.connect(lambda: self.switch_preset(self.preset_selector.currentText()) if self.preset_selector.currentText() != "Create New Preset" else self.create_new_preset())
-        self.rename_preset_button.clicked.connect(self.rename_preset)
-        self.delete_preset_button.clicked.connect(self.delete_preset)
-        #Status Label Setup
-        self.mini_status_widget.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
-        self.mini_status_widget.setStyleSheet("background-color: black; border: 2px solid cyan; border-radius: 6px;")
-        self.general_mini_status_label.setStyleSheet("color: cyan; font-size: 15pt;")
-        self.mini_status_label.setStyleSheet("color: cyan; font-size: 15pt;")
-        self.mini_status_qv = QVBoxLayout(self.mini_status_widget)
-        self.mini_status_qv.setContentsMargins(0, 0, 0, 0)
-        self.mini_status_qv.addWidget(self.general_mini_status_label)
-        self.mini_status_qv.addWidget(self.mini_status_label)
-        self.mini_status_widget.move(600, 75)
-        self.mini_status_qv.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.general_mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        # Set Ui Theme
-        self.status_label.setObjectName("status_label")
-        self.start_button.setObjectName("start_button")
-        self.stop_button.setObjectName("stop_button")
-        self.setStyleSheet("""
-            QMainWindow {background-color: black; }
-            QTabBar::tab { background-color: #222; }
-            QTabBar::tab:selected { background-color: black; }
-            QTabBar {color: cyan;}
-            QWidget {background-color: black;}
-            QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt; }
-            QPushButton:hover {background-color: #0d2c33;}
-            QPushButton#start_button {font-size: 22pt;}
-            QPushButton#stop_button {font-size: 22pt;}
-            QLabel {color: cyan; font-size: 14pt;}
-            QLabel#status_label {color: cyan; font-size: 38pt;}
-        """)
-        log.info("Ui Initialized")
-        self.update_gui_log()
 
     def refresh_webhook_list_widget(self):
         webhooks = config["webhooks"]
