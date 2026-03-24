@@ -781,7 +781,6 @@ class dark_sol_gui(QMainWindow):
         self.status_label = QLabel("Status: Stopped")
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
-        self.rejoin_and_path_to_potion_gui_button = QPushButton("Rejoin and Path to Potion GUI")
         self.main_tab_bottom_header = QWidget()
         self.main_tab_bottom_header_qh_layout = QHBoxLayout(self.main_tab_bottom_header)
         self.main_tab_bottom_header_qh_layout.setContentsMargins(0, 0, 0, 0)
@@ -828,8 +827,7 @@ class dark_sol_gui(QMainWindow):
         # Settings Tab
         self.ps_link_label = QLabel("Private Server Link:")
         self.ps_link_line = QLineEdit()
-        self.ps_link_save_button = QPushButton("Save Private Server Link")
-        self.ps_link_join_button = QPushButton("Join Private Server")
+        self.ps_link_join_button = QPushButton("Join")
         self.reset_add_button_template_button = QPushButton("Reset Add Button Template")
         self.reset_amount_box_template_button = QPushButton("Reset Amount Box Template")
         self.webhook_settings_button = QPushButton("Webhook Settings")
@@ -1139,7 +1137,6 @@ class dark_sol_gui(QMainWindow):
         main_tab_vbox.addWidget(self.status_label)
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_tab_vbox.addLayout(main_tab_hbox)
-        main_tab_vbox.addWidget(self.rejoin_and_path_to_potion_gui_button)
         main_tab_vbox.addWidget(self.log_area)
         self.log_area.setReadOnly(True)
         self.main_tab.setLayout(main_tab_vbox)
@@ -1205,12 +1202,11 @@ class dark_sol_gui(QMainWindow):
             self.ps_link_line.setText(config["private server link"])
         self.private_server_hbox.addWidget(self.ps_link_label)
         self.private_server_hbox.addWidget(self.ps_link_line)
+        self.ps_link_join_button.setStyleSheet("padding: 3px;")
+        self.private_server_hbox.addWidget(self.ps_link_join_button)
         self.settings_tab_vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.settings_tab_vbox.addLayout(self.private_server_hbox)
-        self.settings_tab_vbox.addWidget(self.ps_link_save_button)
-        self.settings_tab_vbox.addWidget(self.ps_link_join_button)
         self.ps_link_join_button.setToolTip("Must save private server before clicking")
-        self.settings_tab_vbox.addWidget(self.ps_link_join_button)
         self.settings_tab_vbox.addWidget(self.reset_add_button_template_button)
         self.settings_tab_vbox.addWidget(self.reset_amount_box_template_button)
         # Biome Detection
@@ -1331,10 +1327,9 @@ class dark_sol_gui(QMainWindow):
         # Main Tab Buttons
         self.start_button.clicked.connect(self.start_macro)
         self.stop_button.clicked.connect(self.stop_macro)
-        self.rejoin_and_path_to_potion_gui_button.clicked.connect(lambda: other_functions.reload_potion_gui())
         self.logging_settings_gui_button.clicked.connect(lambda: self.logging_settings_gui.show())
         # Settings Buttons
-        self.ps_link_save_button.clicked.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
+        self.ps_link_line.editingFinished.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
         self.ps_link_join_button.clicked.connect(lambda: helper_functions.open_roblox(config["private server link"]))
         self.reset_add_button_template_button.clicked.connect(lambda: verify_files("add_button.png", dark_sol_appdata_directory / "Lib" / "Images"))
         self.reset_amount_box_template_button.clicked.connect(lambda: verify_files("amount_box.png", dark_sol_appdata_directory / "Lib" / "Images"))
@@ -1932,7 +1927,6 @@ class dark_sol_gui(QMainWindow):
     def start_macro(self):
         macro()
         biome_detection()
-
         self.mini_status_widget.show()
         self.update_status("Running", what_to_update="both")
 
@@ -2186,6 +2180,20 @@ class helper_functions():
         overlay_windows[overlay_key] = overlay_window
 
     @staticmethod
+    def is_potion_gui_open():
+        helper_functions.focus_roblox()
+        time.sleep(0.2)
+        return helper_functions.check_region_for_colors("#C074FF") >= 10
+    
+    @staticmethod
+    def is_roblox_open():
+        hwnd = win32gui.FindWindow(None, "Roblox")
+        if hwnd:
+            return True
+        else:
+            return False 
+
+    @staticmethod
     def open_roblox(link):
         def convert_roblox_link(url):
             game_pattern = r"https://www.roblox.com/games/(\d+)/[^?]+\?privateServerLinkCode=(\d+)"
@@ -2211,6 +2219,35 @@ class helper_functions():
             
         main_url = convert_roblox_link(link)
         QDesktopServices.openUrl(QUrl(main_url))
+    
+    @staticmethod
+    def focus_roblox(ignore_roblox_not_found=False):
+        hwnd = win32gui.FindWindow(None, "Roblox")
+        if not hwnd:
+            if not ignore_roblox_not_found:
+                log.warning("Roblox window not found!")
+                QMessageBox.warning(dark_sol, "Roblox Not Found", "Could not find a Roblox window. Please make sure Roblox is running.")
+            return False
+
+        if win32gui.IsIconic(hwnd):
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        if win32gui.GetForegroundWindow() != hwnd:
+            try:
+                win32gui.BringWindowToTop(hwnd)
+                win32gui.SetForegroundWindow(hwnd)
+            except Exception:
+                log.error("Failed to bring Roblox to the foreground. It may be minimized or not responding.")
+        if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
+            win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+        return True
+
+    @staticmethod
+    def close_roblox():
+        hwnd = ctypes.windll.user32.FindWindowW(None, "Roblox")
+        if hwnd:
+            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
+            time.sleep(0.2)
+            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
 
     @staticmethod
     def send_discord_webhook(webhook_url, title, message=None, ping_mode=None, ping_id=None):
@@ -2255,35 +2292,6 @@ class helper_functions():
                 mkey.move_to(*position)
 
     @staticmethod
-    def focus_roblox(ignore_roblox_not_found=False):
-        hwnd = win32gui.FindWindow(None, "Roblox")
-        if not hwnd:
-            if not ignore_roblox_not_found:
-                log.warning("Roblox window not found!")
-                QMessageBox.warning(dark_sol, "Roblox Not Found", "Could not find a Roblox window. Please make sure Roblox is running.")
-            return False
-
-        if win32gui.IsIconic(hwnd):
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        if win32gui.GetForegroundWindow() != hwnd:
-            try:
-                win32gui.BringWindowToTop(hwnd)
-                win32gui.SetForegroundWindow(hwnd)
-            except Exception:
-                log.error("Failed to bring Roblox to the foreground. It may be minimized or not responding.")
-        if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
-            win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
-        return True
-
-    @staticmethod
-    def close_roblox():
-        hwnd = ctypes.windll.user32.FindWindowW(None, "Roblox")
-        if hwnd:
-            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
-            time.sleep(0.2)
-            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
-
-    @staticmethod
     def search_for_potion(potion):
         helper_functions.move_and_click(config["positions"]["potion search bar"]["center"])
         mkey.left_click()
@@ -2298,27 +2306,47 @@ class helper_functions():
         helper_functions.move_and_click(config["positions"][potion_selection_button]["center"])
         helper_functions.move_and_click(config["positions"]["open recipe button"]["center"])
         log.debug("Clicked to open recipe button")
+    
+    @staticmethod
+    def is_sols_open():
+        if not helper_functions.is_roblox_open():
+            log.debug("Roblox is not open.")
+            return False
+        game_found = helper_functions.check_roblox_logs_for("Disconnect", "place 15532962292")
+        if game_found == (False, "Disconnect"):
+            log.debug("User is not in a game.")
+            return False
+        if game_found == "place 15532962292":
+            log.debug("User is in Sol's RNG.")
+            return True
+        else:
+            log.debug("Could not determine if user is in Sol's RNG, assuming user is not in game.")
+            return False
+
 class other_functions():
     @staticmethod
     def reload_potion_gui():
         helper_functions.open_roblox(config["private server link"])
-        other_functions.wait_for_and_click_play_button()
+        other_functions.wait_for_play_button()
         time.sleep(2)
         other_functions.path_to_potion_gui()
 
     @staticmethod
-    def path_to_potion_gui(reset=False):
-        if reset:
-            keyboard.Controller().press(keyboard.Key.esc)
-            keyboard.Controller().release(keyboard.Key.esc)
-            keyboard.Controller().press('r')
-            keyboard.Controller().release('r')
-            keyboard.Controller().press(keyboard.Key.enter)
-            keyboard.Controller().release(keyboard.Key.enter)
-
+    def path_to_potion_gui():
+        helper_functions.focus_roblox()
+        keyboard.Controller().press(keyboard.Key.esc)
+        keyboard.Controller().release(keyboard.Key.esc)
+        time.sleep(0.2)
+        keyboard.Controller().press('r')
+        keyboard.Controller().release('r')
+        time.sleep(0.5)
+        keyboard.Controller().press(keyboard.Key.enter)
+        keyboard.Controller().release(keyboard.Key.enter)
+        time.sleep(5)
         helper_functions.move_and_click(config["positions"]["collection menu button"]["center"])
+        time.sleep(0.2)
         helper_functions.move_and_click(config["positions"]["collection exit button"]["center"])
-
+        
         time.sleep(0.2)
         mkey.right_mouse_down()
         time.sleep(0.2)
@@ -2326,8 +2354,8 @@ class other_functions():
         time.sleep(0.2)
         mkey.right_mouse_up()
 
+        time.sleep(1)
         if config["path"] == "vip":
-            time.sleep(5)
             keyboard.Controller().press('s')
             time.sleep(0.0059)
             keyboard.Controller().press('a')
@@ -2426,13 +2454,14 @@ class other_functions():
             pass
 
     @staticmethod
-    def wait_for_and_click_play_button():
+    def wait_for_play_button():
         while True:
             helper_functions.focus_roblox(ignore_roblox_not_found=True)
             if where_to_click := image_processing.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True, return_coordinates=True):
-                helper_functions.move_and_click(where_to_click[1]) # (270,1050)
+                helper_functions.move_and_click(where_to_click[1])
                 break
             time.sleep(1)
+
 class calibrations():
     scroll_calibration_safety_check = False
     calibrations_overlay_active = False
@@ -2725,7 +2754,7 @@ class calibrations():
                 dark_sol.create_msg_box("Calibrations", "Play button detected and calibrated successfully.")
                 config["calibrated positions"]["play button"] = True
                 nice_config_save()
-            other_functions.wait_for_and_click_play_button()
+            other_functions.wait_for_play_button()
             if not config["calibrated positions"]["collection menu button"] and config["sections to calibrate"]["auto rejoin"]:
                 if not calibrate_position("collection menu button"):
                     return
@@ -3074,7 +3103,6 @@ class biome_detection():
             biome_detection.biome_detection_thread.start()
 
     def biome_detection_loop(self):
-        # place 15532962292
         latest_biome = None
         
         def check_roblox_logs_for_biome():
@@ -3118,7 +3146,7 @@ class biome_detection():
                     if carry:
                         line = carry.decode("utf-8", errors="replace")
 
-                        if "Disconnected - stop() called" in line or "Disconnected from server for reason:" in line:
+                        if "Disconnect" in line:
                                 return "Disconnected"
 
                         if '[FLog::Output] [BloxstrapRPC]' in line and '"command":"SetRichPresence"' in line:
@@ -3165,6 +3193,10 @@ class macro():
     macro_thread = None
 
     def __init__(self) -> None:
+        if not helper_functions.is_sols_open():
+            other_functions.reload_potion_gui()
+        elif not helper_functions.is_potion_gui_open():
+            other_functions.path_to_potion_gui()
         macro.run_event.set()
         if macro.macro_thread is None or not macro.macro_thread.is_alive():
             macro.macro_thread = threading.Thread(target=self.macro_loop, daemon=True)
