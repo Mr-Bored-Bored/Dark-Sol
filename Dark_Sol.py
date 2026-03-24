@@ -819,11 +819,7 @@ class dark_sol_gui(QMainWindow):
         self.down_chevron_svg = str(dark_sol_appdata_directory / "Lib" / "Icons" / "down chevron.svg")
         self.up_chevron_disabled_svg = str(dark_sol_appdata_directory / "Lib" / "Icons" / "up chevron disabled.svg")
         # Themes Tab Elements
-        self.theme_not_made_yet_label = QLabel("Themes tab has not been made yet, check back in a future update!")
-        self.theme_not_made_yet_label.setWordWrap(True)
-        self.theme_not_made_yet_label.setStyleSheet("border: 1px solid cyan; border-radius: 5px; padding: 10px;")
         self.theme_tab_layout = QVBoxLayout(self.theme_tab)
-        self.theme_tab_layout.addWidget(self.theme_not_made_yet_label, alignment=Qt.AlignmentFlag.AlignCenter)
         # Settings Tab
         self.ps_link_label = QLabel("Private Server Link:")
         self.ps_link_line = QLineEdit()
@@ -1127,7 +1123,7 @@ class dark_sol_gui(QMainWindow):
         # Initialize Tabs
         self.tabs_widget.addTab(self.main_tab, "Main")
         self.tabs_widget.addTab(self.presets_tab, "Presets")
-        self.tabs_widget.addTab(self.theme_tab, "Theme")
+        #self.tabs_widget.addTab(self.theme_tab, "Theme")
         self.tabs_widget.addTab(self.settings_tab, "Settings")
         # Set Main Tab Layout
         main_tab_vbox = QVBoxLayout()
