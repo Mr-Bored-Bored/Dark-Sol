@@ -3186,9 +3186,12 @@ class biome_detection():
                 if biome_from_roblox_logs != latest_biome:
                     latest_biome = biome_from_roblox_logs
                     log.info("Biome changed to:", latest_biome)
-                    if latest_biome == "NORMAL":
-                        continue
-                    if latest_biome in data["ping everyone biomes"]:
+                    if latest_biome not in config["biome settings"] or data["ping everyone biomes"]:
+                        for webhook in config["webhooks"]:
+                            helper_functions.send_discord_webhook(webhook, f"Unknown Biome Started - {latest_biome}")
+                    elif latest_biome == "NORMAL":
+                        pass
+                    elif latest_biome in data["ping everyone biomes"]:
                         for webhook in config["webhooks"]:
                             helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}", ping_mode="everyone")
                     elif config["biome settings"][latest_biome]["message type"] == "ping":
@@ -3197,7 +3200,7 @@ class biome_detection():
                     elif config["biome settings"][latest_biome]["message type"] == "message":
                         for webhook in config["webhooks"]:
                             helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}")
-                    else:
+                    elif config["biome settings"][latest_biome]["message type"] == "off":
                         pass
             time.sleep(3)
 class macro():
@@ -3207,12 +3210,12 @@ class macro():
     macro_thread = None
 
     def __init__(self) -> None:
-        if not helper_functions.is_sols_open():
-            other_functions.reload_potion_gui()
-        elif not helper_functions.is_potion_gui_open():
-            other_functions.path_to_potion_gui()
         macro.run_event.set()
         if macro.macro_thread is None or not macro.macro_thread.is_alive():
+            if not helper_functions.is_sols_open():
+                other_functions.reload_potion_gui()
+            elif not helper_functions.is_potion_gui_open():
+                other_functions.path_to_potion_gui()
             macro.macro_thread = threading.Thread(target=self.macro_loop, daemon=True)
             macro.macro_thread.start()
             log.debug("Macro thread started.")
