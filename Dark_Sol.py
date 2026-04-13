@@ -46,9 +46,11 @@ log.info("Starting Dark Sol")
 log.debug("Logging Initalized")
 
 # Dev Tools
+DEV_MODE = True
+current_github_version = "0.0.0.5"
 use_built_in_config = False
-skip_loading = True
-create_debug_test_buttons = False
+create_debug_test_buttons = True
+
 log.debug("Dev Tools Loaded")
 
 # DPI Setup
@@ -90,6 +92,7 @@ log.debug("Imports Initalized")
 
 # Constants
 current_version = "0.0.0.5"
+skip_loading = True
 folders_to_check = ("Icons", "Images")
 icons_to_check = ("up chevron.svg", "down chevron.svg", "up chevron disabled.svg", "discord_icon.svg")
 images_to_check = ("add button.png", "amount box.png", "auto add button.png", "craft button.png", "potion search bar.png", "open recipe button.png",
@@ -100,135 +103,154 @@ roblox_log_path = local_appdata_directory / "Roblox" / "logs"
 log.debug("Constants Loaded")
 
 # File Verification
-def download_from_repo(file, output_directory, tag=f"v{current_version}", folder=False, inner_folder_location=None):
-    if inner_folder_location == None:
-        log.info(f"Downloading {file} from repo...")
-        github_file = requests.get(f"https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(file).replace(' ', '%20')}{".zip" if folder else ""}", timeout=20)
-        log.info(f"Finished downloading {file} from repo")
-        file_content = github_file.content
+def download_from_repo(output_directory, github_file_location, tag=f"v{current_version if current_github_version is None else current_github_version}"):
+    output_directory = pathlib.Path(output_directory)
+    github_file_location = pathlib.Path(github_file_location) 
+    if tag.startswith("v"):
+        pass
+    else:
+        tag = "v" + tag
+
+    if len(github_file_location.parts) == 1:
+        if github_file_location.suffix == "":
+            github_file_location = github_file_location.with_suffix(".zip")
+        log.debug(f"Downloading {github_file_location.name} from repo...")
+        github_file = requests.get(f"https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(github_file_location).replace(' ', '%20')}", timeout=20)
+        log.debug(f"Finished downloading {github_file_location.name} from repo")
+        github_file_content = github_file.content
         if github_file.status_code != 200:
-            raise Exception(f"Failed to download {file} from repo, status code: {github_file.status_code}")
-        output_directory.mkdir(parents=True, exist_ok=True)
-        log.debug("Created output directory if it did not exist")
-        if folder:
-            log.info(f"Extracting {file} to {output_directory}...")
-            with zipfile.ZipFile(io.BytesIO(file_content)) as zip_extractor:
-                zip_extractor.extractall(output_directory)
-            log.info(f"Finished extracting {file} to {output_directory}")
+
+            raise Exception(f"Failed to download {github_file_location.name} from repo, status code: {github_file.status_code}")
+        
+        if github_file_location.suffix == ".zip":
+            output_directory.mkdir(parents=True, exist_ok=True)
+            log.debug("Created output folder if it did not exist")
+            log.debug(f"Extracting {github_file_location.name} to {output_directory}...")
+            with zipfile.ZipFile(io.BytesIO(github_file_content)) as zip_extractor:
+                zip_extractor.extractall(output_directory.parent)
+            log.debug(f"Finished extracting {github_file_location.name} to {output_directory}")
         else:
-            log.info(f"Saving {file} to {output_directory}...")
-            out_path = output_directory / str(file)
-            with open(out_path, "wb") as f:
-                f.write(file_content)
-            log.info(f"Finished saving {file} to {out_path}")
+            output_directory.parent.mkdir(parents=True, exist_ok=True)
+            log.debug("Created output directory if it did not exist")
+            log.debug(f"Saving {github_file_location.name} to {output_directory}...")
+            with open(output_directory, "wb") as f:
+                f.write(github_file_content)
+            log.debug(f"Finished saving {github_file_location.name} to {output_directory}")
     else:
-        log.info(f"Downloading {inner_folder_location[0]} from repo...")
-        github_file = requests.get(f"https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(inner_folder_location[0]).replace(' ', '%20')}{".zip" if folder else ""}", timeout=20)
-        log.info(f"Finished downloading {inner_folder_location[0]} from repo")
-        file_content = github_file.content
+        if github_file_location.suffix == ".zip":
+            github_file_location = github_file_location.with_suffix("")
+        log.debug(f"Downloading {github_file_location.name} from repo...")
+        github_file = requests.get(f"https://github.com/Mr-Bored-Bored/Dark-Sol/releases/download/{tag}/{str(github_file_location.parts[0]).replace(' ', '%20')}.zip", timeout=20)
+        log.debug(f"Finished downloading {github_file_location.name} from repo")
+        github_file_content = github_file.content
         if github_file.status_code != 200:
-            raise Exception(f"Failed to download {inner_folder_location[0]} from repo, status code: {github_file.status_code}")
-        output_directory.mkdir(parents=True, exist_ok=True)
-        log.debug("Created output directory if it did not exist")
-        log.info(f"Extracting {file} to {output_directory}...")
-        with zipfile.ZipFile(io.BytesIO(file_content)) as zip_extractor:
-            for name in zip_extractor.namelist():
-                if not name.startswith(inner_folder_location[1]) or name.endswith("/"):
-                    continue
-                rel = name[len(inner_folder_location[1]):]
-                out_path = output_directory / rel
-                out_path.parent.mkdir(parents=True, exist_ok=True)
-                out_path.write_bytes(zip_extractor.read(name))
+            raise Exception(f"Failed to download {github_file_location.name} from repo, status code: {github_file.status_code}")
+        lib_file_location = pathlib.PurePosixPath(*github_file_location.parts).as_posix() + ("/" if github_file_location.suffix == "" else "")
+        log.debug(f"Extracting {github_file_location.name} to {output_directory}...")
+        with zipfile.ZipFile(io.BytesIO(github_file_content)) as zip_extractor:
+            if not lib_file_location in zip_extractor.namelist():
+                log.error(f"Failed to locate {github_file_location.name} in the downloaded github file")
+                return
+            if github_file_location.suffix == "":
+                for inner_file_location in zip_extractor.namelist():
+                    if inner_file_location.startswith(lib_file_location) and not inner_file_location.endswith("/"):
+                        inner_output_directory = output_directory / pathlib.PurePosixPath(inner_file_location).relative_to(lib_file_location)
+                        inner_output_directory.parent.mkdir(parents=True, exist_ok=True)
+                        inner_output_directory.write_bytes(zip_extractor.read(inner_file_location))
+            else:
+                output_directory.parent.mkdir(parents=True, exist_ok=True)
+                output_directory.write_bytes(zip_extractor.read(lib_file_location))
+        log.debug(f"Finished extracting {github_file_location.name} to {output_directory}")
 
-def verify_folders(folder, path, tag=f"v{current_version}"):
-    folder_location = path / folder
-    if not folder_location.exists():
-        log.info(f"{folder} does not exist, downloading...")
-        inner_prefix = "Lib/" if folder == "Lib" else f"Lib/{folder}/"
-        download_from_repo(folder, folder_location, tag=tag, folder=True, inner_folder_location=("Lib", inner_prefix))
+def verify_folder(local_folder_location, github_folder_location, tag=f"v{current_version if current_github_version is None else current_github_version}"):
+    local_folder_location = pathlib.Path(local_folder_location)
+
+    if not local_folder_location.exists():
+        log.info(f"{local_folder_location.name} does not exist, downloading...")
+        download_from_repo(local_folder_location, github_folder_location, tag=tag)
     else:
-        log.debug(f"{folder} already exists, skipping download")
+        log.debug(f"{local_folder_location.name} already exists, skipping download")
 
-def verify_files(file, path, tag=f"v{current_version}"):
-    file_location = path / file
-    if not file_location.exists():
-        log.info(f"{file} does not exist, downloading...")
-        if path.name in ("Images", "Icons") and path.parent.name == "Lib":
-            download_from_repo(file, path, tag=tag, folder=True, inner_folder_location=("Lib", f"Lib/{path.name}/"))
-        else:
-            download_from_repo(file, path, tag=tag)
+def verify_file(local_file_location, github_file_location, tag=f"v{current_version if current_github_version is None else current_github_version}"):
+    local_file_location = pathlib.Path(local_file_location)
+
+    if not local_file_location.exists():
+        log.info(f"{local_file_location.name} does not exist, downloading...")
+        download_from_repo(local_file_location, github_file_location, tag=tag)
     else:
-        log.debug(f"{file} already exists, skipping download")
+        log.debug(f"{local_file_location.name} already exists, skipping download")
 
-verify_folders("Lib", dark_sol_appdata_directory)
+verify_folder(dark_sol_appdata_directory / "Lib", "Lib.zip")
 
 for folder_to_check in folders_to_check:
-    verify_folders(folder_to_check, dark_sol_appdata_directory / "Lib")
+    verify_folder(dark_sol_appdata_directory / "Lib" / folder_to_check, f"Lib/{folder_to_check}")
 
 for image_file in images_to_check:
-    verify_files(image_file, dark_sol_appdata_directory / "Lib" / "Images")
+    verify_file(dark_sol_appdata_directory / "Lib" / "Images"/ image_file, f"Lib/Images/{image_file}")
 
 for icon_file in icons_to_check:
-    verify_files(icon_file, dark_sol_appdata_directory / "Lib" / "Icons")
+    verify_file(dark_sol_appdata_directory / "Lib" / "Icons" / icon_file, f"Lib/Icons/{icon_file}")
 
 log.info("File Verification Completed")
 
 # Config and Data
 def nice_config_save(ind=4):
-        S = (str, int, float, bool, type(None))
+    if use_built_in_config:
+        return
+    S = (str, int, float, bool, type(None))
 
-        stack_ids = set()
+    stack_ids = set()
 
-        def d(o, l=0):
-            p = " " * (ind * l)
-            np = " " * (ind * (l + 1))
+    def d(o, l=0):
+        p = " " * (ind * l)
+        np = " " * (ind * (l + 1))
 
-            def dump_simple_list(vals):
-                return "[" + ", ".join(json.dumps(x) for x in vals) + "]"
+        def dump_simple_list(vals):
+            return "[" + ", ".join(json.dumps(x) for x in vals) + "]"
 
-            if isinstance(o, dict):
-                oid = id(o)
-                stack_ids.add(oid)
-                try:
-                    if not o:
-                        return "{}"
-                    it = list(o.items())
-                    if len(it) <= 2 and all(isinstance(k, str) for k, _ in it) and all(
-                        isinstance(v, S)
-                        or (isinstance(v, (list, tuple)) and len(v) <= 6 and all(isinstance(x, S) for x in v))
-                        for _, v in it
-                    ):
-                        parts = []
-                        for k, v in it:
-                            if isinstance(v, (list, tuple)):
-                                parts.append(f"{json.dumps(k)}: {dump_simple_list(list(v))}")
-                            else:
-                                parts.append(f"{json.dumps(k)}: {json.dumps(v)}")
-                        return "{" + ", ".join(parts) + "}"
-                    return "{\n" + "\n".join(
-                        f"{np}{json.dumps(k)}: {d(v, l + 1)}{',' if i < len(it) - 1 else ''}" for i, (k, v) in enumerate(it)
-                    ) + f"\n{p}}}"
-                finally:
-                    stack_ids.discard(oid)
-            if isinstance(o, (list, tuple)):
-                oid = id(o)
-                stack_ids.add(oid)
-                try:
-                    a = list(o)
-                    if len(a) <= 6 and all(isinstance(x, S) for x in a):
-                        return dump_simple_list(a)
-                    if not a:
-                        return "[]"
-                    return "[\n" + "\n".join(
-                        f"{np}{d(v, l + 1)}{',' if i < len(a) - 1 else ''}" for i, v in enumerate(a)
-                    ) + f"\n{p}]"
-                finally:
-                    stack_ids.discard(oid)
-            return json.dumps(o)
+        if isinstance(o, dict):
+            oid = id(o)
+            stack_ids.add(oid)
+            try:
+                if not o:
+                    return "{}"
+                it = list(o.items())
+                if len(it) <= 2 and all(isinstance(k, str) for k, _ in it) and all(
+                    isinstance(v, S)
+                    or (isinstance(v, (list, tuple)) and len(v) <= 6 and all(isinstance(x, S) for x in v))
+                    for _, v in it
+                ):
+                    parts = []
+                    for k, v in it:
+                        if isinstance(v, (list, tuple)):
+                            parts.append(f"{json.dumps(k)}: {dump_simple_list(list(v))}")
+                        else:
+                            parts.append(f"{json.dumps(k)}: {json.dumps(v)}")
+                    return "{" + ", ".join(parts) + "}"
+                return "{\n" + "\n".join(
+                    f"{np}{json.dumps(k)}: {d(v, l + 1)}{',' if i < len(it) - 1 else ''}" for i, (k, v) in enumerate(it)
+                ) + f"\n{p}}}"
+            finally:
+                stack_ids.discard(oid)
+        if isinstance(o, (list, tuple)):
+            oid = id(o)
+            stack_ids.add(oid)
+            try:
+                a = list(o)
+                if len(a) <= 6 and all(isinstance(x, S) for x in a):
+                    return dump_simple_list(a)
+                if not a:
+                    return "[]"
+                return "[\n" + "\n".join(
+                    f"{np}{d(v, l + 1)}{',' if i < len(a) - 1 else ''}" for i, v in enumerate(a)
+                ) + f"\n{p}]"
+            finally:
+                stack_ids.discard(oid)
+        return json.dumps(o)
 
-        text = d(config) + "\n"
-        with open(config_path, "w", encoding="utf-8") as f:
-            f.write(text)
+    text = d(config) + "\n"
+    with open(config_path, "w", encoding="utf-8") as f:
+        f.write(text)
 
 hidden_config = {
                 "data": {
@@ -368,7 +390,7 @@ hidden_config = {
                         }
                     }
                 },
-                "biome detection": {
+                "biome settings": {
                     "WINDY": {
                         "message type": "message",
                         "ping id": "",
@@ -825,7 +847,13 @@ class dark_sol_gui(QMainWindow):
         self.webhook_edit_button = QPushButton("Edit")
         self.webhook_remove_button = QPushButton("Remove")
         self.webhook_list = QListWidget()
-        # Biome Detection
+        ### Biome Detection
+        # Template Elements
+        self.template_settings_gui = QWidget()
+        self.template_settings_gui_button = QPushButton("Template Settings")
+        self.template_settings_gui_layout = QVBoxLayout(self.template_settings_gui)
+        self.template_settings_gui_layout.addWidget(self.reset_add_button_template_button)
+        self.template_settings_gui_layout.addWidget(self.reset_amount_box_template_button)
         # Calibration Elements
         self.calibrations_widget_button = QPushButton("Calibrations")
         self.show_calibration_overlays_button = QPushButton("Show Calibration Overlays")
@@ -849,7 +877,7 @@ class dark_sol_gui(QMainWindow):
         left_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         right_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.advanced_calibrations_button = QPushButton("Advanced Calibrations")
+        self.advanced_calibrations_gui_button = QPushButton("Advanced Calibrations")
         self.advanced_calibrations_widget = QWidget()
 
         self.calibrate_potion_crafting_checkbox = QCheckBox("Potion Crafting")
@@ -882,7 +910,8 @@ class dark_sol_gui(QMainWindow):
         grid.addWidget(left_top_line, 1, 0)
         grid.addWidget(self.calibrate_macro_button, 2, 0)
         grid.addWidget(self.show_calibration_overlays_button, 3, 0)
-        grid.addWidget(self.advanced_calibrations_button, 4, 0)
+        grid.addWidget(self.advanced_calibrations_gui_button, 4, 0)
+        grid.addWidget(self.template_settings_gui_button, 5, 0)
 
         grid.addWidget(separator, 0, 1, 5, 1)
 
@@ -892,7 +921,8 @@ class dark_sol_gui(QMainWindow):
         grid.addWidget(self.calibrate_auto_path_checkbox, 3, 2)
         grid.addWidget(self.calibrate_auto_rejoin_checkbox, 4, 2)
         self.calibrations_widget_button.clicked.connect(lambda: self.calibrations_widget.show())
-        self.advanced_calibrations_button.clicked.connect(self.build_advanced_calibrations_ui)
+        self.advanced_calibrations_gui_button.clicked.connect(self.build_advanced_calibrations_ui)
+        self.template_settings_gui_button.clicked.connect(lambda: self.template_settings_gui.show())
         # Create Donations Stuff
         self.donate_label = QLabel("Donate")
         # Mini Status Label 
@@ -1019,13 +1049,12 @@ class dark_sol_gui(QMainWindow):
             self.ps_link_line.setText(config["private server link"])
         self.private_server_hbox.addWidget(self.ps_link_label)
         self.private_server_hbox.addWidget(self.ps_link_line)
-        self.ps_link_join_button.setStyleSheet("padding: 3px;")
+        self.ps_link_join_button.setStyleSheet("padding-left: 3px; padding-right: 3px;")
         self.private_server_hbox.addWidget(self.ps_link_join_button)
         self.settings_tab_vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.settings_tab_vbox.addLayout(self.private_server_hbox)
         self.ps_link_join_button.setToolTip("Must save private server before clicking")
-        self.settings_tab_vbox.addWidget(self.reset_add_button_template_button)
-        self.settings_tab_vbox.addWidget(self.reset_amount_box_template_button)
+
         # Biome Detection
         self.biome_detection_settings_widget = QWidget()
         row = 0
@@ -1144,8 +1173,8 @@ class dark_sol_gui(QMainWindow):
         # Settings Buttons
         self.ps_link_line.editingFinished.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
         self.ps_link_join_button.clicked.connect(lambda: helper_functions.open_roblox(config["private server link"]))
-        self.reset_add_button_template_button.clicked.connect(lambda: verify_files("add_button.png", dark_sol_appdata_directory / "Lib" / "Images"))
-        self.reset_amount_box_template_button.clicked.connect(lambda: verify_files("amount_box.png", dark_sol_appdata_directory / "Lib" / "Images"))
+        self.reset_add_button_template_button.clicked.connect(lambda: download_from_repo(dark_sol_appdata_directory / "Lib" / "Images" / "add_button.png", "Lib/Images/add_button.png"))
+        self.reset_amount_box_template_button.clicked.connect(lambda: download_from_repo(dark_sol_appdata_directory / "Lib" / "Images" / "amount_box.png", "Lib/Images/amount_box.png"))
         # Calibration Buttons
         self.show_calibration_overlays_button.clicked.connect(lambda: calibrations.show_calibration_overlays())
         self.calibrate_macro_button.clicked.connect(lambda: calibrations.calibrate_macro())
@@ -1927,7 +1956,7 @@ class dark_sol_gui(QMainWindow):
             elif key == keyboard.Key.f3:
                 if not calibrations.scroll_calibration_safety_check:
                     calibrations.scroll_calibration_safety_check = True
-            elif key == keyboard.Key.f7:
+            elif key == keyboard.Key.f8:
                 os._exit(1)
         main_hotkey_listener = keyboard.Listener(on_press=on_press)
         main_hotkey_listener.start()
@@ -2992,10 +3021,6 @@ class calibrations():
         pass
 
     @staticmethod
-    def reset_template(template):
-        pass
-
-    @staticmethod
     def replace_template(template_name):
         image_location = data["position data"][template_name]["image path"]
         image_path = str(dark_sol_appdata_directory / "Lib" / "Images" / image_location)
@@ -3186,7 +3211,7 @@ class biome_detection():
                 if biome_from_roblox_logs != latest_biome:
                     latest_biome = biome_from_roblox_logs
                     log.info("Biome changed to:", latest_biome)
-                    if latest_biome not in config["biome settings"] or data["ping everyone biomes"]:
+                    if latest_biome not in config["biome settings"] and latest_biome not in data["ping everyone biomes"]:
                         for webhook in config["webhooks"]:
                             helper_functions.send_discord_webhook(webhook, f"Unknown Biome Started - {latest_biome}")
                     elif latest_biome == "NORMAL":
@@ -3201,6 +3226,8 @@ class biome_detection():
                         for webhook in config["webhooks"]:
                             helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}")
                     elif config["biome settings"][latest_biome]["message type"] == "off":
+                        pass
+                    else:
                         pass
             time.sleep(3)
 class macro():
