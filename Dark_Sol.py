@@ -1173,8 +1173,8 @@ class dark_sol_gui(QMainWindow):
         # Settings Buttons
         self.ps_link_line.editingFinished.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
         self.ps_link_join_button.clicked.connect(lambda: helper_functions.open_roblox(config["private server link"]))
-        self.reset_add_button_template_button.clicked.connect(lambda: download_from_repo(dark_sol_appdata_directory / "Lib" / "Images" / "add_button.png", "Lib/Images/add_button.png"))
-        self.reset_amount_box_template_button.clicked.connect(lambda: download_from_repo(dark_sol_appdata_directory / "Lib" / "Images" / "amount_box.png", "Lib/Images/amount_box.png"))
+        self.reset_add_button_template_button.clicked.connect(lambda: download_from_repo(dark_sol_appdata_directory / "Lib" / "Images" / "add button.png", "Lib/Images/add button.png"))
+        self.reset_amount_box_template_button.clicked.connect(lambda: download_from_repo(dark_sol_appdata_directory / "Lib" / "Images" / "amount box.png", "Lib/Images/amount box.png"))
         # Calibration Buttons
         self.show_calibration_overlays_button.clicked.connect(lambda: calibrations.show_calibration_overlays())
         self.calibrate_macro_button.clicked.connect(lambda: calibrations.calibrate_macro())
@@ -1212,6 +1212,7 @@ class dark_sol_gui(QMainWindow):
             QLabel {color: cyan; font-size: 14pt;}
             QLabel#status_label {color: cyan; font-size: 38pt;}
         """)
+        self.template_settings_gui.setStyleSheet(self.styleSheet())
         log.info("Ui Initialized")
         self.update_gui_log()
 
