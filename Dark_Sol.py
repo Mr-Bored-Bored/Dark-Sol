@@ -51,6 +51,11 @@ current_github_version = "0.0.0.5"
 use_built_in_config = False
 create_debug_test_buttons = True
 
+if not DEV_MODE:
+    current_github_version = None
+    use_built_in_config = False
+    create_debug_test_buttons = False
+
 log.debug("Dev Tools Loaded")
 
 # DPI Setup
@@ -957,11 +962,11 @@ class dark_sol_gui(QMainWindow):
             self.debug_tab_qv_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
             self.debug_tab.setLayout(self.debug_tab_qv_layout)
 
-            self.debug_test_button_1.clicked.connect(lambda: log.debug("Test Button 1 Pressed"))
-            self.debug_test_button_2.clicked.connect(lambda: log.debug("Test Button 2 Pressed"))
-            self.debug_test_button_3.clicked.connect(lambda: log.debug("Test Button 3 Pressed"))
-            self.debug_test_button_4.clicked.connect(lambda: log.debug("Test Button 4 Pressed"))
-            self.debug_test_button_5.clicked.connect(lambda: log.debug("Test Button 5 Pressed"))
+            self.debug_test_button_1.clicked.connect(lambda: (log.debug("Test Button 1 Pressed")))
+            self.debug_test_button_2.clicked.connect(lambda: (log.debug("Test Button 2 Pressed")))
+            self.debug_test_button_3.clicked.connect(lambda: (log.debug("Test Button 3 Pressed")))
+            self.debug_test_button_4.clicked.connect(lambda: (log.debug("Test Button 4 Pressed")))
+            self.debug_test_button_5.clicked.connect(lambda: (log.debug("Test Button 5 Pressed")))
 
     def init_ui(self):
         # Initalize Main Gui
@@ -2228,15 +2233,7 @@ class helper_functions():
         helper_functions.focus_roblox()
         time.sleep(0.2)
         return helper_functions.check_region_for_colors("#C074FF") >= 10
-    
-    @staticmethod
-    def is_roblox_open():
-        hwnd = win32gui.FindWindow(None, "Roblox")
-        if hwnd:
-            return True
-        else:
-            return False 
-
+        
     @staticmethod
     def open_roblox(link):
         def convert_roblox_link(url):
@@ -2261,9 +2258,31 @@ class helper_functions():
                     share_type = "ExperienceInvite"
                 return f"roblox://navigation/share_links?code={code}&type={share_type}"
             
+        hwnd = ctypes.windll.user32.FindWindowW(None, "Roblox")
+        if hwnd:
+            log.debug("Roblox window found, attempting to close it.")
+            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)
+            time.sleep(0.2)
+            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0) 
+            log.debug("Close message sent to Roblox window.")
+        
+        while True:
+            if not win32gui.FindWindow(None, "Roblox"):
+                log.debug("Roblox window closed.")
+                break    
+            log.debug("Roblox window not found, retrying...")
+            time.sleep(1)
+
         main_url = convert_roblox_link(link)
         QDesktopServices.openUrl(QUrl(main_url))
-    
+
+        while True:
+            if helper_functions.focus_roblox(ignore_roblox_not_found=True):
+                log.debug("Roblox window found and focused.")
+                break
+            log.debug("Roblox window not found, retrying...")
+            time.sleep(1)
+
     @staticmethod
     def focus_roblox(ignore_roblox_not_found=False):
         hwnd = win32gui.FindWindow(None, "Roblox")
@@ -2273,25 +2292,20 @@ class helper_functions():
                 QMessageBox.warning(dark_sol, "Roblox Not Found", "Could not find a Roblox window. Please make sure Roblox is running.")
             return False
 
-        if win32gui.IsIconic(hwnd):
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        if win32gui.GetForegroundWindow() != hwnd:
+        while win32gui.IsIconic(hwnd) or win32gui.GetForegroundWindow() != hwnd or win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
             try:
-                win32gui.BringWindowToTop(hwnd)
-                win32gui.SetForegroundWindow(hwnd)
-            except Exception:
-                log.error("Failed to bring Roblox to the foreground. It may be minimized or not responding.")
-        if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
-            win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
-        return True
-
-    @staticmethod
-    def close_roblox():
-        hwnd = ctypes.windll.user32.FindWindowW(None, "Roblox")
-        if hwnd:
-            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
+                if win32gui.IsIconic(hwnd):
+                    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                if win32gui.GetForegroundWindow() != hwnd:
+                    win32gui.BringWindowToTop(hwnd)
+                    win32gui.SetForegroundWindow(hwnd)
+                if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
+                    win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+            except Exception as e:
+                log.error(f"Error focusing Roblox window: {e}")
+                return False
             time.sleep(0.2)
-            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
+        return True
 
     @staticmethod
     def send_discord_webhook(webhook_url, title, message=None, ping_mode=None, ping_id=None):
@@ -2353,7 +2367,9 @@ class helper_functions():
     
     @staticmethod
     def is_sols_open():
-        if not helper_functions.is_roblox_open():
+        hwnd = win32gui.FindWindow(None, "Roblox")
+        
+        if not hwnd:
             log.debug("Roblox is not open.")
             return False
         game_found = helper_functions.check_roblox_logs_for("Disconnect", "place 15532962292")
@@ -2371,7 +2387,11 @@ class other_functions():
     @staticmethod
     def reload_potion_gui():
         helper_functions.open_roblox(config["private server link"])
-        other_functions.wait_for_play_button()
+        while True:
+            if where_to_click := image_processing.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True, return_coordinates=True):
+                helper_functions.move_and_click(where_to_click[1])
+                break
+            time.sleep(1)
         time.sleep(2)
         other_functions.path_to_potion_gui()
 
@@ -2496,15 +2516,6 @@ class other_functions():
             pass
         elif config["path"] == "abyssal hunter/normal":
             pass
-
-    @staticmethod
-    def wait_for_play_button():
-        while True:
-            helper_functions.focus_roblox(ignore_roblox_not_found=True)
-            if where_to_click := image_processing.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True, return_coordinates=True):
-                helper_functions.move_and_click(where_to_click[1])
-                break
-            time.sleep(1)
 
 class calibrations():
     scroll_calibration_safety_check = False
@@ -2781,13 +2792,7 @@ class calibrations():
                 if private_server_dialog.exec() != QDialog.DialogCode.Accepted:
                     return
                 
-            helper_functions.close_roblox()
-            time.sleep(5)
             helper_functions.open_roblox(config["private server link"])
-            time.sleep(1)
-            while not helper_functions.focus_roblox(True):
-                time.sleep(1)
-            time.sleep(0.5)
             dark_sol.raise_()
             dark_sol.activateWindow()
 
@@ -2798,7 +2803,11 @@ class calibrations():
                 dark_sol.create_msg_box("Calibrations", "Play button detected and calibrated successfully.")
                 config["calibrated positions"]["play button"] = True
                 nice_config_save()
-            other_functions.wait_for_play_button()
+            while True:
+                if where_to_click := image_processing.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True, return_coordinates=True):
+                    helper_functions.move_and_click(where_to_click[1])
+                    break
+                time.sleep(1)
             if not config["calibrated positions"]["collection menu button"] and config["sections to calibrate"]["auto rejoin"]:
                 if not calibrate_position("collection menu button"):
                     return
@@ -3240,10 +3249,6 @@ class macro():
     def __init__(self) -> None:
         macro.run_event.set()
         if macro.macro_thread is None or not macro.macro_thread.is_alive():
-            if not helper_functions.is_sols_open():
-                other_functions.reload_potion_gui()
-            elif not helper_functions.is_potion_gui_open():
-                other_functions.path_to_potion_gui()
             macro.macro_thread = threading.Thread(target=self.macro_loop, daemon=True)
             macro.macro_thread.start()
             log.debug("Macro thread started.")
@@ -3393,6 +3398,11 @@ class macro():
             log.debug(f"first_conf={(first*100):.0f} second_conf={(second*100):.0f} more_green={more_green}")
 
         def potion_loop_iteration(item):
+            if not helper_functions.is_sols_open():
+                other_functions.reload_potion_gui()
+            elif not helper_functions.is_potion_gui_open():
+                other_functions.path_to_potion_gui()
+
             helper_functions.focus_roblox()
             if item not in macro.auto_add_waitlist and macro.current_auto_add_potion != item:
                 helper_functions.move_and_click(config["positions"]["potion menu item button"]["center"])
