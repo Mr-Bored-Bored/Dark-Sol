@@ -38,13 +38,11 @@ class log():
         logger.error(" ".join(str(a) for a in args))
         print(" ".join(str(a) for a in args))
     @staticmethod
-    def exception(*args):
-        logger.exception(" ".join(str(a) for a in args))
+    def critical(*args):
+        logger.critical(" ".join(str(a) for a in args))
         print(" ".join(str(a) for a in args))
-
 log.info("Starting Dark Sol")
 log.debug("Logging Initalized")
-
 # Dev Tools
 DEV_MODE = True
 current_github_version = "0.0.0.5"
@@ -716,7 +714,7 @@ class auto_updater():
                 log.info(f"A new version is available: {self.latest_updateable_version}")
                 return True
         except Exception as e:
-            log.error("Failed to check for updates:", e)
+            log.warning("Failed to check for updates:", e)
 
     def create_msg_box(self, title, text, *buttons, msg_box_type=QMessageBox.Icon.Information, internal=True):
         if internal:
@@ -2302,7 +2300,7 @@ class helper_functions():
                 if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
                     win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
             except Exception as e:
-                log.error(f"Error focusing Roblox window: {e}")
+                log.warning(f"Error focusing Roblox window: {e}")
                 return False
             time.sleep(0.2)
         return True
@@ -3245,6 +3243,9 @@ class macro():
     auto_add_waitlist = []
     current_auto_add_potion = None
     macro_thread = None
+    check_auto_add_button_latch = False
+    check_auto_add_button_timer = QTimer()
+    check_auto_add_button_timer.timeout.connect(lambda: setattr(macro, 'check_auto_add_button_latch', True))
 
     def __init__(self) -> None:
         macro.run_event.set()
@@ -3396,6 +3397,8 @@ class macro():
             else:
                 raise Exception("Unexpected case in auto add button check")
             log.debug(f"first_conf={(first*100):.0f} second_conf={(second*100):.0f} more_green={more_green}")
+            macro.check_auto_add_button_latch = False
+            macro.check_auto_add_button_timer.start(2 * 60 * 1000)
 
         def potion_loop_iteration(item):
             if not helper_functions.is_sols_open():
@@ -3440,7 +3443,8 @@ class macro():
                 helper_functions.move_and_click(config["positions"]["potion menu item button"]["center"])
                 dark_sol.update_status("Searching for:", item.capitalize())
                 helper_functions.search_for_potion(item)
-                log.debug(f"{item.capitalize()} set to ready")
+                if macro.check_auto_add_button_latch:
+                    check_auto_add_button()
                 dark_sol.update_status("Checking All Buttons")
 
                 for slot in config["item presets"][dark_sol.current_preset][item]["buttons to check"]:
@@ -3477,13 +3481,15 @@ class macro():
             while True:
                 for item in data["item data"].keys():
                     if not macro.run_event.is_set():
+                        macro.check_auto_add_button_timer.stop()
+                        macro.check_auto_add_button_latch = True
                         dark_sol.update_status("Stopped", what_to_update="both")
                         dark_sol.hide_status_widget_signal.emit()
                         return
                     if config["item presets"][dark_sol.current_preset][item]["enabled"]:
                         potion_loop_iteration(item)
         except Exception as e:
-            log.error("Error in macro loop:", e)
+            log.critical("Error in macro loop:", e)
 
 def run_main_script():
     global dark_sol
