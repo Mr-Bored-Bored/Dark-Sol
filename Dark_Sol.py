@@ -2383,138 +2383,156 @@ class helper_functions():
 
 class other_functions():
     @staticmethod
-    def reload_potion_gui():
+    def reload_potion_gui(timeout=60):
         helper_functions.open_roblox(config["private server link"])
+        play_button_failsafe = False
+        play_button_failsafe_timer = QTimer()
+        play_button_failsafe_timer.setSingleShot(True)
+        play_button_failsafe_timer.timeout.connect(lambda: setattr(other_functions, "play_button_failsafe", True))
+        play_button_failsafe_timer.start(timeout * 1000)
         while True:
+            if play_button_failsafe:
+                log.warning("Play button not found within timeout.")
+                return False
             if where_to_click := image_processing.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True, return_coordinates=True):
                 helper_functions.move_and_click(where_to_click[1])
                 break
             time.sleep(1)
         time.sleep(2)
-        other_functions.path_to_potion_gui()
-
+        return other_functions.path_to_potion_gui()
+        
     @staticmethod
     def path_to_potion_gui():
-        helper_functions.focus_roblox()
-        keyboard.Controller().press(keyboard.Key.esc)
-        keyboard.Controller().release(keyboard.Key.esc)
-        time.sleep(0.5)
-        keyboard.Controller().press('r')
-        keyboard.Controller().release('r')
-        time.sleep(1)
-        keyboard.Controller().press(keyboard.Key.enter)
-        keyboard.Controller().release(keyboard.Key.enter)
-        time.sleep(5)
-        helper_functions.move_and_click(config["positions"]["collection menu button"]["center"])
-        time.sleep(0.5)
-        helper_functions.move_and_click(config["positions"]["collection exit button"]["center"])
-        
-        time.sleep(0.2)
-        mkey.right_mouse_down()
-        time.sleep(0.2)
-        mkey.move_relative(0, screen_height*2)
-        time.sleep(0.2)
-        mkey.right_mouse_up()
-
-        time.sleep(1)
-        if config["path"] == "vip":
-            keyboard.Controller().press('s')
-            time.sleep(0.0059)
-            keyboard.Controller().press('a')
-            time.sleep(3.1014)
-            keyboard.Controller().release('a')
-            time.sleep(3.0857)
-            keyboard.Controller().release('s')
-            time.sleep(0.1841)
-            keyboard.Controller().press('d')
-            time.sleep(0.9020)
-            keyboard.Controller().press('s')
-            time.sleep(0.3860)
-            keyboard.Controller().release('s')
-            time.sleep(0.0772)
-            keyboard.Controller().release('d')
-            time.sleep(0.1619)
-            keyboard.Controller().press('w')
-            time.sleep(0.1413)
-            keyboard.Controller().release('w')
-            time.sleep(0.0856)
-            keyboard.Controller().press(keyboard.Key.space)
-            time.sleep(0.1184)
-            keyboard.Controller().press('d')
-            time.sleep(0.0255)
-            keyboard.Controller().release(keyboard.Key.space)
-            time.sleep(0.2294)
-            keyboard.Controller().release('d')
-            time.sleep(0.2628)
-            keyboard.Controller().press('s')
-            time.sleep(0.6789)
-            keyboard.Controller().press('a')
-            time.sleep(0.9100)
-            keyboard.Controller().release('a')
-            time.sleep(0.9474)
-            keyboard.Controller().press('a')
-            time.sleep(0.1487)
-            keyboard.Controller().release('a')
-            time.sleep(3.9572)
-            keyboard.Controller().press('a')
-            time.sleep(2.2367)
-            keyboard.Controller().release('a')
-            time.sleep(0.3313)
-            keyboard.Controller().press('a')
-            time.sleep(0.1747)
-            keyboard.Controller().release('a')
-            time.sleep(0.7474)
-            keyboard.Controller().press('a')
-            time.sleep(1.2850)
-            keyboard.Controller().release('a')
-            time.sleep(0.0758)
-            keyboard.Controller().release('s')
-            time.sleep(0.2941)
-            keyboard.Controller().press('w')
-            time.sleep(0.0029)
-            keyboard.Controller().press('d')
-            time.sleep(0.2300)
-            keyboard.Controller().release('d')
-            time.sleep(0.0002)
-            keyboard.Controller().release('w')
-            time.sleep(0.2077)
-            keyboard.Controller().press(keyboard.Key.space)
-            time.sleep(0.0041)
-            keyboard.Controller().press('s')
-            time.sleep(0.1679)
-            keyboard.Controller().release(keyboard.Key.space)
-            time.sleep(0.5104)
-            keyboard.Controller().release('s')
-            time.sleep(0.0555)
-            keyboard.Controller().press('a')
-            time.sleep(0.0881)
-            keyboard.Controller().press(keyboard.Key.space)
-            time.sleep(0.1990)
-            keyboard.Controller().release(keyboard.Key.space)
-            time.sleep(2.8905)
-            keyboard.Controller().release('a')
-            time.sleep(0.0732)
-            keyboard.Controller().press('s')
-            time.sleep(1.8236)
-            keyboard.Controller().release('s')
-            time.sleep(2.6950)
-            keyboard.Controller().press('a')
-            time.sleep(0.7439)
-            keyboard.Controller().release('a')
-            time.sleep(0.2463)
-            keyboard.Controller().press('f')
-            time.sleep(0.0868)
-            keyboard.Controller().release('f')
-            keyboard.Controller().press('d')
+        count = 0
+        while True:
+            helper_functions.focus_roblox()
+            keyboard.Controller().press(keyboard.Key.esc)
+            keyboard.Controller().release(keyboard.Key.esc)
+            time.sleep(0.5)
+            keyboard.Controller().press('r')
+            keyboard.Controller().release('r')
             time.sleep(1)
-            keyboard.Controller().release('d')
-        elif config["path"] == "normal":
-            pass
-        elif config["path"] == "abyssal hunter/vip":
-            pass
-        elif config["path"] == "abyssal hunter/normal":
-            pass
+            keyboard.Controller().press(keyboard.Key.enter)
+            keyboard.Controller().release(keyboard.Key.enter)
+            time.sleep(5)
+            helper_functions.move_and_click(config["positions"]["collection menu button"]["center"])
+            time.sleep(0.5)
+            helper_functions.move_and_click(config["positions"]["collection exit button"]["center"])
+            
+            time.sleep(0.2)
+            mkey.right_mouse_down()
+            time.sleep(0.2)
+            mkey.move_relative(0, screen_height*2)
+            time.sleep(0.2)
+            mkey.right_mouse_up()
 
+            time.sleep(1)
+            if config["path"] == "vip":
+                keyboard.Controller().press('s')
+                time.sleep(0.0059)
+                keyboard.Controller().press('a')
+                time.sleep(3.1014)
+                keyboard.Controller().release('a')
+                time.sleep(3.0857)
+                keyboard.Controller().release('s')
+                time.sleep(0.1841)
+                keyboard.Controller().press('d')
+                time.sleep(0.9020)
+                keyboard.Controller().press('s')
+                time.sleep(0.3860)
+                keyboard.Controller().release('s')
+                time.sleep(0.0772)
+                keyboard.Controller().release('d')
+                time.sleep(0.1619)
+                keyboard.Controller().press('w')
+                time.sleep(0.1413)
+                keyboard.Controller().release('w')
+                time.sleep(0.0856)
+                keyboard.Controller().press(keyboard.Key.space)
+                time.sleep(0.1184)
+                keyboard.Controller().press('d')
+                time.sleep(0.0255)
+                keyboard.Controller().release(keyboard.Key.space)
+                time.sleep(0.2294)
+                keyboard.Controller().release('d')
+                time.sleep(0.2628)
+                keyboard.Controller().press('s')
+                time.sleep(0.6789)
+                keyboard.Controller().press('a')
+                time.sleep(0.9100)
+                keyboard.Controller().release('a')
+                time.sleep(0.9474)
+                keyboard.Controller().press('a')
+                time.sleep(0.1487)
+                keyboard.Controller().release('a')
+                time.sleep(3.9572)
+                keyboard.Controller().press('a')
+                time.sleep(2.2367)
+                keyboard.Controller().release('a')
+                time.sleep(0.3313)
+                keyboard.Controller().press('a')
+                time.sleep(0.1747)
+                keyboard.Controller().release('a')
+                time.sleep(0.7474)
+                keyboard.Controller().press('a')
+                time.sleep(1.2850)
+                keyboard.Controller().release('a')
+                time.sleep(0.0758)
+                keyboard.Controller().release('s')
+                time.sleep(0.2941)
+                keyboard.Controller().press('w')
+                time.sleep(0.0029)
+                keyboard.Controller().press('d')
+                time.sleep(0.2300)
+                keyboard.Controller().release('d')
+                time.sleep(0.0002)
+                keyboard.Controller().release('w')
+                time.sleep(0.2077)
+                keyboard.Controller().press(keyboard.Key.space)
+                time.sleep(0.0041)
+                keyboard.Controller().press('s')
+                time.sleep(0.1679)
+                keyboard.Controller().release(keyboard.Key.space)
+                time.sleep(0.5104)
+                keyboard.Controller().release('s')
+                time.sleep(0.0555)
+                keyboard.Controller().press('a')
+                time.sleep(0.0881)
+                keyboard.Controller().press(keyboard.Key.space)
+                time.sleep(0.1990)
+                keyboard.Controller().release(keyboard.Key.space)
+                time.sleep(2.8905)
+                keyboard.Controller().release('a')
+                time.sleep(0.0732)
+                keyboard.Controller().press('s')
+                time.sleep(1.8236)
+                keyboard.Controller().release('s')
+                time.sleep(2.6950)
+                keyboard.Controller().press('a')
+                time.sleep(0.7439)
+                keyboard.Controller().release('a')
+                time.sleep(0.2463)
+                keyboard.Controller().press('f')
+                time.sleep(0.0868)
+                keyboard.Controller().release('f')
+                keyboard.Controller().press('d')
+                time.sleep(1)
+                keyboard.Controller().release('d')
+            elif config["path"] == "normal":
+                pass
+            elif config["path"] == "abyssal hunter/vip":
+                pass
+            elif config["path"] == "abyssal hunter/normal":
+                pass
+
+            count += 1
+
+            if helper_functions.is_potion_gui_open():
+                return True
+            elif count >= 3:
+                log.warning("Unable to reach or detect potion GUI after multiple attempts")
+                dark_sol.create_msg_box("Error", "Unable to reach or detect potion GUI after multiple attempts. Stopping.", internal=False)
+                return False
 class calibrations():
     scroll_calibration_safety_check = False
     calibrations_overlay_active = False
@@ -2841,7 +2859,8 @@ class calibrations():
         if not helper_functions.focus_roblox():
             return
         time.sleep(2)
-        other_functions.path_to_potion_gui()
+        if not other_functions.path_to_potion_gui():
+            return
         time.sleep(2)
         if config["sections to calibrate"]["potion crafting"] == True:
             if not config["calibrated positions"]["potion menu item button"]["center"]:
@@ -3402,9 +3421,11 @@ class macro():
 
         def potion_loop_iteration(item):
             if not helper_functions.is_sols_open():
-                other_functions.reload_potion_gui()
+                if not other_functions.reload_potion_gui():
+                    return
             elif not helper_functions.is_potion_gui_open():
-                other_functions.path_to_potion_gui()
+                if not other_functions.path_to_potion_gui():
+                    return
 
             helper_functions.focus_roblox()
             if item not in macro.auto_add_waitlist and macro.current_auto_add_potion != item:
