@@ -73,7 +73,7 @@ import sys, threading, pyautogui, time, ctypes, json, win32gui, win32con, re, re
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout,
 QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QComboBox, QLineEdit, QDialog, QGridLayout,
 QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QSizePolicy,
-QLineEdit, QListWidget)
+QLineEdit, QListWidget, QDoubleSpinBox)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices, QRegularExpressionValidator
 from PyQt6.QtCore import (Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl,
 QFileSystemWatcher, QRegularExpression, QObject)
@@ -257,8 +257,7 @@ def nice_config_save(ind=4):
         f.write(text)
 
 hidden_config = {
-                "data": {
-                    "scroll amounts": {"to_5": 16, "past_5": 50},
+                "scroll amounts": {"to_5": 16, "past_5": 50},
                 "position data": {
                     "add button 1": {"confidence": 0.75},
                     "add button 2": {"confidence": 0.75},
@@ -283,7 +282,6 @@ hidden_config = {
                     "potion menu item button": {"confidence": 0.75},
                     "play button": {"confidence": 0.75}
                     },
-                },
                 "calibrated positions": {
                     "path": False,
                     "play button": False,
@@ -447,12 +445,20 @@ hidden_config = {
                     "auto path": True,
                     "auto rejoin": True
                 },
+                "durations": {
+                    "macro slowdown 1": 0.1,
+                    "macro slowdown 2": 0.1,
+                    "after pathing wait": 3,
+                    "after reset wait": 5,
+                    "play button failsafe": 60,
+                    "auto add check interval": 120
+                },
                 "current preset": "Main",
                 "private server link": "",
                 "wrap log area": False,
                 "gui log levels": ["INFO", "WARNING", "ERROR", "CRITICAL"],
                 "show only current logs": True,
-                "path": "vip",       
+                "path": "vip"    
             }
 
 if use_built_in_config:
@@ -851,6 +857,30 @@ class dark_sol_gui(QMainWindow):
         self.webhook_edit_button = QPushButton("Edit")
         self.webhook_remove_button = QPushButton("Remove")
         self.webhook_list = QListWidget()
+        self.macro_slowdown_1_label = QLabel("Macro Slowdown 1 (seconds):")
+        self.macro_slowdown_2_label = QLabel("Macro Slowdown 2 (seconds):")
+        self.after_pathing_wait_label = QLabel("After Pathing Wait (seconds):")
+        self.after_reset_wait_label = QLabel("After Reset Wait (seconds):")
+        self.play_button_failsafe_label = QLabel("Play Button Failsafe (seconds):")
+        self.auto_add_check_label = QLabel("Auto Add Check Interval (seconds):")
+        self.macro_slowdown_1_spinbox = QDoubleSpinBox()
+        self.macro_slowdown_2_spinbox = QDoubleSpinBox()
+        self.after_pathing_wait_spinbox = QDoubleSpinBox()
+        self.after_reset_wait_spinbox = QDoubleSpinBox()
+        self.play_button_failsafe_spinbox = QDoubleSpinBox()
+        self.auto_add_check_spinbox = QDoubleSpinBox()
+        self.macro_slowdown_1_spinbox.setValue(config["durations"]["macro slowdown 1"])
+        self.macro_slowdown_2_spinbox.setValue(config["durations"]["macro slowdown 2"])
+        self.after_pathing_wait_spinbox.setValue(config["durations"]["after pathing wait"])
+        self.after_reset_wait_spinbox.setValue(config["durations"]["after reset wait"])
+        self.play_button_failsafe_spinbox.setValue(config["durations"]["play button failsafe"])
+        self.auto_add_check_spinbox.setValue(config["durations"]["auto add check interval"])
+        self.macro_slowdown_1_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("macro slowdown 1", value), nice_config_save()))
+        self.macro_slowdown_2_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("macro slowdown 2", value), nice_config_save()))
+        self.after_pathing_wait_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("after pathing wait", value), nice_config_save()))
+        self.after_reset_wait_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("after reset wait", value), nice_config_save()))
+        self.play_button_failsafe_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("play button failsafe", value), nice_config_save()))
+        self.auto_add_check_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("auto add check interval", value), nice_config_save()))
         ### Biome Detection
         # Template Elements
         self.template_settings_gui = QWidget()
@@ -1058,7 +1088,6 @@ class dark_sol_gui(QMainWindow):
         self.settings_tab_vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.settings_tab_vbox.addLayout(self.private_server_hbox)
         self.ps_link_join_button.setToolTip("Must save private server before clicking")
-
         # Biome Detection
         self.biome_detection_settings_widget = QWidget()
         row = 0
@@ -1140,6 +1169,42 @@ class dark_sol_gui(QMainWindow):
    
         # Calibrations
         self.settings_tab_vbox.addWidget(self.calibrations_widget_button)
+        # Durations
+        self.durations_widget = QWidget()
+        self.durations_button = QPushButton("Durations")
+        self.durations_button.clicked.connect(lambda: self.durations_widget.show())
+        self.settings_tab_vbox.addWidget(self.durations_button)
+        duration_hbox = QHBoxLayout()
+        duration_vbox_left = QVBoxLayout()
+        duration_vbox_right = QVBoxLayout()
+        duration_hbox.addLayout(duration_vbox_left)
+        duration_hbox.addLayout(duration_vbox_right)
+        self.durations_widget.setLayout(duration_hbox)
+        duration_vbox_left.addWidget(self.macro_slowdown_1_label)
+        duration_vbox_right.addWidget(self.macro_slowdown_1_spinbox)
+        duration_vbox_left.addWidget(self.macro_slowdown_2_label)
+        duration_vbox_right.addWidget(self.macro_slowdown_2_spinbox)
+        duration_vbox_left.addWidget(self.after_pathing_wait_label)
+        duration_vbox_right.addWidget(self.after_pathing_wait_spinbox)
+        duration_vbox_left.addWidget(self.after_reset_wait_label)
+        duration_vbox_right.addWidget(self.after_reset_wait_spinbox)
+        duration_vbox_left.addWidget(self.play_button_failsafe_label)
+        duration_vbox_right.addWidget(self.play_button_failsafe_spinbox)
+        duration_vbox_left.addWidget(self.auto_add_check_label)
+        duration_vbox_right.addWidget(self.auto_add_check_spinbox)
+
+        self.macro_slowdown_1_spinbox.setDecimals(3)
+        self.macro_slowdown_1_spinbox.setSingleStep(0.001)
+        self.macro_slowdown_2_spinbox.setSingleStep(0.01)
+        self.after_pathing_wait_spinbox.setSingleStep(0.1)
+        self.after_reset_wait_spinbox.setSingleStep(0.1)
+        self.play_button_failsafe_spinbox.setMaximum(float("inf"))
+        self.auto_add_check_spinbox.setMaximum(float("inf"))
+
+        self.after_pathing_wait_spinbox.setDecimals(1)
+        self.after_reset_wait_spinbox.setDecimals(1)
+        self.play_button_failsafe_spinbox.setDecimals(0)
+        self.auto_add_check_spinbox.setDecimals(0)
         # Footer
         self.main_gui_footer = QWidget()
         self.main_gui_footer_layout = QHBoxLayout(self.main_gui_footer)
@@ -1217,6 +1282,7 @@ class dark_sol_gui(QMainWindow):
             QLabel#status_label {color: cyan; font-size: 38pt;}
         """)
         self.template_settings_gui.setStyleSheet(self.styleSheet())
+        self.durations_widget.setStyleSheet(self.styleSheet())
         self.thread_controller = thread_controller()
         log.info("Ui Initialized")
         self.update_gui_log()
@@ -2061,7 +2127,7 @@ class image_processing():
             nonlocal return_bool, bbox, center
             return_bool = True
             try:
-                match = pyautogui.locateOnScreen(template_scaled, confidence=config["data"]["position data"][calibration]["confidence"], region=region)
+                match = pyautogui.locateOnScreen(template_scaled, confidence=config["position data"][calibration]["confidence"], region=region)
                 bbox = (int(match.left), int(match.top), int(match.left + match.width), int(match.top + match.height))  # type: ignore[reportOptionalMemberAccess]
                 center = (int(match.left + match.width // 2), int(match.top + match.height // 2))  # type: ignore[reportOptionalMemberAccess]
                 if what_to_save != None:
@@ -2414,7 +2480,7 @@ class other_functions():
             time.sleep(1)
             keyboard.Controller().press(keyboard.Key.enter)
             keyboard.Controller().release(keyboard.Key.enter)
-            time.sleep(5)
+            time.sleep(config["durations"]["after reset wait"])
             helper_functions.move_and_click(config["positions"]["collection menu button"]["center"])
             time.sleep(0.5)
             helper_functions.move_and_click(config["positions"]["collection exit button"]["center"])
@@ -2527,7 +2593,7 @@ class other_functions():
 
             count += 1
 
-            time.sleep(3)
+            time.sleep(config["durations"]["after pathing wait"])
             if helper_functions.is_potion_gui_open():
                 return True
             elif count >= 3:
@@ -2538,9 +2604,9 @@ class other_functions():
 class thread_controller(QObject):
     # Variables
     play_button_failsafe = False
-    play_button_failsafe_timeout = 60
+    play_button_failsafe_timeout = config["durations"]["play button failsafe"]
     auto_add_check_latch = False
-    auto_add_check_latch_timeout = 120
+    auto_add_check_latch_timeout = config["durations"]["auto add check interval"]
     # Timer Functions
     @staticmethod
     def trigger_play_button_failsafe():
@@ -2608,7 +2674,7 @@ class calibrations():
                 img =ImageGrab.grab(config["positions"]["add button 5"]["bbox"])
                 if find:
                     try:
-                        pyautogui.locate(template_path, img, confidence=config["data"]["position data"]["add button 5"]["scroll check confidence"])
+                        pyautogui.locate(template_path, img, confidence=config["position data"]["add button 5"]["scroll check confidence"])
                         log.info("'Add' detected saving scroll amount:", scrolls)
                         found = True
                     except pyautogui.ImageNotFoundException:
@@ -2624,7 +2690,7 @@ class calibrations():
                     scrolls += 1
                 elif not find:
                     try:
-                        pyautogui.locate(template_path, img, confidence=config["data"]["position data"]["add button 5"]["scroll check confidence"])
+                        pyautogui.locate(template_path, img, confidence=config["position data"]["add button 5"]["scroll check confidence"])
                     except pyautogui.ImageNotFoundException:
                         log.debug("'Moved away from previous add button")
                         gone = True
@@ -2646,7 +2712,7 @@ class calibrations():
         count1 = count_scrolls()
         if count1 == False:
             return False
-        config["data"]["scroll amounts"]["to_5"] = count1
+        config["scroll amounts"]["to_5"] = count1
         nice_config_save()
         dark_sol.create_msg_box("Scroll Calibration", f"scrolls needed to reach 5th add button: {count1}", internal=False)
         if not count_scrolls(False):
@@ -2657,7 +2723,7 @@ class calibrations():
         count2 = count_scrolls()
         if count2 == False:
             return False
-        config["data"]["scroll amounts"]["past_5"] = count2
+        config["scroll amounts"]["past_5"] = count2
         nice_config_save()
         dark_sol.create_msg_box("Scroll Calibration", f"scrolls needed to reach past 5th add button: {count2}", internal=False)
         dark_sol.hide_status_widget_signal.emit()
@@ -2703,10 +2769,10 @@ class calibrations():
         def update_confidence(calibration):
 
             if scroll_check:
-                config["data"]["position data"][calibration]["scroll check confidence"] = slider.value() / 100.0
+                config["position data"][calibration]["scroll check confidence"] = slider.value() / 100.0
                 confidence_label.setText(f"Adjust scroll confidence: {slider.value()}%")
             else:
-                config["data"]["position data"][calibration]["confidence"] = slider.value() / 100.0
+                config["position data"][calibration]["confidence"] = slider.value() / 100.0
                 confidence_label.setText(f"Adjust confidence for '{calibration}': {slider.value()}%")
             nice_config_save()
 
@@ -2728,7 +2794,7 @@ class calibrations():
 
         slider = QSlider(Qt.Orientation.Horizontal)
         slider.setRange(0, 100)
-        slider.setValue(int(config["data"]["position data"][calibration]["confidence"] * 100) if not scroll_check else int(config["data"]["position data"][calibration]["scroll check confidence"] * 100))
+        slider.setValue(int(config["position data"][calibration]["confidence"] * 100) if not scroll_check else int(config["position data"][calibration]["scroll check confidence"] * 100))
 
         confidence_label = QLabel(slider)
         confidence_label.setText(f"Adjust confidence for '{calibration}': {slider.value()}%" if not scroll_check else f"Adjust scroll confidence: {slider.value()}%")
@@ -3308,6 +3374,8 @@ class macro():
     current_auto_add_potion = None
     macro_thread = None
     macro_start_lock = threading.Lock()
+    macro_slowdown1 = config["durations"]["macro slowdown 1"]
+    macro_slowdown2 = config["durations"]["macro slowdown 2"]
 
     def __init__(self) -> None:
         with macro.macro_start_lock:
@@ -3317,7 +3385,7 @@ class macro():
                 macro.macro_thread.start()
                 log.debug("Macro thread started.")
         
-    def macro_loop(self, slowdown=0.01, slowdown2=0.1):
+    def macro_loop(self):
         def add_to_button(button_to_add_to):
             log.debug("Adding to:", button_to_add_to)
             if int(button_to_add_to[-1]) < 5:
@@ -3325,7 +3393,7 @@ class macro():
                 log.debug("Moved to", "amount box", button_to_add_to[-1])
                 pyautogui.scroll(2000)
                 log.debug("Scrolled up")
-                time.sleep(slowdown)
+                time.sleep(macro.macro_slowdown1)
                 mkey.left_click()
                 mkey.left_click()
                 log.debug("Amount box clicked to focus")
@@ -3335,7 +3403,7 @@ class macro():
                 else:
                     keyboard.Controller().type("1")
                     log.debug("Typed amount: 1")
-                time.sleep(slowdown)
+                time.sleep(macro.macro_slowdown1)
                 helper_functions.move_and_click(config["positions"][button_to_add_to]["center"])
                 log.debug(f"{button_to_add_to} clicked")
             elif int(button_to_add_to[-1]) >= 5:
@@ -3343,11 +3411,11 @@ class macro():
                 log.debug("Moved to amount box 5 center")
                 pyautogui.scroll(2000)
                 log.debug("Scrolled up")
-                pyautogui.scroll(-config["data"]["scroll amounts"]["to_5"])
+                pyautogui.scroll(-config["scroll amounts"]["to_5"])
                 log.debug("Scrolled down to slot 5")
-                time.sleep(slowdown)
+                time.sleep(macro.macro_slowdown1)
                 for x in range(4, int(button_to_add_to[-1])):
-                    pyautogui.scroll(-config["data"]["scroll amounts"]["past_5"])
+                    pyautogui.scroll(-config["scroll amounts"]["past_5"])
                     log.debug("Scrolled down to slot", x + 1)
                 mkey.left_click()
                 mkey.left_click()
@@ -3362,27 +3430,27 @@ class macro():
                 log.debug(f"{button_to_add_to} clicked")
 
         def check_button(button_to_check):
-            time.sleep(slowdown)
+            time.sleep(macro.macro_slowdown1)
             if int(button_to_check[-1]) < 5:
                 helper_functions.move_and_click(config["positions"][f"amount box {int(button_to_check[-1])}"]["center"], False)
                 log.debug(f"Moved to amount box {int(button_to_check[-1])}")
                 pyautogui.scroll(2000)
                 log.debug("Scrolled up")
-                time.sleep(slowdown2)
-                time.sleep(slowdown2)
+                time.sleep(macro.macro_slowdown2)
+                time.sleep(macro.macro_slowdown2)
                 bbox = config["positions"][f"add completed checkmark {button_to_check[-1]}"]["bbox"]
             else:
                 helper_functions.move_and_click(config["positions"]["amount box 5"]["center"], False)
                 log.debug("Moved to amount box 5")
                 pyautogui.scroll(2000)
                 log.debug("Scrolled up")
-                pyautogui.scroll(-config["data"]["scroll amounts"]["to_5"])
+                pyautogui.scroll(-config["scroll amounts"]["to_5"])
                 log.debug("Scrolled down to slot 4")
                 for x in range(4, int(button_to_check[-1])):
-                    pyautogui.scroll(-config["data"]["scroll amounts"]["past_5"])
+                    pyautogui.scroll(-config["scroll amounts"]["past_5"])
                     log.debug("Scrolled down to slot", x + 1)
-                time.sleep(slowdown2)
-                time.sleep(slowdown2)
+                time.sleep(macro.macro_slowdown2)
+                time.sleep(macro.macro_slowdown2)
                 bbox = config["positions"][f"add completed checkmark 5"]["bbox"]
             pixel_matches = helper_functions.check_region_for_colors("#42FF6E", "#41FA6C", "#3FF369", "#3EEE67", "#41FC6D", "#40F169", bbox=bbox)
             log.debug(data["item data"][item]["button names"][button_to_check], "pixel matches:", pixel_matches)
@@ -3408,9 +3476,9 @@ class macro():
             if len(macro.auto_add_waitlist) > 0:
                 dark_sol.update_status("Setting Auto Add for:", macro.auto_add_waitlist[0].capitalize())
                 helper_functions.search_for_potion(macro.auto_add_waitlist[0])
-                time.sleep(slowdown2)
+                time.sleep(macro.macro_slowdown2)
                 check_auto_add_button()
-                time.sleep(slowdown)
+                time.sleep(macro.macro_slowdown1)
                 macro.current_auto_add_potion = macro.auto_add_waitlist.pop(0)
         
         def check_auto_add_button():
@@ -3479,10 +3547,10 @@ class macro():
                 dark_sol.update_status("Adding to buttons for:", item.capitalize())
                 for button_to_add_to in config["item presets"][dark_sol.current_preset][item]["buttons to check"]:
                     add_to_button(button_to_add_to)
-                    time.sleep(slowdown)
+                    time.sleep(macro.macro_slowdown1)
 
                 log.debug(f"{item} set to ready")
-                time.sleep(slowdown2)
+                time.sleep(macro.macro_slowdown2)
                 dark_sol.update_status("Checking Buttons for:", item.capitalize())
                 for button_to_check in config["item presets"][dark_sol.current_preset][item]["buttons to check"]:
                     if not check_button(button_to_check):
@@ -3539,7 +3607,7 @@ class macro():
                 helper_functions.move_and_click(config["positions"]["craft button"]["center"])
                 log.debug("Clicked craft button")
                 log.info(f"Crafted {item.capitalize()}")
-                time.sleep(slowdown)
+                time.sleep(macro.macro_slowdown1)
                 add_next_item_to_auto_add()
 
         try:
