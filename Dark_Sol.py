@@ -75,7 +75,8 @@ QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QComboBox, QLineEdit, QDialo
 QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QSizePolicy,
 QLineEdit, QListWidget)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices, QRegularExpressionValidator
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl, QFileSystemWatcher, QRegularExpression
+from PyQt6.QtCore import (Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl,
+QFileSystemWatcher, QRegularExpression, QObject)
 from pyscreeze import ImageNotFoundException as pyscreeze_ImageNotFoundException
 from datetime import datetime, timezone
 from PIL import Image, ImageGrab
@@ -1216,6 +1217,7 @@ class dark_sol_gui(QMainWindow):
             QLabel#status_label {color: cyan; font-size: 38pt;}
         """)
         self.template_settings_gui.setStyleSheet(self.styleSheet())
+        self.thread_controller = thread_controller()
         log.info("Ui Initialized")
         self.update_gui_log()
 
@@ -2383,18 +2385,16 @@ class helper_functions():
 
 class other_functions():
     @staticmethod
-    def reload_potion_gui(timeout=60):
+    def reload_potion_gui():
         helper_functions.open_roblox(config["private server link"])
-        play_button_failsafe = False
-        play_button_failsafe_timer = QTimer()
-        play_button_failsafe_timer.setSingleShot(True)
-        play_button_failsafe_timer.timeout.connect(lambda: setattr(other_functions, "play_button_failsafe", True))
-        play_button_failsafe_timer.start(timeout * 1000)
+        thread_controller.play_button_failsafe = False
+        dark_sol.thread_controller.start_play_button_failsafe_timer_signal.emit()
         while True:
-            if play_button_failsafe:
+            if thread_controller.play_button_failsafe:
                 log.warning("Play button not found within timeout.")
                 return False
             if where_to_click := image_processing.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True, return_coordinates=True):
+                dark_sol.thread_controller.stop_play_button_failsafe_timer_signal.emit()
                 helper_functions.move_and_click(where_to_click[1])
                 break
             time.sleep(1)
@@ -2527,12 +2527,55 @@ class other_functions():
 
             count += 1
 
+            time.sleep(3)
             if helper_functions.is_potion_gui_open():
                 return True
             elif count >= 3:
                 log.warning("Unable to reach or detect potion GUI after multiple attempts")
                 dark_sol.create_msg_box("Error", "Unable to reach or detect potion GUI after multiple attempts. Stopping.", internal=False)
                 return False
+            
+class thread_controller(QObject):
+    # Variables
+    play_button_failsafe = False
+    play_button_failsafe_timeout = 60
+    auto_add_check_latch = False
+    auto_add_check_latch_timeout = 120
+    # Timer Functions
+    @staticmethod
+    def trigger_play_button_failsafe():
+        thread_controller.play_button_failsafe = True
+    @staticmethod
+    def check_auto_add_check_latch():
+        thread_controller.auto_add_check_latch = True
+    # Timers
+    play_button_failsafe_timer = QTimer()
+    auto_add_check_latch_timer = QTimer()
+    # Timer Setup
+    play_button_failsafe_timer.setSingleShot(True)
+    play_button_failsafe_timer.timeout.connect(trigger_play_button_failsafe)
+    auto_add_check_latch_timer.timeout.connect(check_auto_add_check_latch)
+    # Signal Functions
+    def start_play_button_failsafe_timer(self):
+        thread_controller.play_button_failsafe_timer.start(thread_controller.play_button_failsafe_timeout * 1000)
+    def stop_play_button_failsafe_timer(self):
+        thread_controller.play_button_failsafe_timer.stop()
+    def start_auto_add_check_timer(self):
+        thread_controller.auto_add_check_latch_timer.start(thread_controller.auto_add_check_latch_timeout * 1000)
+    def stop_auto_add_check_timer(self):
+        thread_controller.auto_add_check_latch_timer.stop()
+    # Signals 
+    start_play_button_failsafe_timer_signal = pyqtSignal()
+    stop_play_button_failsafe_timer_signal = pyqtSignal()
+    start_auto_add_check_timer_signal = pyqtSignal()
+    stop_auto_add_check_timer_signal = pyqtSignal()
+    # Signal Setup
+    def __init__(self) -> None:
+        super().__init__()
+        self.start_play_button_failsafe_timer_signal.connect(self.start_play_button_failsafe_timer)
+        self.stop_play_button_failsafe_timer_signal.connect(self.stop_play_button_failsafe_timer)
+        self.start_auto_add_check_timer_signal.connect(self.start_auto_add_check_timer)
+        self.stop_auto_add_check_timer_signal.connect(self.stop_auto_add_check_timer)
 class calibrations():
     scroll_calibration_safety_check = False
     calibrations_overlay_active = False
@@ -3161,12 +3204,14 @@ class calibrations():
 class biome_detection():
     run_event = threading.Event()
     biome_detection_thread = None
+    biome_detection_start_lock = threading.Lock()
 
     def __init__(self):
-        biome_detection.run_event.set()
-        if biome_detection.biome_detection_thread is None or not biome_detection.biome_detection_thread.is_alive():
-            biome_detection.biome_detection_thread = threading.Thread(target=self.biome_detection_loop, daemon=True)
-            biome_detection.biome_detection_thread.start()
+        with biome_detection.biome_detection_start_lock:
+            biome_detection.run_event.set()
+            if biome_detection.biome_detection_thread is None or not biome_detection.biome_detection_thread.is_alive():
+                biome_detection.biome_detection_thread = threading.Thread(target=self.biome_detection_loop, daemon=True)
+                biome_detection.biome_detection_thread.start()
 
     def biome_detection_loop(self):
         latest_biome = None
@@ -3262,16 +3307,15 @@ class macro():
     auto_add_waitlist = []
     current_auto_add_potion = None
     macro_thread = None
-    check_auto_add_button_latch = False
-    check_auto_add_button_timer = QTimer()
-    check_auto_add_button_timer.timeout.connect(lambda: setattr(macro, 'check_auto_add_button_latch', True))
+    macro_start_lock = threading.Lock()
 
     def __init__(self) -> None:
-        macro.run_event.set()
-        if macro.macro_thread is None or not macro.macro_thread.is_alive():
-            macro.macro_thread = threading.Thread(target=self.macro_loop, daemon=True)
-            macro.macro_thread.start()
-            log.debug("Macro thread started.")
+        with macro.macro_start_lock:
+            macro.run_event.set()
+            if macro.macro_thread is None or not macro.macro_thread.is_alive():
+                macro.macro_thread = threading.Thread(target=self.macro_loop, daemon=True)
+                macro.macro_thread.start()
+                log.debug("Macro thread started.")
         
     def macro_loop(self, slowdown=0.01, slowdown2=0.1):
         def add_to_button(button_to_add_to):
@@ -3416,8 +3460,8 @@ class macro():
             else:
                 raise Exception("Unexpected case in auto add button check")
             log.debug(f"first_conf={(first*100):.0f} second_conf={(second*100):.0f} more_green={more_green}")
-            macro.check_auto_add_button_latch = False
-            macro.check_auto_add_button_timer.start(2 * 60 * 1000)
+            thread_controller.auto_add_check_latch = False
+            dark_sol.thread_controller.start_auto_add_check_timer_signal.emit()
 
         def potion_loop_iteration(item):
             if not helper_functions.is_sols_open():
@@ -3464,7 +3508,7 @@ class macro():
                 helper_functions.move_and_click(config["positions"]["potion menu item button"]["center"])
                 dark_sol.update_status("Searching for:", item.capitalize())
                 helper_functions.search_for_potion(item)
-                if macro.check_auto_add_button_latch:
+                if thread_controller.auto_add_check_latch:
                     check_auto_add_button()
                 dark_sol.update_status("Checking All Buttons")
 
@@ -3486,7 +3530,7 @@ class macro():
                     
                 for slot in range(1, data['item data'][item]['crafting slots'] + 1):
                     slot = "add button " + str(slot)
-                    if slot not in (config["item presets"][dark_sol.current_preset][item]["buttons to check"] or config["item presets"][dark_sol.current_preset][item]["additional buttons to click"]):
+                    if slot not in (*config["item presets"][dark_sol.current_preset][item]["buttons to check"], *config["item presets"][dark_sol.current_preset][item]["additional buttons to click"]):
                         add_to_button(slot)
                         if not check_button(slot):
                             return
@@ -3502,8 +3546,8 @@ class macro():
             while True:
                 for item in data["item data"].keys():
                     if not macro.run_event.is_set():
-                        macro.check_auto_add_button_timer.stop()
-                        macro.check_auto_add_button_latch = True
+                        dark_sol.thread_controller.stop_auto_add_check_timer_signal.emit()
+                        thread_controller.auto_add_check_latch = True
                         dark_sol.update_status("Stopped", what_to_update="both")
                         dark_sol.hide_status_widget_signal.emit()
                         return
