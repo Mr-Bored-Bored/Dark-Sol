@@ -69,11 +69,11 @@ screen_width, screen_height = user32.GetSystemMetrics(0), user32.GetSystemMetric
 log.debug("DPI Tools Loaded")
 
 # Imports
-import sys, threading, pyautogui, time, ctypes, json, win32gui, win32con, re, requests, io, zipfile, socket, subprocess
+import sys, threading, pyautogui, time, ctypes, json, win32gui, win32con, re, requests, io, zipfile, socket, subprocess, traceback
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout,
 QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QComboBox, QLineEdit, QDialog, QGridLayout,
 QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QSizePolicy,
-QLineEdit, QListWidget, QDoubleSpinBox)
+QLineEdit, QListWidget, QSpinBox, QDoubleSpinBox)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices, QRegularExpressionValidator
 from PyQt6.QtCore import (Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl,
 QFileSystemWatcher, QRegularExpression, QObject)
@@ -446,12 +446,15 @@ hidden_config = {
                     "auto rejoin": True
                 },
                 "durations": {
-                    "macro slowdown 1": 0.1,
+                    "macro slowdown 1": 0.01,
                     "macro slowdown 2": 0.1,
                     "after pathing wait": 3,
                     "after reset wait": 5,
                     "play button failsafe": 60,
-                    "auto add check interval": 120
+                    "auto add check interval": 120,
+                    "roblox launch timeout": 30,
+                    "after play button wait": 5,
+                    "potion gui open check delay": 0.2
                 },
                 "current preset": "Main",
                 "private server link": "",
@@ -857,30 +860,61 @@ class dark_sol_gui(QMainWindow):
         self.webhook_edit_button = QPushButton("Edit")
         self.webhook_remove_button = QPushButton("Remove")
         self.webhook_list = QListWidget()
+
         self.macro_slowdown_1_label = QLabel("Macro Slowdown 1 (seconds):")
         self.macro_slowdown_2_label = QLabel("Macro Slowdown 2 (seconds):")
         self.after_pathing_wait_label = QLabel("After Pathing Wait (seconds):")
         self.after_reset_wait_label = QLabel("After Reset Wait (seconds):")
         self.play_button_failsafe_label = QLabel("Play Button Failsafe (seconds):")
         self.auto_add_check_label = QLabel("Auto Add Check Interval (seconds):")
+        self.roblox_launch_timeout_label = QLabel("Roblox Launch Timeout (seconds):")
+        self.after_play_button_wait_label = QLabel("After Play Button Wait (seconds):")
+        self.potion_gui_open_check_delay_label = QLabel("Potion GUI Open Check Delay (seconds):")
+
         self.macro_slowdown_1_spinbox = QDoubleSpinBox()
         self.macro_slowdown_2_spinbox = QDoubleSpinBox()
         self.after_pathing_wait_spinbox = QDoubleSpinBox()
         self.after_reset_wait_spinbox = QDoubleSpinBox()
-        self.play_button_failsafe_spinbox = QDoubleSpinBox()
-        self.auto_add_check_spinbox = QDoubleSpinBox()
+        self.play_button_failsafe_spinbox = QSpinBox()
+        self.auto_add_check_spinbox = QSpinBox()
+        self.roblox_launch_timeout_spinbox = QSpinBox()
+        self.after_play_button_wait_spinbox = QSpinBox()
+        self.potion_gui_open_check_delay_spinbox = QDoubleSpinBox()
+
         self.macro_slowdown_1_spinbox.setValue(config["durations"]["macro slowdown 1"])
         self.macro_slowdown_2_spinbox.setValue(config["durations"]["macro slowdown 2"])
         self.after_pathing_wait_spinbox.setValue(config["durations"]["after pathing wait"])
         self.after_reset_wait_spinbox.setValue(config["durations"]["after reset wait"])
         self.play_button_failsafe_spinbox.setValue(config["durations"]["play button failsafe"])
         self.auto_add_check_spinbox.setValue(config["durations"]["auto add check interval"])
-        self.macro_slowdown_1_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("macro slowdown 1", value), nice_config_save()))
-        self.macro_slowdown_2_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("macro slowdown 2", value), nice_config_save()))
-        self.after_pathing_wait_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("after pathing wait", value), nice_config_save()))
-        self.after_reset_wait_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("after reset wait", value), nice_config_save()))
-        self.play_button_failsafe_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("play button failsafe", value), nice_config_save()))
-        self.auto_add_check_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("auto add check interval", value), nice_config_save()))
+        self.roblox_launch_timeout_spinbox.setValue(config["durations"]["roblox launch timeout"])
+        self.after_play_button_wait_spinbox.setValue(config["durations"]["after play button wait"])
+        self.potion_gui_open_check_delay_spinbox.setValue(config["durations"]["potion gui open check delay"])
+
+        self.macro_slowdown_1_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("macro slowdown 1", round(value, 3)), nice_config_save()))
+        self.macro_slowdown_2_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("macro slowdown 2", round(value, 2)), nice_config_save()))
+        self.after_pathing_wait_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("after pathing wait", int(value, 1)), nice_config_save()))
+        self.after_reset_wait_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("after reset wait", int(value, 1)), nice_config_save()))
+        self.play_button_failsafe_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("play button failsafe", int(value)), nice_config_save()))
+        self.auto_add_check_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("auto add check interval", int(value)), nice_config_save()))
+        self.roblox_launch_timeout_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("roblox launch timeout", int(value)), nice_config_save()))
+        self.after_play_button_wait_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("after play button wait", int(value)), nice_config_save()))
+        self.potion_gui_open_check_delay_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("potion gui open check delay", round(value, 2)), nice_config_save()))
+
+        self.macro_slowdown_1_spinbox.setSingleStep(0.001)
+        self.macro_slowdown_2_spinbox.setSingleStep(0.01)
+        self.after_pathing_wait_spinbox.setSingleStep(0.1)
+        self.potion_gui_open_check_delay_spinbox.setSingleStep(0.1)
+
+        self.after_reset_wait_spinbox.setMaximum(999999999)
+        self.play_button_failsafe_spinbox.setMaximum(999999999)
+        self.auto_add_check_spinbox.setMaximum(999999999)
+        self.after_play_button_wait_spinbox.setMaximum(999999999)
+
+        self.macro_slowdown_1_spinbox.setDecimals(3)
+        self.after_pathing_wait_spinbox.setDecimals(1)
+        self.after_reset_wait_spinbox.setDecimals(1)
+        self.potion_gui_open_check_delay_spinbox.setDecimals(2)
         ### Biome Detection
         # Template Elements
         self.template_settings_gui = QWidget()
@@ -1171,6 +1205,7 @@ class dark_sol_gui(QMainWindow):
         self.settings_tab_vbox.addWidget(self.calibrations_widget_button)
         # Durations
         self.durations_widget = QWidget()
+        self.durations_widget.setWindowTitle("Duration / Delay Settings")
         self.durations_button = QPushButton("Durations")
         self.durations_button.clicked.connect(lambda: self.durations_widget.show())
         self.settings_tab_vbox.addWidget(self.durations_button)
@@ -1180,31 +1215,26 @@ class dark_sol_gui(QMainWindow):
         duration_hbox.addLayout(duration_vbox_left)
         duration_hbox.addLayout(duration_vbox_right)
         self.durations_widget.setLayout(duration_hbox)
+
         duration_vbox_left.addWidget(self.macro_slowdown_1_label)
-        duration_vbox_right.addWidget(self.macro_slowdown_1_spinbox)
         duration_vbox_left.addWidget(self.macro_slowdown_2_label)
-        duration_vbox_right.addWidget(self.macro_slowdown_2_spinbox)
         duration_vbox_left.addWidget(self.after_pathing_wait_label)
-        duration_vbox_right.addWidget(self.after_pathing_wait_spinbox)
         duration_vbox_left.addWidget(self.after_reset_wait_label)
-        duration_vbox_right.addWidget(self.after_reset_wait_spinbox)
         duration_vbox_left.addWidget(self.play_button_failsafe_label)
-        duration_vbox_right.addWidget(self.play_button_failsafe_spinbox)
         duration_vbox_left.addWidget(self.auto_add_check_label)
+        duration_vbox_left.addWidget(self.roblox_launch_timeout_label)
+        duration_vbox_left.addWidget(self.after_play_button_wait_label)
+        duration_vbox_left.addWidget(self.potion_gui_open_check_delay_label)
+
+        duration_vbox_right.addWidget(self.macro_slowdown_1_spinbox)
+        duration_vbox_right.addWidget(self.macro_slowdown_2_spinbox)
+        duration_vbox_right.addWidget(self.after_pathing_wait_spinbox)
+        duration_vbox_right.addWidget(self.after_reset_wait_spinbox)
+        duration_vbox_right.addWidget(self.play_button_failsafe_spinbox)
         duration_vbox_right.addWidget(self.auto_add_check_spinbox)
-
-        self.macro_slowdown_1_spinbox.setDecimals(3)
-        self.macro_slowdown_1_spinbox.setSingleStep(0.001)
-        self.macro_slowdown_2_spinbox.setSingleStep(0.01)
-        self.after_pathing_wait_spinbox.setSingleStep(0.1)
-        self.after_reset_wait_spinbox.setSingleStep(0.1)
-        self.play_button_failsafe_spinbox.setMaximum(float("inf"))
-        self.auto_add_check_spinbox.setMaximum(float("inf"))
-
-        self.after_pathing_wait_spinbox.setDecimals(1)
-        self.after_reset_wait_spinbox.setDecimals(1)
-        self.play_button_failsafe_spinbox.setDecimals(0)
-        self.auto_add_check_spinbox.setDecimals(0)
+        duration_vbox_right.addWidget(self.roblox_launch_timeout_spinbox)
+        duration_vbox_right.addWidget(self.after_play_button_wait_spinbox)
+        duration_vbox_right.addWidget(self.potion_gui_open_check_delay_spinbox)
         # Footer
         self.main_gui_footer = QWidget()
         self.main_gui_footer_layout = QHBoxLayout(self.main_gui_footer)
@@ -2040,14 +2070,12 @@ class dark_sol_gui(QMainWindow):
         threading.Thread(target=self.global_hotkey_listener, daemon=True).start()
                                     
     def start_macro(self):
+        log.debug("Start button clicked")
         macro()
-        biome_detection()
-        self.mini_status_widget.show()
-        self.update_status("Running", what_to_update="both")
 
     def stop_macro(self):
+        log.debug("Stop button clicked")
         macro.run_event.clear()
-        biome_detection.run_event.clear()
 
     def inner_log(self, log_message):
         print(log_message)
@@ -2160,11 +2188,11 @@ class helper_functions():
             return None
 
         if not roblox_log_path.exists():
-            return False
+            return "Roblox file not found"
 
         latest_roblox_log_file = max(roblox_log_path.glob("*.log"), key=lambda p: p.stat().st_mtime, default=None)
         if not latest_roblox_log_file:
-            return False
+            return "Roblox file not found"
 
         with latest_roblox_log_file.open("rb") as f:
             f.seek(0, 2)
@@ -2297,9 +2325,18 @@ class helper_functions():
     @staticmethod
     def is_potion_gui_open():
         helper_functions.focus_roblox()
-        time.sleep(0.2)
+        time.sleep(config["durations"]["potion gui open check delay"])
         return helper_functions.check_region_for_colors("#C074FF") >= 10
         
+    @staticmethod
+    def is_roblox_open():
+        roblox_open = win32gui.FindWindow(None, "Roblox") != 0
+        if roblox_open:
+            log.debug("Roblox window found.")
+        else:            
+            log.debug("Roblox window not found.")
+        return roblox_open
+    
     @staticmethod
     def open_roblox(link):
         def convert_roblox_link(url):
@@ -2324,6 +2361,10 @@ class helper_functions():
                     share_type = "ExperienceInvite"
                 return f"roblox://navigation/share_links?code={code}&type={share_type}"
             
+        def launch_roblox():
+            main_url = convert_roblox_link(link)
+            QDesktopServices.openUrl(QUrl(main_url))
+        
         hwnd = ctypes.windll.user32.FindWindowW(None, "Roblox")
         if hwnd:
             log.debug("Roblox window found, attempting to close it.")
@@ -2332,49 +2373,81 @@ class helper_functions():
             ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0) 
             log.debug("Close message sent to Roblox window.")
         
-        while True:
-            if not win32gui.FindWindow(None, "Roblox"):
-                log.debug("Roblox window closed.")
-                break    
-            log.debug("Roblox window not found, retrying...")
-            time.sleep(1)
+            while True:
+                if not win32gui.FindWindow(None, "Roblox"):
+                    log.debug("Roblox window closed.")
+                    break    
+                log.debug("Roblox window still open, waiting...")
+                time.sleep(1)
 
-        main_url = convert_roblox_link(link)
-        QDesktopServices.openUrl(QUrl(main_url))
+        launch_roblox()
 
+        roblox_launch_attempts = 0
+        dark_sol.thread_controller.start_roblox_launch_failsafe_timer_signal.emit()
         while True:
+            if thread_controller.roblox_launch_failsafe:
+                log.debug("Roblox start timeout reached, relaunching Roblox.")
+                launch_roblox()
+                thread_controller.roblox_launch_failsafe = False
+                dark_sol.thread_controller.stop_roblox_launch_failsafe_timer_signal.emit()
+
+                roblox_launch_attempts += 1
+
+            if roblox_launch_attempts >= 3:
+                dark_sol.thread_controller.stop_roblox_launch_failsafe_timer_signal.emit()
+                raise RuntimeError("Roblox failed to start after multiple attempts.")
+            
             if helper_functions.focus_roblox(ignore_roblox_not_found=True):
-                log.debug("Roblox window found and focused.")
                 break
-            log.debug("Roblox window not found, retrying...")
             time.sleep(1)
 
     @staticmethod
     def focus_roblox(ignore_roblox_not_found=False):
         hwnd = win32gui.FindWindow(None, "Roblox")
         if not hwnd:
-            if not ignore_roblox_not_found:
-                log.warning("Roblox window not found!")
-                QMessageBox.warning(dark_sol, "Roblox Not Found", "Could not find a Roblox window. Please make sure Roblox is running.")
-            return False
-
-        while win32gui.IsIconic(hwnd) or win32gui.GetForegroundWindow() != hwnd or win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
-            try:
-                if win32gui.IsIconic(hwnd):
-                    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-                if win32gui.GetForegroundWindow() != hwnd:
-                    win32gui.BringWindowToTop(hwnd)
-                    win32gui.SetForegroundWindow(hwnd)
-                if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
-                    win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
-            except Exception as e:
-                log.warning(f"Error focusing Roblox window: {e}")
+            if ignore_roblox_not_found:
+                log.debug("Roblox window not found, but ignoring this fact as per the argument.")
                 return False
-            time.sleep(0.2)
-        return True
+            else:
+                log.warning("Roblox window not found!")
+                return False
+            
+        retries = 0
+        while retries < 3:
+            while True:
+                if not win32gui.IsIconic(hwnd) and win32gui.GetForegroundWindow() == hwnd and win32gui.GetWindowPlacement(hwnd)[1] == win32con.SW_SHOWMAXIMIZED:
+                    log.debug("Roblox window focused.")
+                    return True
+                try:
+                    if win32gui.IsIconic(hwnd):
+                        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                    if win32gui.GetForegroundWindow() != hwnd:
+                        win32gui.BringWindowToTop(hwnd)
+                        win32gui.SetForegroundWindow(hwnd)
+                    if win32gui.GetWindowPlacement(hwnd)[1] != win32con.SW_SHOWMAXIMIZED:
+                        win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+                except Exception as e:
+                    log.warning(f"Error focusing Roblox window: {e}")
+                    retries += 1
+                    break
+                time.sleep(0.2)
+            time.sleep(1)
+        
+        raise RuntimeError("Failed to focus Roblox window after multiple attempts.")
 
     @staticmethod
-    def send_discord_webhook(webhook_url, title, message=None, ping_mode=None, ping_id=None):
+    def send_discord_webhook(title, message=None, ping_mode=None, ping_id=None, color="cyan"):
+        color_id = {
+            "red": 0xFF0000,
+            "cyan": 0x00FFFF,
+            "green": 0x00FF00,
+            "blue": 0x0000FF,
+            "yellow": 0xFFFF00,
+            "orange": 0xFF8C00,
+            "purple": 0x800080,
+            "white": 0xFFFFFF,
+        }
+        
         if ping_mode == "everyone":
             mention = "@everyone"
         elif ping_mode == "user":
@@ -2391,19 +2464,27 @@ class helper_functions():
                 {
                     "title": title,
                     "description": message,
-                    "color": int(0x00FFFF),  # Discord expects decimal int
+                    "color": int(color_id[color]),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "footer": {"text": f"Dark Sol v{current_version}"}
                 }
             ],
         }
 
-        r = requests.post(webhook_url, json=payload, timeout=10)
-        r.raise_for_status()
-        return True
+        if config["webhooks"]:
+            for webhook in config["webhooks"]:
+                try:
+                    r = requests.post(webhook, json=payload, timeout=10)
+                    r.raise_for_status()
+                except Exception as e:
+                    log.error(f"""Error sending Discord webhook: {e}
+                    Webhook URL: {webhook}
+                    Payload: {payload}""")
     
     @staticmethod
     def move_and_click(position, click=True):
+        if macro.macro_thread is not None and macro.macro_thread.is_alive():
+            macro.check_macro_run_event()
         try:
             if click:
                 mkey.left_click_xy_natural(*position)
@@ -2429,7 +2510,7 @@ class helper_functions():
         log.debug(potion_selection_button)
         helper_functions.move_and_click(config["positions"][potion_selection_button]["center"])
         helper_functions.move_and_click(config["positions"]["open recipe button"]["center"])
-        log.debug("Clicked to open recipe button")
+        log.debug("Clicked open recipe button")
     
     @staticmethod
     def is_sols_open():
@@ -2439,12 +2520,15 @@ class helper_functions():
             log.debug("Roblox is not open.")
             return False
         game_found = helper_functions.check_roblox_logs_for("Disconnect", "place 15532962292")
-        if game_found == (False, "Disconnect"):
+        if game_found in (False, "Disconnect"):
             log.debug("User is not in a game.")
             return False
-        if game_found == "place 15532962292":
+        elif game_found == "place 15532962292":
             log.debug("User is in Sol's RNG.")
             return True
+        elif game_found == "Roblox file not found":
+            log.debug("Roblox log file not found, cannot determine if user is in game. Assuming user is not in game.")
+            return False
         else:
             log.debug("Could not determine if user is in Sol's RNG, assuming user is not in game.")
             return False
@@ -2452,39 +2536,55 @@ class helper_functions():
 class other_functions():
     @staticmethod
     def reload_potion_gui():
-        helper_functions.open_roblox(config["private server link"])
-        thread_controller.play_button_failsafe = False
-        dark_sol.thread_controller.start_play_button_failsafe_timer_signal.emit()
+        macro.check_macro_run_event()
+        retries = 0
         while True:
-            if thread_controller.play_button_failsafe:
-                log.warning("Play button not found within timeout.")
-                return False
-            if where_to_click := image_processing.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True, return_coordinates=True):
-                dark_sol.thread_controller.stop_play_button_failsafe_timer_signal.emit()
-                helper_functions.move_and_click(where_to_click[1])
-                break
-            time.sleep(1)
-        time.sleep(2)
-        return other_functions.path_to_potion_gui()
-        
+            macro.check_macro_run_event()
+            helper_functions.open_roblox(config["private server link"])
+            thread_controller.play_button_failsafe = False
+            dark_sol.thread_controller.start_play_button_failsafe_timer_signal.emit()
+            while thread_controller.play_button_failsafe == False:   
+                macro.check_macro_run_event()
+                if where_to_click := image_processing.auto_find_image("play button", what_to_save=None, ignore_match_not_found=True, return_coordinates=True):
+                    dark_sol.thread_controller.stop_play_button_failsafe_timer_signal.emit()
+                    helper_functions.move_and_click(where_to_click[1])
+                    time.sleep(config["durations"]["after play button wait"])
+                    return other_functions.path_to_potion_gui()
+                time.sleep(1)
+            
+            retries += 1
+            if retries >= 3:
+                raise TimeoutError("Play button not found within timeout. Even with multiple attempts. After restarting Roblox.")
+            else:
+                log.warning("Play button not found within timeout, retrying.")
+
     @staticmethod
     def path_to_potion_gui():
-        count = 0
+        retries = 0
         while True:
+            macro.check_macro_run_event()
             helper_functions.focus_roblox()
             keyboard.Controller().press(keyboard.Key.esc)
             keyboard.Controller().release(keyboard.Key.esc)
             time.sleep(0.5)
+            macro.check_macro_run_event()
             keyboard.Controller().press('r')
             keyboard.Controller().release('r')
+            macro.check_macro_run_event()
             time.sleep(1)
+            macro.check_macro_run_event()
+            time.sleep(1)
+            macro.check_macro_run_event()
             keyboard.Controller().press(keyboard.Key.enter)
             keyboard.Controller().release(keyboard.Key.enter)
             time.sleep(config["durations"]["after reset wait"])
+            macro.check_macro_run_event()
             helper_functions.move_and_click(config["positions"]["collection menu button"]["center"])
             time.sleep(0.5)
+            macro.check_macro_run_event()
             helper_functions.move_and_click(config["positions"]["collection exit button"]["center"])
             
+            macro.check_macro_run_event()
             time.sleep(0.2)
             mkey.right_mouse_down()
             time.sleep(0.2)
@@ -2497,10 +2597,22 @@ class other_functions():
                 keyboard.Controller().press('s')
                 time.sleep(0.0059)
                 keyboard.Controller().press('a')
-                time.sleep(3.1014)
+                
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1.03)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1.03)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1.03)
                 keyboard.Controller().release('a')
-                time.sleep(3.0857)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1)
                 keyboard.Controller().release('s')
+                macro.check_macro_run_event()
                 time.sleep(0.1841)
                 keyboard.Controller().press('d')
                 time.sleep(0.9020)
@@ -2509,10 +2621,12 @@ class other_functions():
                 keyboard.Controller().release('s')
                 time.sleep(0.0772)
                 keyboard.Controller().release('d')
+                macro.check_macro_run_event()
                 time.sleep(0.1619)
                 keyboard.Controller().press('w')
                 time.sleep(0.1413)
                 keyboard.Controller().release('w')
+                macro.check_macro_run_event()
                 time.sleep(0.0856)
                 keyboard.Controller().press(keyboard.Key.space)
                 time.sleep(0.1184)
@@ -2521,30 +2635,43 @@ class other_functions():
                 keyboard.Controller().release(keyboard.Key.space)
                 time.sleep(0.2294)
                 keyboard.Controller().release('d')
+                macro.check_macro_run_event()
                 time.sleep(0.2628)
                 keyboard.Controller().press('s')
                 time.sleep(0.6789)
                 keyboard.Controller().press('a')
                 time.sleep(0.9100)
                 keyboard.Controller().release('a')
+                macro.check_macro_run_event()
                 time.sleep(0.9474)
                 keyboard.Controller().press('a')
                 time.sleep(0.1487)
                 keyboard.Controller().release('a')
-                time.sleep(3.9572)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1)
                 keyboard.Controller().press('a')
                 time.sleep(2.2367)
                 keyboard.Controller().release('a')
+                macro.check_macro_run_event(movements_cancel=True)
                 time.sleep(0.3313)
                 keyboard.Controller().press('a')
                 time.sleep(0.1747)
                 keyboard.Controller().release('a')
+                macro.check_macro_run_event(movements_cancel=True)
                 time.sleep(0.7474)
                 keyboard.Controller().press('a')
                 time.sleep(1.2850)
                 keyboard.Controller().release('a')
+                macro.check_macro_run_event(movements_cancel=True)
                 time.sleep(0.0758)
                 keyboard.Controller().release('s')
+                macro.check_macro_run_event()
                 time.sleep(0.2941)
                 keyboard.Controller().press('w')
                 time.sleep(0.0029)
@@ -2553,6 +2680,7 @@ class other_functions():
                 keyboard.Controller().release('d')
                 time.sleep(0.0002)
                 keyboard.Controller().release('w')
+                macro.check_macro_run_event()
                 time.sleep(0.2077)
                 keyboard.Controller().press(keyboard.Key.space)
                 time.sleep(0.0041)
@@ -2561,26 +2689,38 @@ class other_functions():
                 keyboard.Controller().release(keyboard.Key.space)
                 time.sleep(0.5104)
                 keyboard.Controller().release('s')
+                macro.check_macro_run_event()
                 time.sleep(0.0555)
                 keyboard.Controller().press('a')
                 time.sleep(0.0881)
                 keyboard.Controller().press(keyboard.Key.space)
                 time.sleep(0.1990)
                 keyboard.Controller().release(keyboard.Key.space)
-                time.sleep(2.8905)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1.45)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(1.45)
                 keyboard.Controller().release('a')
+                macro.check_macro_run_event()
                 time.sleep(0.0732)
                 keyboard.Controller().press('s')
-                time.sleep(1.8236)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(0.9)
+                macro.check_macro_run_event(movements_cancel=True)
+                time.sleep(0.9)
                 keyboard.Controller().release('s')
+                macro.check_macro_run_event()
                 time.sleep(2.6950)
+                macro.check_macro_run_event()
                 keyboard.Controller().press('a')
                 time.sleep(0.7439)
                 keyboard.Controller().release('a')
+                macro.check_macro_run_event()
                 time.sleep(0.2463)
                 keyboard.Controller().press('f')
                 time.sleep(0.0868)
                 keyboard.Controller().release('f')
+                macro.check_macro_run_event()
                 keyboard.Controller().press('d')
                 time.sleep(1)
                 keyboard.Controller().release('d')
@@ -2591,15 +2731,16 @@ class other_functions():
             elif config["path"] == "abyssal hunter/normal":
                 pass
 
-            count += 1
+            retries += 1
 
             time.sleep(config["durations"]["after pathing wait"])
             if helper_functions.is_potion_gui_open():
                 return True
-            elif count >= 3:
-                log.warning("Unable to reach or detect potion GUI after multiple attempts")
-                dark_sol.create_msg_box("Error", "Unable to reach or detect potion GUI after multiple attempts. Stopping.", internal=False)
-                return False
+            
+            log.debug("Potion GUI not detected, retrying pathing sequence.")
+
+            if retries >= 3:
+                raise TimeoutError("Failed to reach potion GUI after multiple attempts.")
             
 class thread_controller(QObject):
     # Variables
@@ -2607,20 +2748,30 @@ class thread_controller(QObject):
     play_button_failsafe_timeout = config["durations"]["play button failsafe"]
     auto_add_check_latch = False
     auto_add_check_latch_timeout = config["durations"]["auto add check interval"]
+    roblox_launch_failsafe = False
+    roblox_launch_failsafe_timeout = config["durations"]["roblox launch timeout"]
+    
     # Timer Functions
     @staticmethod
     def trigger_play_button_failsafe():
         thread_controller.play_button_failsafe = True
     @staticmethod
-    def check_auto_add_check_latch():
+    def trigger_auto_add_check_latch():
         thread_controller.auto_add_check_latch = True
+    @staticmethod
+    def trigger_roblox_launch_failsafe():
+        thread_controller.roblox_launch_failsafe = True
     # Timers
     play_button_failsafe_timer = QTimer()
     auto_add_check_latch_timer = QTimer()
+    roblox_launch_failsafe_timer = QTimer()
     # Timer Setup
     play_button_failsafe_timer.setSingleShot(True)
+    roblox_launch_failsafe_timer.setSingleShot(True)
+
     play_button_failsafe_timer.timeout.connect(trigger_play_button_failsafe)
-    auto_add_check_latch_timer.timeout.connect(check_auto_add_check_latch)
+    auto_add_check_latch_timer.timeout.connect(trigger_auto_add_check_latch)
+    roblox_launch_failsafe_timer.timeout.connect(trigger_roblox_launch_failsafe)
     # Signal Functions
     def start_play_button_failsafe_timer(self):
         thread_controller.play_button_failsafe_timer.start(thread_controller.play_button_failsafe_timeout * 1000)
@@ -2630,11 +2781,17 @@ class thread_controller(QObject):
         thread_controller.auto_add_check_latch_timer.start(thread_controller.auto_add_check_latch_timeout * 1000)
     def stop_auto_add_check_timer(self):
         thread_controller.auto_add_check_latch_timer.stop()
+    def start_roblox_launch_failsafe_timer(self):
+        thread_controller.roblox_launch_failsafe_timer.start(thread_controller.roblox_launch_failsafe_timeout * 1000)
+    def stop_roblox_launch_failsafe_timer(self):
+        thread_controller.roblox_launch_failsafe_timer.stop()
     # Signals 
     start_play_button_failsafe_timer_signal = pyqtSignal()
     stop_play_button_failsafe_timer_signal = pyqtSignal()
     start_auto_add_check_timer_signal = pyqtSignal()
     stop_auto_add_check_timer_signal = pyqtSignal()
+    start_roblox_launch_failsafe_timer_signal = pyqtSignal()
+    stop_roblox_launch_failsafe_timer_signal = pyqtSignal()
     # Signal Setup
     def __init__(self) -> None:
         super().__init__()
@@ -2642,6 +2799,8 @@ class thread_controller(QObject):
         self.stop_play_button_failsafe_timer_signal.connect(self.stop_play_button_failsafe_timer)
         self.start_auto_add_check_timer_signal.connect(self.start_auto_add_check_timer)
         self.stop_auto_add_check_timer_signal.connect(self.stop_auto_add_check_timer)
+        self.start_roblox_launch_failsafe_timer_signal.connect(self.start_roblox_launch_failsafe_timer)
+        self.stop_roblox_launch_failsafe_timer_signal.connect(self.stop_roblox_launch_failsafe_timer)
 class calibrations():
     scroll_calibration_safety_check = False
     calibrations_overlay_active = False
@@ -3147,7 +3306,7 @@ class calibrations():
         if not point:
             log.info(f"Manual point calibration for '{calibration_name}' was canceled.")
             return False
-        config["positions"]["center"] = point
+        config["positions"][calibration_name]["center"] = point
         nice_config_save()
         log.info(f"Manual point calibration for '{calibration_name}' completed successfully.")
         return True
@@ -3259,7 +3418,7 @@ class calibrations():
         else:
             bbox = result
             center = (int((bbox[0] + bbox[2]) // 2), int((bbox[1] + bbox[3]) // 2))
-            log.debug(f"Manual calibration for {calibration_name} completed successfully.")
+            log.debug(f"Manual calibration selection {calibration_name} completed.")
             if what_to_save is not None:
                 if not isinstance(what_to_save, (tuple)):
                     what_to_save = (what_to_save,)
@@ -3275,16 +3434,19 @@ class biome_detection():
     def __init__(self):
         with biome_detection.biome_detection_start_lock:
             biome_detection.run_event.set()
+            log.debug("Biome detection run event set.")
             if biome_detection.biome_detection_thread is None or not biome_detection.biome_detection_thread.is_alive():
+                log.debug("Attempting to start biome detection thread.")
                 biome_detection.biome_detection_thread = threading.Thread(target=self.biome_detection_loop, daemon=True)
                 biome_detection.biome_detection_thread.start()
+                log.debug("Biome detection thread started.")
 
     def biome_detection_loop(self):
         latest_biome = None
         
         def check_roblox_logs_for_biome():
                 if not roblox_log_path.exists():
-                    return False
+                    return "Roblox file not found"
 
                 latest_roblox_log_file = max(roblox_log_path.glob("*.log"), key=lambda p: p.stat().st_mtime, default=None)
                 if not latest_roblox_log_file:
@@ -3338,53 +3500,110 @@ class biome_detection():
                                     return biome
                 return "Entire biome detection log went through without finding any info"
         
-        while biome_detection.run_event.is_set():
-            biome_from_roblox_logs = check_roblox_logs_for_biome()
-            if biome_from_roblox_logs == False:
-                log.debug("No information found in Roblox logs.")
-            elif biome_from_roblox_logs in ("Roblox file not found", "Disconnected", "Entire biome detection log went through without finding any info"):
-                log.info(biome_from_roblox_logs)
-            else:
-                log.debug("Detected biome from Roblox logs:", biome_from_roblox_logs)
-                if biome_from_roblox_logs != latest_biome:
-                    latest_biome = biome_from_roblox_logs
-                    log.info("Biome changed to:", latest_biome)
-                    if latest_biome not in config["biome settings"] and latest_biome not in data["ping everyone biomes"]:
-                        for webhook in config["webhooks"]:
-                            helper_functions.send_discord_webhook(webhook, f"Unknown Biome Started - {latest_biome}")
-                    elif latest_biome == "NORMAL":
-                        pass
-                    elif latest_biome in data["ping everyone biomes"]:
-                        for webhook in config["webhooks"]:
-                            helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}", ping_mode="everyone")
-                    elif config["biome settings"][latest_biome]["message type"] == "ping":
-                        for webhook in config["webhooks"]:
-                            helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}", ping_mode="role" if config["biome settings"][latest_biome]["id type"] == "role" else "user", ping_id=config["biome settings"][latest_biome]["ping id"])
-                    elif config["biome settings"][latest_biome]["message type"] == "message":
-                        for webhook in config["webhooks"]:
-                            helper_functions.send_discord_webhook(webhook, f"Biome Started - {latest_biome}")
-                    elif config["biome settings"][latest_biome]["message type"] == "off":
-                        pass
-                    else:
-                        pass
-            time.sleep(3)
+        log.debug("Starting biome detection loop.")
+        try:
+            while biome_detection.run_event.is_set():
+                biome_from_roblox_logs = check_roblox_logs_for_biome()
+                if biome_from_roblox_logs == False:
+                    log.debug("No information found in Roblox logs.")
+                elif biome_from_roblox_logs in ("Roblox file not found", "Disconnected", "Entire biome detection log went through without finding any info"):
+                    log.debug(biome_from_roblox_logs)
+                else:
+                    log.debug("Detected biome from Roblox logs:", biome_from_roblox_logs)
+                    if biome_from_roblox_logs != latest_biome:
+                        latest_biome = biome_from_roblox_logs
+                        log.info("Biome changed to:", latest_biome)
+                        
+                        if latest_biome not in config["biome settings"] and latest_biome not in data["ping everyone biomes"]:
+                            helper_functions.send_discord_webhook(f"Unknown Biome Started - {latest_biome}")
+                        elif latest_biome == "NORMAL":
+                            pass
+                        elif latest_biome in data["ping everyone biomes"]:
+                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", ping_mode="everyone")
+                        elif config["biome settings"][latest_biome]["message type"] == "ping":
+                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", ping_mode="role" if config["biome settings"][latest_biome]["id type"] == "role" else "user", ping_id=config["biome settings"][latest_biome]["ping id"])
+                        elif config["biome settings"][latest_biome]["message type"] == "message":
+                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}")
+                        elif config["biome settings"][latest_biome]["message type"] == "off":
+                            pass
+                time.sleep(3)
+            log.debug("Stopped biome detection loop.")
+        except Exception as e:
+            log.critical(f"Critical error occurred in biome detection loop: {type(e).__name__}: {e}\n Traceback:{traceback.format_exc()}")
+            helper_functions.send_discord_webhook(f"Critical error occurred in biome detection loop, please check logs for more details", f"{type(e).__name__}: {e}", color="red")
+        
 class macro():
+    class StopMacroException(Exception):
+        pass
+
     run_event = threading.Event()
+    stopping = False
+    restarting = False
     auto_add_waitlist = []
     current_auto_add_potion = None
     macro_thread = None
+    restart_thread = None
     macro_start_lock = threading.Lock()
     macro_slowdown1 = config["durations"]["macro slowdown 1"]
     macro_slowdown2 = config["durations"]["macro slowdown 2"]
 
+    def start_macro(self):
+        if not macro.stopping and (macro.macro_thread is None or not macro.macro_thread.is_alive()):
+            log.debug("Attempting to start macro thread.")
+            macro.macro_thread = threading.Thread(target=self.macro_loop, daemon=True)
+            macro.macro_thread.start()
+            dark_sol.update_status("Running", what_to_update="both")
+            dark_sol.show_status_widget_signal.emit()
+            helper_functions.send_discord_webhook("Macro started.")
+            log.debug("Macro thread started.")
+            biome_detection()
+            macro.restarting = False
+            return True
+        else:
+            return False
+
+    def restart_macro(self):
+        log.info("Restarting macro...")
+        dark_sol.update_status("Restarting...", what_to_update="both")
+        while macro.restarting:
+            self.start_macro()
+            time.sleep(0.1)
+            
     def __init__(self) -> None:
         with macro.macro_start_lock:
             macro.run_event.set()
-            if macro.macro_thread is None or not macro.macro_thread.is_alive():
-                macro.macro_thread = threading.Thread(target=self.macro_loop, daemon=True)
-                macro.macro_thread.start()
-                log.debug("Macro thread started.")
-        
+            log.debug("Macro run event set.")
+            if self.start_macro():
+                pass
+            elif macro.stopping and not macro.restarting:
+                log.debug("Macro is currently stopping, setting restarting flag to True.")
+                macro.restarting = True
+                log.debug("Starting restart thread.")
+                self.restart_thread = threading.Thread(target=self.restart_macro, daemon=True)
+                self.restart_thread.start()
+                log.debug("Restart thread started.")
+                
+    @staticmethod
+    def check_macro_run_event(movements_cancel=False):
+        if not macro.run_event.is_set():
+            macro.stopping = True
+            dark_sol.update_status("Stopping...", what_to_update="both")
+            if movements_cancel:
+                keyboard.Controller().release('w')
+                keyboard.Controller().release('a')
+                keyboard.Controller().release('s')
+                keyboard.Controller().release('d')
+                keyboard.Controller().release('f')
+            dark_sol.thread_controller.stop_auto_add_check_timer_signal.emit()
+            thread_controller.auto_add_check_latch = True
+            helper_functions.send_discord_webhook("Macro stopped.")
+            dark_sol.update_status("Stopped", what_to_update="both")
+            dark_sol.hide_status_widget_signal.emit()
+            biome_detection.run_event.clear()
+            log.debug("Biome detection run event cleared.")
+            raise macro.StopMacroException()
+        return True
+    
     def macro_loop(self):
         def add_to_button(button_to_add_to):
             log.debug("Adding to:", button_to_add_to)
@@ -3480,7 +3699,8 @@ class macro():
                 check_auto_add_button()
                 time.sleep(macro.macro_slowdown1)
                 macro.current_auto_add_potion = macro.auto_add_waitlist.pop(0)
-        
+                log.info(f"Set current auto add potion to {macro.current_auto_add_potion}")
+
         def check_auto_add_button():
             bbox = config["positions"]["auto add button"]["bbox"]
 
@@ -3532,13 +3752,15 @@ class macro():
             dark_sol.thread_controller.start_auto_add_check_timer_signal.emit()
 
         def potion_loop_iteration(item):
-            if not helper_functions.is_sols_open():
-                if not other_functions.reload_potion_gui():
-                    return
-            elif not helper_functions.is_potion_gui_open():
-                if not other_functions.path_to_potion_gui():
-                    return
-
+            if not helper_functions.is_roblox_open():
+                other_functions.reload_potion_gui()
+            else:
+                if not helper_functions.is_potion_gui_open():
+                    if not helper_functions.is_sols_open():
+                        other_functions.reload_potion_gui()
+                    else:
+                        other_functions.path_to_potion_gui()
+                        
             helper_functions.focus_roblox()
             if item not in macro.auto_add_waitlist and macro.current_auto_add_potion != item:
                 helper_functions.move_and_click(config["positions"]["potion menu item button"]["center"])
@@ -3563,9 +3785,10 @@ class macro():
                         if macro.current_auto_add_potion == None:
                             check_auto_add_button()
                             macro.current_auto_add_potion = item
+                            log.info(f"Set current auto add potion to {item}")
                         elif not macro.current_auto_add_potion == None and item not in macro.auto_add_waitlist:
                             macro.auto_add_waitlist.append(item)
-                            log.debug(f"{item.capitalize()} added to auto add waitlist")
+                            log.info(f"{item.capitalize()} added to auto add waitlist")
                     else:
                         dark_sol.update_status("Crafting:", item.capitalize())
                         helper_functions.move_and_click(config["positions"]["craft button"]["center"])
@@ -3578,21 +3801,23 @@ class macro():
                 helper_functions.search_for_potion(item)
                 if thread_controller.auto_add_check_latch:
                     check_auto_add_button()
-                dark_sol.update_status("Checking All Buttons")
+                dark_sol.update_status("Checking All Buttons For: ", item.capitalize())
 
                 for slot in config["item presets"][dark_sol.current_preset][item]["buttons to check"]:
                     add_to_button(slot)
                     if not check_button(slot):
-                        log.debug(f"{item.capitalize()} false positive detected on completed check button: {data['item data'][item]['button names'][slot]}, skipping craft and moving to next auto add item")
+                        log.warning(f"{item.capitalize()} false positive detected on completed check button: {data['item data'][item]['button names'][slot]}, skipping craft and moving to next auto add item")
                         macro.current_auto_add_potion = None
+                        log.debug(f"Set current auto add potion to None")
                         add_next_item_to_auto_add()
                         return
                 
                 for slot in config["item presets"][dark_sol.current_preset][item]["additional buttons to click"]:
                     add_to_button(slot)
                     if not check_button(slot):
-                        log.debug(f"{item.capitalize()} false positive detected on additional button to click: {data['item data'][item]['button names'][slot]}, skipping craft and moving to next auto add item")
+                        log.warning(f"{item.capitalize()} false positive detected on additional button to click: {data['item data'][item]['button names'][slot]}, skipping craft and moving to next auto add item")
                         macro.current_auto_add_potion = None
+                        log.debug(f"Set current auto add potion to None")
                         add_next_item_to_auto_add()
                         return
                     
@@ -3613,21 +3838,23 @@ class macro():
         try:
             while True:
                 for item in data["item data"].keys():
-                    if not macro.run_event.is_set():
-                        dark_sol.thread_controller.stop_auto_add_check_timer_signal.emit()
-                        thread_controller.auto_add_check_latch = True
-                        dark_sol.update_status("Stopped", what_to_update="both")
-                        dark_sol.hide_status_widget_signal.emit()
-                        return
+                    macro.check_macro_run_event()
                     if config["item presets"][dark_sol.current_preset][item]["enabled"]:
                         potion_loop_iteration(item)
+        except macro.StopMacroException:
+            pass
         except Exception as e:
-            log.critical("Error in macro loop:", e)
+            log.critical(f"Critical error occured in main macro loop: {type(e).__name__}: {e}\nTraceback: {traceback.format_exc()}")
+            helper_functions.send_discord_webhook(f"Critical error occurred in macro loop, please check logs for more details", f"{type(e).__name__}: {e}", color="red")
+        finally:
+            macro.macro_thread = None
+            macro.stopping = False
 
 def run_main_script():
     global dark_sol
     dark_sol = dark_sol_gui()
     dark_sol.show()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     if skip_loading:
