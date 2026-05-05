@@ -464,13 +464,17 @@ hidden_config = {
                 "path": "vip"    
             }
 
+config = {}
 if use_built_in_config:
     log.info("Using built in config (user should never see this log message)")
     config = hidden_config
 elif config_path.exists():
     log.debug("Config file exists, loading config")
-    with open(config_path, "r", encoding="utf-8") as f:
-        config = json.load(f)
+    def load_config():
+        global config
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+    load_config()
 else:
     log.info("Config file does not exist, using hidden config")
     config = hidden_config
@@ -1030,6 +1034,10 @@ class dark_sol_gui(QMainWindow):
             self.debug_test_button_3.clicked.connect(lambda: (log.debug("Test Button 3 Pressed")))
             self.debug_test_button_4.clicked.connect(lambda: (log.debug("Test Button 4 Pressed")))
             self.debug_test_button_5.clicked.connect(lambda: (log.debug("Test Button 5 Pressed")))
+
+            self.reload_config = QPushButton("Reload Config")
+            self.debug_tab_qv_layout.addWidget(self.reload_config)
+            self.reload_config.clicked.connect(lambda: (load_config(), log.debug("Config Reloaded")))
 
     def init_ui(self):
         # Initalize Main Gui
@@ -2050,24 +2058,37 @@ class dark_sol_gui(QMainWindow):
         return clicked_text
 
     def global_hotkey_listener(self):
-        def on_press(key):
-            if key == keyboard.Key.f1:
-                self.start_macro_signal.emit()
-            elif key == keyboard.Key.f2:
-                self.stop_macro_signal.emit()
-            elif key == keyboard.Key.f3:
-                if not calibrations.scroll_calibration_safety_check:
-                    calibrations.scroll_calibration_safety_check = True
-            elif key == keyboard.Key.f8:
-                os._exit(1)
-        main_hotkey_listener = keyboard.Listener(on_press=on_press)
-        main_hotkey_listener.start()
-        main_hotkey_listener.join()
+        hotkey_restarts = 0
+        try:
+            while True:
+                try:
+                    def on_press(key):
+                        if key == keyboard.Key.f1:
+                            self.start_macro_signal.emit()
+                        elif key == keyboard.Key.f2:
+                            self.stop_macro_signal.emit()
+                        elif key == keyboard.Key.f3:
+                            if not calibrations.scroll_calibration_safety_check:
+                                calibrations.scroll_calibration_safety_check = True
+                        elif key == keyboard.Key.f8:
+                            os._exit(1)
+                    main_hotkey_listener = keyboard.Listener(on_press=on_press)
+                    main_hotkey_listener.start()
+                    main_hotkey_listener.join()
+                except Exception as e:
+                    log.error(f" Global hotkey listener error: {e}")
+                    hotkey_restarts += 1
+                    if hotkey_restarts >= 3:
+                        raise e
+        except Exception as e:
+            log.critical("Global hotkey listener failed after multiple attempts. Hotkeys will not work." + f"{type(e).__name__}: " + str(e) + f"\n Traceback:{traceback.format_exc()}")
+            helper_functions.send_discord_webhook("Global hotkey listener failed after multiple attempts. Hotkeys will not work, please check logs for more details", f"{type(e).__name__}: " + str(e), color="red")
 
     def setup_hotkeys(self):
         self.start_macro_signal.connect(self.start_macro)
         self.stop_macro_signal.connect(self.stop_macro)
         threading.Thread(target=self.global_hotkey_listener, daemon=True).start()
+        log.debug("Global hotkey listener started")
                                     
     def start_macro(self):
         log.debug("Start button clicked")
@@ -2182,43 +2203,165 @@ class image_processing():
         return return_bool if return_coordinates == False or return_bool == False else (bbox, center)
 class helper_functions():
     @staticmethod
-    def check_roblox_logs_for(*logs_to_check_for):
-        texts = [logs_to_check_for] if isinstance(logs_to_check_for, str) else list(logs_to_check_for)
-        if not texts:
-            return None
-
+    def scan_roblox_logs_for(scan_for, stopper=None, data_to_return : tuple | list | str | None = None):
         if not roblox_log_path.exists():
-            return "Roblox file not found"
+            log.warning("Roblox log path does not exist.")
+            return False
 
         latest_roblox_log_file = max(roblox_log_path.glob("*.log"), key=lambda p: p.stat().st_mtime, default=None)
+        
         if not latest_roblox_log_file:
-            return "Roblox file not found"
+            log.warning("No Roblox log files found.")
+            return False
 
-        with latest_roblox_log_file.open("rb") as f:
-            f.seek(0, 2)
-            pos, carry = f.tell(), b""
+        if isinstance(scan_for, str):
+            scan_for = {scan_for: {"type": "string"}}
+        elif isinstance(scan_for, (tuple, list)):
+            scan_for = {item: {"type": "string"} for item in scan_for}
+        elif isinstance(scan_for, dict):
+            pass
+        else:
+            raise TypeError("Invalid type for scan_for parameter. Must be str, tuple, list, or dict.")
+        
+        if stopper is None or isinstance(stopper, dict):
+            pass
+        elif isinstance(stopper, str):
+            stopper = {stopper: {"type": "string"}}
+        elif isinstance(stopper, (tuple, list)):
+            stopper = {item: {"type": "string"} for item in stopper}
+        else:
+            raise TypeError("Invalid type for stopper parameter. Must be str, list, or tuple.")
 
-            while pos > 0:
-                n = min(8192, pos)
-                pos -= n
-                f.seek(pos)
-                carry = f.read(n) + carry
-                *lines, carry = carry.split(b"\n")
+        if data_to_return is None:
+            data_to_return = ()
+        elif isinstance(data_to_return, tuple):
+            pass
+        elif isinstance(data_to_return, str):
+            data_to_return = (data_to_return,)
+        elif isinstance(data_to_return, (list)):
+            data_to_return = tuple(data_to_return)
+        else:
+            raise TypeError("Invalid type for data_to_return parameter. Must be str, list, or tuple.")
+        
+        match_data = {}
+        def save_match_data(scan, match):
+            if data_to_return:
+                log.debug(f"Scan Data '{scan}': {match.group(0)}")
+                if scan not in match_data:
+                    match_data[scan] = {}
+                if "full match" in data_to_return:
+                    match_data[scan]["full match"] = match.group(0)
+                if "matched data" in data_to_return:
+                    try:
+                        match_data[scan]["matched data"] = match.group(1)
+                    except IndexError:
+                        match_data[scan]["matched data"] = None
 
-                for raw in reversed(lines):  # newest -> oldest
-                    line = raw.decode("utf-8", errors="replace")
-                    hits = [(line.find(t), t) for t in texts if t in line]
-                    if hits:
-                        x, found = min(hits, key=lambda x: x[0])  # first text in that line
-                        return found
+        def match_return_formatter(matches, stopper_mode=False):
+            if not stopper_mode:
+                best_match = min(matches, key=lambda hit: hit[0])[1]
+            else:
+                best_match = min(saved_matches, key=lambda match: tuple(scan_for).index(match))
 
-            if carry:
-                line = carry.decode("utf-8", errors="replace")
-                hits = [(line.find(t), t) for t in texts if t in line]
+            if not data_to_return or best_match not in match_data:
+                return best_match
+            else:
+                return {
+                        "scan": best_match,
+                        "matched data": match_data[best_match].get("matched data") if "matched data" in data_to_return else None,
+                        "full match": match_data[best_match].get("full match") if "full match" in data_to_return else None,
+                    }
+                
+        def scan_lines(raw, stopper_mode=False):
+            line = raw.decode("utf-8", errors="replace")
+            if stopper_mode:
+                if stopper is None:
+                    raise ValueError("Stopper cannot be None when in stopper mode.")
+                for stop, inner_dict in stopper.items():
+                    if inner_dict["type"] == "string":
+                        if stop in line:
+                            return True
+
+                    elif inner_dict["type"] == "parser":
+                        pattern = inner_dict["pattern"]
+                        match = re.search(pattern, line, re.IGNORECASE)
+                        if match:
+                            return True
+            
+            for scan, inner_dict in scan_for.items():
+                if inner_dict["type"] == "string":
+                    if not stopper_mode:
+                        found_pos = line.find(scan)
+                        if found_pos != -1:
+                            hits.append((found_pos, scan))
+                    else:
+                        if scan in line:
+                            saved_matches.append(scan)
+                    
+                elif inner_dict["type"] == "parser":
+                    pattern = inner_dict["pattern"]
+                    match = re.search(pattern, line, re.IGNORECASE)
+                    if match:
+                        if not stopper_mode:
+                            hits.append((match.start(), scan))
+                        else:
+                            saved_matches.append(scan)
+                        save_match_data(scan, match)
+            if not stopper_mode:
                 if hits:
-                    x, found = min(hits, key=lambda x: x[0])
-                    return found
-        return False
+                    return True
+                
+        found = False
+        if stopper is None:
+            hits = []
+            with latest_roblox_log_file.open("rb") as f:
+                f.seek(0, 2)
+                pos, carry = f.tell(), b""
+
+                while pos > 0:
+                    n = min(8192, pos)
+                    pos -= n
+                    f.seek(pos)
+                    carry = f.read(n) + carry
+                    *lines, carry = carry.split(b"\n")
+
+                    for raw in reversed(lines):  # newest -> oldest
+                        if found := scan_lines(raw):
+                            break
+                    if found:
+                        break
+
+                if carry and not found:
+                    scan_lines(carry)
+                    
+            if hits:
+                return match_return_formatter(hits)
+            return False
+        else:
+            saved_matches = []
+            
+            with latest_roblox_log_file.open("rb") as f:
+                f.seek(0, 2)
+                pos, carry = f.tell(), b""
+
+                while pos > 0:
+                    n = min(8192, pos)
+                    pos -= n
+                    f.seek(pos)
+                    carry = f.read(n) + carry
+                    *lines, carry = carry.split(b"\n")
+
+                    for raw in reversed(lines):  # newest -> oldest
+                        if found := scan_lines(raw, stopper_mode=True):
+                            break
+                    if found:
+                        break
+
+                if carry and not found:
+                    scan_lines(carry, stopper_mode=True)
+            if saved_matches:
+                return match_return_formatter(saved_matches, stopper_mode=True)
+            return False
     
     @staticmethod
     def check_region_for_colors(*targets, bbox=None):
@@ -2374,6 +2517,7 @@ class helper_functions():
             log.debug("Close message sent to Roblox window.")
         
             while True:
+                macro.check_macro_run_event()
                 if not win32gui.FindWindow(None, "Roblox"):
                     log.debug("Roblox window closed.")
                     break    
@@ -2385,12 +2529,12 @@ class helper_functions():
         roblox_launch_attempts = 0
         dark_sol.thread_controller.start_roblox_launch_failsafe_timer_signal.emit()
         while True:
+            macro.check_macro_run_event()
             if thread_controller.roblox_launch_failsafe:
                 log.debug("Roblox start timeout reached, relaunching Roblox.")
                 launch_roblox()
                 thread_controller.roblox_launch_failsafe = False
-                dark_sol.thread_controller.stop_roblox_launch_failsafe_timer_signal.emit()
-
+                dark_sol.thread_controller.start_roblox_launch_failsafe_timer_signal.emit()
                 roblox_launch_attempts += 1
 
             if roblox_launch_attempts >= 3:
@@ -2436,7 +2580,7 @@ class helper_functions():
         raise RuntimeError("Failed to focus Roblox window after multiple attempts.")
 
     @staticmethod
-    def send_discord_webhook(title, message=None, ping_mode=None, ping_id=None, color="cyan"):
+    def send_discord_webhook(title, message=None, ping_mode=None, ping_id=None, color="cyan", join_server_button=False):
         color_id = {
             "red": 0xFF0000,
             "cyan": 0x00FFFF,
@@ -2468,13 +2612,31 @@ class helper_functions():
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "footer": {"text": f"Dark Sol v{current_version}"}
                 }
-            ],
+            ]
         }
+
+        if join_server_button and not config["private server link"]:
+           payload["embeds"][0]["description"] = f"{message}\n\n**Private server link is empty.**" if message else "**Private server link is empty.**"
+        elif join_server_button and config["private server link"]:
+            payload["components"] = [
+                {
+                    "type": 1,
+                    "components": [
+                        {
+                            "type": 2,
+                            "style": 5,
+                            "label": "Join Server",
+                            "url": config["private server link"],
+                        }
+                    ]
+                }
+            ]
 
         if config["webhooks"]:
             for webhook in config["webhooks"]:
                 try:
-                    r = requests.post(webhook, json=payload, timeout=10)
+                    webhook_url = f"{webhook}?with_components=true" if "components" in payload else webhook
+                    r = requests.post(webhook_url, json=payload, timeout=10)
                     r.raise_for_status()
                 except Exception as e:
                     log.error(f"""Error sending Discord webhook: {e}
@@ -2519,7 +2681,7 @@ class helper_functions():
         if not hwnd:
             log.debug("Roblox is not open.")
             return False
-        game_found = helper_functions.check_roblox_logs_for("Disconnect", "place 15532962292")
+        game_found = helper_functions.scan_roblox_logs_for(("Disconnect", "place 15532962292"))
         if game_found in (False, "Disconnect"):
             log.debug("User is not in a game.")
             return False
@@ -3444,66 +3606,39 @@ class biome_detection():
     def biome_detection_loop(self):
         latest_biome = None
         
-        def check_roblox_logs_for_biome():
-                if not roblox_log_path.exists():
-                    return "Roblox file not found"
+        def check_current_biome_from_roblox_logs():
+            rpc_result = helper_functions.scan_roblox_logs_for(
+                scan_for={
+                    "rpc": {
+                        "type": "parser",
+                        "pattern": r'(\{"command":"SetRichPresence","data":.*\})'
+                    },
+                    "Disconnect": {
+                        "type": "string"
+                    },
+                },
+                data_to_return="matched data"
+            )
 
-                latest_roblox_log_file = max(roblox_log_path.glob("*.log"), key=lambda p: p.stat().st_mtime, default=None)
-                if not latest_roblox_log_file:
-                    return "Roblox file not found"
+            if rpc_result is False:
+                return False
 
-                with latest_roblox_log_file.open("rb") as f:
-                    f.seek(0, 2)
-                    pos, carry = f.tell(), b""
+            try:
+                payload = json.loads(rpc_result["matched data"])
+            except (json.JSONDecodeError, TypeError, KeyError) as e:
+                log.warning("Failed to parse JSON from RPC log: ", e)
+                return False
 
-                    while pos > 0:
-                        n = min(8192, pos)
-                        pos -= n
-                        f.seek(pos)
-                        carry = f.read(n) + carry
-                        *lines, carry = carry.split(b"\n")
+            try:
+                return payload["data"]["largeImage"]["hoverText"]
+            except (KeyError, TypeError) as e:
+                log.warning("Expected keys not found in RPC payload: ", e)
+                return False
 
-                        for raw in reversed(lines):  # newest -> oldest
-                            line = raw.decode("utf-8", errors="replace")
-
-                            if "Disconnect" in line:
-                                return "Disconnected"
-
-                            if '[FLog::Output] [BloxstrapRPC]' in line and '"command":"SetRichPresence"' in line:
-                                json_start = line.find("{")
-                                if json_start == -1:
-                                    continue
-                                try:
-                                    payload = json.loads(line[json_start:])
-                                except json.JSONDecodeError:
-                                    continue
-
-                                biome = payload.get("data", {}).get("largeImage", {}).get("hoverText")
-                                if biome:
-                                    return biome
-
-                    if carry:
-                        line = carry.decode("utf-8", errors="replace")
-
-                        if "Disconnect" in line:
-                                return "Disconnected"
-
-                        if '[FLog::Output] [BloxstrapRPC]' in line and '"command":"SetRichPresence"' in line:
-                            json_start = line.find("{")
-                            if json_start != -1:
-                                try:
-                                    payload = json.loads(line[json_start:])
-                                except json.JSONDecodeError:
-                                    return False
-                                biome = payload.get("data", {}).get("largeImage", {}).get("hoverText")
-                                if biome:
-                                    return biome
-                return "Entire biome detection log went through without finding any info"
-        
         log.debug("Starting biome detection loop.")
         try:
             while biome_detection.run_event.is_set():
-                biome_from_roblox_logs = check_roblox_logs_for_biome()
+                biome_from_roblox_logs = check_current_biome_from_roblox_logs()
                 if biome_from_roblox_logs == False:
                     log.debug("No information found in Roblox logs.")
                 elif biome_from_roblox_logs in ("Roblox file not found", "Disconnected", "Entire biome detection log went through without finding any info"):
@@ -3515,22 +3650,22 @@ class biome_detection():
                         log.info("Biome changed to:", latest_biome)
                         
                         if latest_biome not in config["biome settings"] and latest_biome not in data["ping everyone biomes"]:
-                            helper_functions.send_discord_webhook(f"Unknown Biome Started - {latest_biome}")
+                            helper_functions.send_discord_webhook(f"Unknown Biome Started - {latest_biome}", join_server_button=True)
                         elif latest_biome == "NORMAL":
                             pass
                         elif latest_biome in data["ping everyone biomes"]:
-                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", ping_mode="everyone")
+                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", ping_mode="everyone", join_server_button=True)
                         elif config["biome settings"][latest_biome]["message type"] == "ping":
-                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", ping_mode="role" if config["biome settings"][latest_biome]["id type"] == "role" else "user", ping_id=config["biome settings"][latest_biome]["ping id"])
+                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", ping_mode="role" if config["biome settings"][latest_biome]["id type"] == "role" else "user", ping_id=config["biome settings"][latest_biome]["ping id"], join_server_button=True)
                         elif config["biome settings"][latest_biome]["message type"] == "message":
-                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}")
+                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", join_server_button=True)
                         elif config["biome settings"][latest_biome]["message type"] == "off":
                             pass
                 time.sleep(3)
             log.debug("Stopped biome detection loop.")
         except Exception as e:
-            log.critical(f"Critical error occurred in biome detection loop: {type(e).__name__}: {e}\n Traceback:{traceback.format_exc()}")
-            helper_functions.send_discord_webhook(f"Critical error occurred in biome detection loop, please check logs for more details", f"{type(e).__name__}: {e}", color="red")
+            log.critical(f"Critical error occurred in biome detection loop: {type(e).__name__}: " + str(e) + f"\n Traceback:{traceback.format_exc()}")
+            helper_functions.send_discord_webhook(f"Critical error occurred in biome detection loop, please check logs for more details", f"{type(e).__name__}: " + str(e), color="red")
         
 class macro():
     class StopMacroException(Exception):
@@ -3844,8 +3979,8 @@ class macro():
         except macro.StopMacroException:
             pass
         except Exception as e:
-            log.critical(f"Critical error occured in main macro loop: {type(e).__name__}: {e}\nTraceback: {traceback.format_exc()}")
-            helper_functions.send_discord_webhook(f"Critical error occurred in macro loop, please check logs for more details", f"{type(e).__name__}: {e}", color="red")
+            log.critical(f"Critical error occured in main macro loop: {type(e).__name__}: " + str(e) + f"\n Traceback:{traceback.format_exc()}")
+            helper_functions.send_discord_webhook(f"Critical error occurred in macro loop, please check logs for more details", f"{type(e).__name__}: " + str(e), color="red")
         finally:
             macro.macro_thread = None
             macro.stopping = False
