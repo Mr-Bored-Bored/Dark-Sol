@@ -1,5 +1,3 @@
-# --- Dark Sol repo rules ---
-# Ignore everything by default; explicitly allow only the main script (and this .gitignore).
 *
 !.gitignore
 !Dark_Sol.py
@@ -8,4 +6,3 @@
 !Appdata/
 !Appdata/Lib/
 !Appdata/Lib/**
-

@@ -1,15 +1,172 @@
 """
 # Start Arguments
---reset_config: Resets config to default settings
+--log-reader: Opens a high level log reader to debug startup issues, errors, and other log messages. 
+--dev-mode: Enables dev mode, which enables various tools and features for development and testing. Not intended for end users, may cause issues and bugs. Use with caution.
+--reset-config: Resets config to default settings
+
 """
-# Logging
-import logging, pathlib, os
-from logging.handlers import RotatingFileHandler
+
+# Log Reader
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout, QHBoxLayout, QPlainTextEdit, QCheckBox
+import sys
+LOG_READER_MODE = "--log-reader" in sys.argv
+
+class log_reader(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Dark Sol - Log Reader")
+        self.setGeometry(100, 100, 900, 600)
+
+        self.log_read_pos = 0
+        self.gui_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        self.wrap_log_enabled = False
+        self.show_only_current_logs = False
+
+        self.central_widget = QWidget()
+        self.central_layout = QVBoxLayout(self.central_widget)
+        self.log_area = QPlainTextEdit()
+        self.log_area.setReadOnly(True)
+        self.log_area.setStyleSheet("background-color: #0f0f0f; color: white; font-size: 11pt; padding: 1px;")
+
+        self.logging_settings_gui_button = QPushButton("Logging Settings")
+        self.wrap_log_checkbox = QCheckBox("Wrap Log Area")
+        self.show_only_current_logs_checkbox = QCheckBox("Only Show Current Session Logs")
+        self.logging_settings_gui = QWidget()
+        self.logging_settings_gui.setWindowTitle("Dark Sol Logging Settings")
+        self.logging_settings_gui.setStyleSheet("QWidget {background-color: black; color: cyan;}")
+        self.logging_settings_gui_qv_layout = QVBoxLayout(self.logging_settings_gui)
+        self.logging_settings_gui_qh_layout = QHBoxLayout()
+        self.logging_settings_gui_qh_layout2 = QHBoxLayout()
+
+        for log_level in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
+            checkbox = QCheckBox(log_level.lower().capitalize())
+            checkbox.setChecked(log_level in self.gui_log_levels)
+            checkbox.stateChanged.connect(lambda state, log_level=log_level: self.change_gui_log_levels(state, log_level))
+            self.logging_settings_gui_qh_layout.addWidget(checkbox)
+
+        self.logging_settings_gui_qv_layout.addLayout(self.logging_settings_gui_qh_layout)
+        self.logging_settings_gui_qv_layout.addLayout(self.logging_settings_gui_qh_layout2)
+        self.logging_settings_gui_qh_layout2.addWidget(self.wrap_log_checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.logging_settings_gui_qh_layout2.addWidget(self.show_only_current_logs_checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        footer = QWidget()
+        footer_layout = QHBoxLayout(footer)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(self.logging_settings_gui_button, alignment=Qt.AlignmentFlag.AlignRight)
+
+        self.central_layout.addWidget(self.log_area)
+        self.central_layout.addWidget(footer)
+        self.central_layout.setContentsMargins(0, 0, 0, 0)
+        self.setCentralWidget(self.central_widget)
+
+        if not self.wrap_log_enabled:
+            self.log_area.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+            self.log_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        self.wrap_log_checkbox.setChecked(self.wrap_log_enabled)
+        self.show_only_current_logs_checkbox.setChecked(self.show_only_current_logs)
+        self.wrap_log_checkbox.stateChanged.connect(self.toggle_log_wrap)
+        self.show_only_current_logs_checkbox.stateChanged.connect(self.toggle_show_only_current_logs)
+        self.logging_settings_gui_button.clicked.connect(lambda: self.logging_settings_gui.show())
+
+        self.setStyleSheet("""
+            QMainWindow {background-color: black; }
+            QWidget {background-color: black;}
+            QPushButton {background-color: black; color: cyan; border-radius: 5px; border: 1px solid cyan; font-size: 15pt; }
+            QPushButton:hover {background-color: #0d2c33;}
+            QLabel {color: cyan; font-size: 14pt;}
+            QCheckBox {color: cyan; font-size: 11pt;}
+        """)
+        self.logging_settings_gui.setStyleSheet("QWidget {background-color: black; color: cyan;}")
+
+        self.log_watcher = QFileSystemWatcher([f"{log_path}"])
+        self.log_watcher.fileChanged.connect(self.update_gui_log)
+        self.update_gui_log(reset_log=True)
+
+    def change_gui_log_levels(self, state, log_level):
+        if state == 2:
+            if log_level not in self.gui_log_levels:
+                self.gui_log_levels.append(log_level)
+        else:
+            if log_level in self.gui_log_levels:
+                self.gui_log_levels.remove(log_level)
+        self.update_gui_log(True)
+
+    def toggle_log_wrap(self):
+        if self.wrap_log_enabled:
+            self.log_area.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+            self.log_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        else:
+            self.log_area.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
+            self.log_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.wrap_log_enabled = not self.wrap_log_enabled
+
+    def toggle_show_only_current_logs(self, state):
+        self.show_only_current_logs = state == 2
+        self.update_gui_log(True)
+
+    def get_current_logs(self):
+        with open(log_path, "r", encoding="utf-8") as f:
+            self.log_read_pos = 0
+            while True:
+                line_pos = f.tell()
+                line = f.readline()
+                if not line:
+                    break
+                if "Starting Dark Sol" in line:
+                    self.log_read_pos = line_pos
+
+    def update_gui_log(self, reset_log=False):
+        if reset_log is True:
+            self.log_area.clear()
+            self.log_read_pos = 0
+            if self.show_only_current_logs:
+                self.get_current_logs()
+        with open(log_path, "r", encoding="utf-8") as f:
+            f.seek(self.log_read_pos)
+            for line in f:
+                parts = line.split(" | ", 2)
+                if len(parts) >= 3 and parts[1].strip() in self.gui_log_levels:
+                    self.log_area.appendPlainText(line.rstrip("\n"))
+            self.log_read_pos = f.tell()
+
+def start_log_reader():
+    app = QApplication(sys.argv)
+    log_reader_window = log_reader()
+    log_reader_window.show()
+    sys.exit(app.exec())
+
+if LOG_READER_MODE:
+    start_log_reader()
+
+# Appdata Setup
+import pathlib, os
 local_appdata_directory = pathlib.Path(os.environ["LOCALAPPDATA"])
 dark_sol_appdata_directory = local_appdata_directory / "Dark Sol"
 os.makedirs(dark_sol_appdata_directory, exist_ok=True)
-log_path = dark_sol_appdata_directory / "Dark Sol Log.log"
 
+# Start Arguement Initalization
+start_settings_path = dark_sol_appdata_directory / "start settings.txt"
+
+if start_settings_path.exists():
+    start_settings = [
+        line.strip()
+        for line in start_settings_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+else:
+    start_settings = []
+    start_settings_path.touch(exist_ok=True)
+
+LOG_READER_MODE = "--log-reader" in (*sys.argv, *start_settings)
+if LOG_READER_MODE:
+    start_log_reader()
+
+# Logging
+import logging
+from logging.handlers import RotatingFileHandler
+log_path = dark_sol_appdata_directory / "Dark Sol Log.log"
 logger = logging.getLogger("DarkSol")
 logger.setLevel(logging.DEBUG)
 logger.propagate = False
@@ -43,13 +200,19 @@ class log():
         print(" ".join(str(a) for a in args))
 log.info("Starting Dark Sol")
 log.debug("Logging Initalized")
+
+# Startup Settings
+DEV_MODE = "--dev-mode" in (*sys.argv, *start_settings)
+RESET_CONFIG = "--reset-config" in (*sys.argv, *start_settings)
+
 # Dev Tools
-DEV_MODE = True
+TEST_MODE = False
 current_github_version = "0.0.0.5"
 use_built_in_config = False
 create_debug_test_buttons = True
 
 if not DEV_MODE:
+    TEST_MODE = False
     current_github_version = None
     use_built_in_config = False
     create_debug_test_buttons = False
@@ -67,13 +230,11 @@ dpi = gdi32.GetDeviceCaps(hdc, LOGPIXELSX)
 scale = dpi / 96.0
 screen_width, screen_height = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
 log.debug("DPI Tools Loaded")
-
 # Imports
-import sys, threading, pyautogui, time, ctypes, json, win32gui, win32con, re, requests, io, zipfile, socket, subprocess, traceback
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QWidget, QVBoxLayout,
-QHBoxLayout, QTabWidget, QMessageBox, QProgressBar, QComboBox, QLineEdit, QDialog, QGridLayout,
-QDialogButtonBox, QScrollArea, QCheckBox, QFrame, QSlider, QRubberBand, QPlainTextEdit, QSizePolicy,
-QLineEdit, QListWidget, QSpinBox, QDoubleSpinBox)
+import threading, pyautogui, time, ctypes, json, win32gui, win32con, re, requests, io, zipfile
+import socket, subprocess, traceback, urllib.request, urllib.parse
+from PyQt6.QtWidgets import (QTabWidget, QMessageBox, QProgressBar, QComboBox, QLineEdit, QDialog, QGridLayout,
+QDialogButtonBox, QScrollArea, QFrame, QSlider, QRubberBand, QSizePolicy, QLineEdit, QListWidget, QSpinBox, QDoubleSpinBox)
 from PyQt6.QtGui import QIcon, QGuiApplication, QColor, QPainter, QDesktopServices, QRegularExpressionValidator
 from PyQt6.QtCore import (Qt, QTimer, pyqtSignal, QThread, QSize, QRect, QPoint, QEventLoop, QUrl,
 QFileSystemWatcher, QRegularExpression, QObject)
@@ -83,7 +244,7 @@ from PIL import Image, ImageGrab
 from packaging import version
 from mousekey import MouseKey
 from pynput import keyboard
-from typing import Any
+from typing import Any # ????
 from copy import deepcopy
 
 import numpy as np
@@ -123,7 +284,6 @@ def download_from_repo(output_directory, github_file_location, tag=f"v{current_v
         log.debug(f"Finished downloading {github_file_location.name} from repo")
         github_file_content = github_file.content
         if github_file.status_code != 200:
-
             raise Exception(f"Failed to download {github_file_location.name} from repo, status code: {github_file.status_code}")
         
         if github_file_location.suffix == ".zip":
@@ -185,16 +345,12 @@ def verify_file(local_file_location, github_file_location, tag=f"v{current_versi
         log.debug(f"{local_file_location.name} already exists, skipping download")
 
 verify_folder(dark_sol_appdata_directory / "Lib", "Lib.zip")
-
 for folder_to_check in folders_to_check:
     verify_folder(dark_sol_appdata_directory / "Lib" / folder_to_check, f"Lib/{folder_to_check}")
-
 for image_file in images_to_check:
     verify_file(dark_sol_appdata_directory / "Lib" / "Images"/ image_file, f"Lib/Images/{image_file}")
-
 for icon_file in icons_to_check:
     verify_file(dark_sol_appdata_directory / "Lib" / "Icons" / icon_file, f"Lib/Icons/{icon_file}")
-
 log.info("File Verification Completed")
 
 # Config and Data
@@ -454,7 +610,8 @@ hidden_config = {
                     "auto add check interval": 120,
                     "roblox launch timeout": 30,
                     "after play button wait": 5,
-                    "potion gui open check delay": 0.2
+                    "potion gui open check delay": 0.2,
+                    "dual login confirmation timeout": 300
                 },
                 "current preset": "Main",
                 "private server link": "",
@@ -466,9 +623,9 @@ hidden_config = {
 
 config = {}
 if use_built_in_config:
-    log.info("Using built in config (user should never see this log message)")
+    log.info("Using built in config (you should never see this log message, if you do contact a developer)")
     config = hidden_config
-elif config_path.exists():
+elif config_path.exists() and not RESET_CONFIG:
     log.debug("Config file exists, loading config")
     def load_config():
         global config
@@ -807,7 +964,7 @@ class dark_sol_gui(QMainWindow):
         # Create main window
         super().__init__()
         self.setWindowTitle("Dark Sol")
-        #self.setGeometry(int(((screen_width / 2) / scale) - (self.width() / 2)), int(((screen_height / 2) / scale) - (self.height() / 2 )), 0, 0) # Make gui as small as possible and appear in the center of the screen
+        #self.setGeometry(int(((screen_width / 2) / scale) - (self.width() / 2)), int(((screen_height / 2) / scale) - (self.height() / 2 )), 0, 0)
         # Create Main Gui Elements
         self.central_widget = QWidget()
         self.central_widget_vbox = QVBoxLayout(self.central_widget)
@@ -874,6 +1031,7 @@ class dark_sol_gui(QMainWindow):
         self.roblox_launch_timeout_label = QLabel("Roblox Launch Timeout (seconds):")
         self.after_play_button_wait_label = QLabel("After Play Button Wait (seconds):")
         self.potion_gui_open_check_delay_label = QLabel("Potion GUI Open Check Delay (seconds):")
+        self.dual_login_confirmation_timeout_label = QLabel("Multi Instance Confirmation Timeout (seconds):")
 
         self.macro_slowdown_1_spinbox = QDoubleSpinBox()
         self.macro_slowdown_2_spinbox = QDoubleSpinBox()
@@ -884,6 +1042,13 @@ class dark_sol_gui(QMainWindow):
         self.roblox_launch_timeout_spinbox = QSpinBox()
         self.after_play_button_wait_spinbox = QSpinBox()
         self.potion_gui_open_check_delay_spinbox = QDoubleSpinBox()
+        self.dual_login_confirmation_timeout_spinbox = QSpinBox()
+
+        self.after_reset_wait_spinbox.setMaximum(999999999)
+        self.play_button_failsafe_spinbox.setMaximum(999999999)
+        self.auto_add_check_spinbox.setMaximum(999999999)
+        self.after_play_button_wait_spinbox.setMaximum(999999999)
+        self.dual_login_confirmation_timeout_spinbox.setMaximum(999999999)
 
         self.macro_slowdown_1_spinbox.setValue(config["durations"]["macro slowdown 1"])
         self.macro_slowdown_2_spinbox.setValue(config["durations"]["macro slowdown 2"])
@@ -894,6 +1059,7 @@ class dark_sol_gui(QMainWindow):
         self.roblox_launch_timeout_spinbox.setValue(config["durations"]["roblox launch timeout"])
         self.after_play_button_wait_spinbox.setValue(config["durations"]["after play button wait"])
         self.potion_gui_open_check_delay_spinbox.setValue(config["durations"]["potion gui open check delay"])
+        self.dual_login_confirmation_timeout_spinbox.setValue(config["durations"]["dual login confirmation timeout"])
 
         self.macro_slowdown_1_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("macro slowdown 1", round(value, 3)), nice_config_save()))
         self.macro_slowdown_2_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("macro slowdown 2", round(value, 2)), nice_config_save()))
@@ -904,16 +1070,12 @@ class dark_sol_gui(QMainWindow):
         self.roblox_launch_timeout_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("roblox launch timeout", int(value)), nice_config_save()))
         self.after_play_button_wait_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("after play button wait", int(value)), nice_config_save()))
         self.potion_gui_open_check_delay_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("potion gui open check delay", round(value, 2)), nice_config_save()))
+        self.dual_login_confirmation_timeout_spinbox.valueChanged.connect(lambda value: (config["durations"].__setitem__("dual login confirmation timeout", int(value)), nice_config_save()))
 
         self.macro_slowdown_1_spinbox.setSingleStep(0.001)
         self.macro_slowdown_2_spinbox.setSingleStep(0.01)
         self.after_pathing_wait_spinbox.setSingleStep(0.1)
         self.potion_gui_open_check_delay_spinbox.setSingleStep(0.1)
-
-        self.after_reset_wait_spinbox.setMaximum(999999999)
-        self.play_button_failsafe_spinbox.setMaximum(999999999)
-        self.auto_add_check_spinbox.setMaximum(999999999)
-        self.after_play_button_wait_spinbox.setMaximum(999999999)
 
         self.macro_slowdown_1_spinbox.setDecimals(3)
         self.after_pathing_wait_spinbox.setDecimals(1)
@@ -1233,6 +1395,7 @@ class dark_sol_gui(QMainWindow):
         duration_vbox_left.addWidget(self.roblox_launch_timeout_label)
         duration_vbox_left.addWidget(self.after_play_button_wait_label)
         duration_vbox_left.addWidget(self.potion_gui_open_check_delay_label)
+        duration_vbox_left.addWidget(self.dual_login_confirmation_timeout_label)
 
         duration_vbox_right.addWidget(self.macro_slowdown_1_spinbox)
         duration_vbox_right.addWidget(self.macro_slowdown_2_spinbox)
@@ -1243,6 +1406,7 @@ class dark_sol_gui(QMainWindow):
         duration_vbox_right.addWidget(self.roblox_launch_timeout_spinbox)
         duration_vbox_right.addWidget(self.after_play_button_wait_spinbox)
         duration_vbox_right.addWidget(self.potion_gui_open_check_delay_spinbox)
+        duration_vbox_right.addWidget(self.dual_login_confirmation_timeout_spinbox)
         # Footer
         self.main_gui_footer = QWidget()
         self.main_gui_footer_layout = QHBoxLayout(self.main_gui_footer)
@@ -1279,7 +1443,7 @@ class dark_sol_gui(QMainWindow):
         self.logging_settings_gui_button.clicked.connect(lambda: self.logging_settings_gui.show())
         # Settings Buttons
         self.ps_link_line.editingFinished.connect(lambda: (config.__setitem__("private server link", self.ps_link_line.text()), nice_config_save()))
-        self.ps_link_join_button.clicked.connect(lambda: helper_functions.open_roblox(config["private server link"]))
+        self.ps_link_join_button.clicked.connect(lambda: threading.Thread(target=helper_functions.open_roblox, args=(config["private server link"],)).start())
         self.reset_add_button_template_button.clicked.connect(lambda: download_from_repo(dark_sol_appdata_directory / "Lib" / "Images" / "add button.png", "Lib/Images/add button.png"))
         self.reset_amount_box_template_button.clicked.connect(lambda: download_from_repo(dark_sol_appdata_directory / "Lib" / "Images" / "amount box.png", "Lib/Images/amount box.png"))
         # Calibration Buttons
@@ -1298,7 +1462,6 @@ class dark_sol_gui(QMainWindow):
         self.mini_status_qv.setContentsMargins(0, 0, 0, 0)
         self.mini_status_qv.addWidget(self.general_mini_status_label)
         self.mini_status_qv.addWidget(self.mini_status_label)
-        self.mini_status_widget.move(600, 75)
         self.mini_status_qv.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.general_mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.mini_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -2098,13 +2261,6 @@ class dark_sol_gui(QMainWindow):
         log.debug("Stop button clicked")
         macro.run_event.clear()
 
-    def inner_log(self, log_message):
-        print(log_message)
-        self.log_area.appendPlainText(log_message)
-        log_scroll_bar = self.log_area.verticalScrollBar()
-        if log_scroll_bar is not None:
-            log_scroll_bar.setValue(log_scroll_bar.maximum())
-
     def update_status(self, *args, what_to_update="task"):
         status_text = " ".join(str(a) for a in args)
         self.status_signal.emit(status_text, str(what_to_update))
@@ -2124,6 +2280,15 @@ class dark_sol_gui(QMainWindow):
                 self.mini_status_label.adjustSize()
 
         self.mini_status_widget.adjustSize()
+        screen = QApplication.primaryScreen()
+        if screen is None:
+            self.mini_status_widget.move(screen_width // 2 - self.mini_status_widget.width() // 2, screen_height // 10)
+        else:
+            screen_geometry = screen.availableGeometry()
+            self.mini_status_widget.move(
+                screen_geometry.x() + (screen_geometry.width() - self.mini_status_widget.width()) // 2,
+                screen_geometry.y() + screen_geometry.height() // 10,
+            )
 class image_processing():
     @staticmethod
     def rescale_template(template, template_path):
@@ -2257,11 +2422,11 @@ class helper_functions():
                     except IndexError:
                         match_data[scan]["matched data"] = None
 
-        def match_return_formatter(matches, stopper_mode=False):
-            if not stopper_mode:
+        def match_return_formatter(matches):
+            if not stopper:
                 best_match = min(matches, key=lambda hit: hit[0])[1]
             else:
-                best_match = min(saved_matches, key=lambda match: tuple(scan_for).index(match))
+                best_match = min(saved_matches, key=lambda match: tuple((*scan_for, *(stopper if stopper else ""))).index(match))
 
             if not data_to_return or best_match not in match_data:
                 return best_match
@@ -2272,25 +2437,26 @@ class helper_functions():
                         "full match": match_data[best_match].get("full match") if "full match" in data_to_return else None,
                     }
                 
-        def scan_lines(raw, stopper_mode=False):
+        def scan_lines(raw):
             line = raw.decode("utf-8", errors="replace")
-            if stopper_mode:
-                if stopper is None:
-                    raise ValueError("Stopper cannot be None when in stopper mode.")
+            if stopper:
                 for stop, inner_dict in stopper.items():
                     if inner_dict["type"] == "string":
                         if stop in line:
+                            saved_matches.append(stop)
                             return True
 
                     elif inner_dict["type"] == "parser":
                         pattern = inner_dict["pattern"]
                         match = re.search(pattern, line, re.IGNORECASE)
                         if match:
+                            saved_matches.append(stop)
+                            save_match_data(stop, match)
                             return True
             
             for scan, inner_dict in scan_for.items():
                 if inner_dict["type"] == "string":
-                    if not stopper_mode:
+                    if not stopper:
                         found_pos = line.find(scan)
                         if found_pos != -1:
                             hits.append((found_pos, scan))
@@ -2302,12 +2468,12 @@ class helper_functions():
                     pattern = inner_dict["pattern"]
                     match = re.search(pattern, line, re.IGNORECASE)
                     if match:
-                        if not stopper_mode:
+                        if not stopper:
                             hits.append((match.start(), scan))
                         else:
                             saved_matches.append(scan)
                         save_match_data(scan, match)
-            if not stopper_mode:
+            if not stopper:
                 if hits:
                     return True
                 
@@ -2352,15 +2518,15 @@ class helper_functions():
                     *lines, carry = carry.split(b"\n")
 
                     for raw in reversed(lines):  # newest -> oldest
-                        if found := scan_lines(raw, stopper_mode=True):
+                        if found := scan_lines(raw):
                             break
                     if found:
                         break
 
                 if carry and not found:
-                    scan_lines(carry, stopper_mode=True)
+                    scan_lines(carry)
             if saved_matches:
-                return match_return_formatter(saved_matches, stopper_mode=True)
+                return match_return_formatter(saved_matches)
             return False
     
     @staticmethod
@@ -2580,7 +2746,39 @@ class helper_functions():
         raise RuntimeError("Failed to focus Roblox window after multiple attempts.")
 
     @staticmethod
-    def send_discord_webhook(title, message=None, ping_mode=None, ping_id=None, color="cyan", join_server_button=False):
+    def close_roblox():
+        hwnd = win32gui.FindWindow(None, "Roblox")
+        if not hwnd:
+            log.debug("Roblox window not found, cannot close.")
+            return
+        try:
+            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)
+            time.sleep(0.2)
+            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0) 
+            log.debug("Close message sent to Roblox window.")
+        except Exception as e:
+            log.error(f"Error sending close message to Roblox window: {e}")
+            raise RuntimeError("Failed to close Roblox window.") from e
+        
+    @staticmethod
+    def send_discord_webhook(title, message=None, ping_mode=None, ping_id=None, color="cyan", buttons=None):
+        if buttons != None:
+            if isinstance(buttons, tuple):
+                pass
+            elif isinstance(buttons, dict):
+                buttons = (buttons,)
+            elif isinstance(buttons, (list, set)):
+                buttons = tuple(buttons)
+            else:
+                log.warning("Invalid type for buttons parameter. Expected tuple, list, or set.")
+
+            for button in buttons:
+                if isinstance(button, dict):
+                    pass
+                else:
+                    log.warning("Invalid button format. Each button should be a dictionary with 'label' and 'url' keys.")
+                    break
+
         color_id = {
             "red": 0xFF0000,
             "cyan": 0x00FFFF,
@@ -2608,29 +2806,29 @@ class helper_functions():
                 {
                     "title": title,
                     "description": message,
-                    "color": int(color_id[color]),
+                    "color": int(color_id[color.lower()]),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "footer": {"text": f"Dark Sol v{current_version}"}
                 }
             ]
         }
 
-        if join_server_button and not config["private server link"]:
-           payload["embeds"][0]["description"] = f"{message}\n\n**Private server link is empty.**" if message else "**Private server link is empty.**"
-        elif join_server_button and config["private server link"]:
-            payload["components"] = [
-                {
-                    "type": 1,
-                    "components": [
-                        {
-                            "type": 2,
-                            "style": 5,
-                            "label": "Join Server",
-                            "url": config["private server link"],
-                        }
-                    ]
-                }
-            ]
+        if buttons != None:
+            for button in buttons:
+                key, value = next(iter(button.items()))
+                payload["components"] = [
+                    {
+                        "type": 1,
+                        "components": [
+                            {
+                                "type": 2,
+                                "style": 5,
+                                "label": key,
+                                "url": value
+                            }
+                        ]
+                    }
+                ]
 
         if config["webhooks"]:
             for webhook in config["webhooks"]:
@@ -2675,26 +2873,46 @@ class helper_functions():
         log.debug("Clicked open recipe button")
     
     @staticmethod
-    def is_sols_open():
+    def is_sols_open(other_device_mode=False):
         hwnd = win32gui.FindWindow(None, "Roblox")
         
         if not hwnd:
             log.debug("Roblox is not open.")
             return False
-        game_found = helper_functions.scan_roblox_logs_for(("Disconnect", "place 15532962292"))
-        if game_found in (False, "Disconnect"):
-            log.debug("User is not in a game.")
-            return False
-        elif game_found == "place 15532962292":
-            log.debug("User is in Sol's RNG.")
-            return True
-        elif game_found == "Roblox file not found":
-            log.debug("Roblox log file not found, cannot determine if user is in game. Assuming user is not in game.")
-            return False
+        
+        game_found = helper_functions.scan_roblox_logs_for(
+            scan_for=("disconnect with reason: 276", "disconnect with reason: 273", "disconnect with reason: 264" if other_device_mode else "place 15532962292", "disconnect with reason: 285", "disconnect"),
+            stopper={
+                    "joining game": {
+                        "type": "parser",
+                        "pattern": r"\[FLog::Output\] ! Joining game '([^']+)' place 15532962292"
+                    }
+                }
+                if other_device_mode else None,
+            )
+        if not other_device_mode:
+            if game_found in (False, "disconnect with reason: 285"):
+                log.debug("User is not in a game.")
+                return False
+            elif game_found == "place 15532962292":
+                log.debug("User is in Sol's RNG.")
+                return True
+            elif game_found == "disconnect":
+                log.warning("Unknown disconnect reason found in logs.")
+                helper_functions.send_discord_webhook("Unknown disconnect reason found in logs", color="yellow")
+                return False
+            elif game_found == "Roblox file not found":
+                log.debug("Roblox log file not found, cannot determine if user is in game. Assuming user is not in game.")
+                return False
+            else:
+                log.debug("Could not determine if user is in Sol's RNG, assuming user is not in game.")
+                return False
         else:
-            log.debug("Could not determine if user is in Sol's RNG, assuming user is not in game.")
-            return False
-
+            if game_found in ("disconnect with reason: 276", "disconnect with reason: 273", "disconnect with reason: 264"):
+                return True
+            else:
+                return False
+                
 class other_functions():
     @staticmethod
     def reload_potion_gui():
@@ -2912,7 +3130,7 @@ class thread_controller(QObject):
     auto_add_check_latch_timeout = config["durations"]["auto add check interval"]
     roblox_launch_failsafe = False
     roblox_launch_failsafe_timeout = config["durations"]["roblox launch timeout"]
-    
+
     # Timer Functions
     @staticmethod
     def trigger_play_button_failsafe():
@@ -3613,9 +3831,6 @@ class biome_detection():
                         "type": "parser",
                         "pattern": r'(\{"command":"SetRichPresence","data":.*\})'
                     },
-                    "Disconnect": {
-                        "type": "string"
-                    },
                 },
                 data_to_return="matched data"
             )
@@ -3623,10 +3838,15 @@ class biome_detection():
             if rpc_result is False:
                 return False
 
+            if not isinstance(rpc_result, dict):
+                log.warning(f"Unexpected RPC scan result: {rpc_result}")
+                return False
+
             try:
                 payload = json.loads(rpc_result["matched data"])
             except (json.JSONDecodeError, TypeError, KeyError) as e:
                 log.warning("Failed to parse JSON from RPC log: ", e)
+                log.warning("Failed RPC Data: ", rpc_result)
                 return False
 
             try:
@@ -3635,6 +3855,11 @@ class biome_detection():
                 log.warning("Expected keys not found in RPC payload: ", e)
                 return False
 
+        if config["private server link"]:
+            join_server_button = {"Join Private Server": config["private server link"]}
+        else:
+            join_server_button = None
+            
         log.debug("Starting biome detection loop.")
         try:
             while biome_detection.run_event.is_set():
@@ -3650,15 +3875,15 @@ class biome_detection():
                         log.info("Biome changed to:", latest_biome)
                         
                         if latest_biome not in config["biome settings"] and latest_biome not in data["ping everyone biomes"]:
-                            helper_functions.send_discord_webhook(f"Unknown Biome Started - {latest_biome}", join_server_button=True)
+                            helper_functions.send_discord_webhook(f"Unknown Biome Started - {latest_biome}", buttons=join_server_button)
                         elif latest_biome == "NORMAL":
                             pass
                         elif latest_biome in data["ping everyone biomes"]:
-                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", ping_mode="everyone", join_server_button=True)
+                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", ping_mode="everyone", buttons=join_server_button)
                         elif config["biome settings"][latest_biome]["message type"] == "ping":
-                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", ping_mode="role" if config["biome settings"][latest_biome]["id type"] == "role" else "user", ping_id=config["biome settings"][latest_biome]["ping id"], join_server_button=True)
+                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", ping_mode="role" if config["biome settings"][latest_biome]["id type"] == "role" else "user", ping_id=config["biome settings"][latest_biome]["ping id"], buttons=join_server_button)
                         elif config["biome settings"][latest_biome]["message type"] == "message":
-                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", join_server_button=True)
+                            helper_functions.send_discord_webhook(f"Biome Started - {latest_biome}", buttons=join_server_button)
                         elif config["biome settings"][latest_biome]["message type"] == "off":
                             pass
                 time.sleep(3)
@@ -3674,23 +3899,32 @@ class macro():
     run_event = threading.Event()
     stopping = False
     restarting = False
+    other_device_pause = False
+    start_other_device_process = False
+    wait_for_fresh_join_after_dual_login = False
     auto_add_waitlist = []
     current_auto_add_potion = None
     macro_thread = None
     restart_thread = None
+    other_device_thread = None
     macro_start_lock = threading.Lock()
     macro_slowdown1 = config["durations"]["macro slowdown 1"]
     macro_slowdown2 = config["durations"]["macro slowdown 2"]
 
     def start_macro(self):
         if not macro.stopping and (macro.macro_thread is None or not macro.macro_thread.is_alive()):
+            log.debug("Starting macro")
+            dark_sol.update_status("Running", what_to_update="both")
+            dark_sol.show_status_widget_signal.emit()
             log.debug("Attempting to start macro thread.")
             macro.macro_thread = threading.Thread(target=self.macro_loop, daemon=True)
             macro.macro_thread.start()
-            dark_sol.update_status("Running", what_to_update="both")
-            dark_sol.show_status_widget_signal.emit()
             helper_functions.send_discord_webhook("Macro started.")
             log.debug("Macro thread started.")
+            log.debug("Attempting to start other device monitoring thread.")
+            macro.other_device_thread = threading.Thread(target=self.other_device_loop, daemon=True)
+            macro.other_device_thread.start()
+            log.debug("Other device monitoring thread started.")
             biome_detection()
             macro.restarting = False
             return True
@@ -3724,11 +3958,8 @@ class macro():
             macro.stopping = True
             dark_sol.update_status("Stopping...", what_to_update="both")
             if movements_cancel:
-                keyboard.Controller().release('w')
-                keyboard.Controller().release('a')
-                keyboard.Controller().release('s')
-                keyboard.Controller().release('d')
-                keyboard.Controller().release('f')
+                for x in "wasdf":
+                    keyboard.Controller().release(x)
             dark_sol.thread_controller.stop_auto_add_check_timer_signal.emit()
             thread_controller.auto_add_check_latch = True
             helper_functions.send_discord_webhook("Macro stopped.")
@@ -3739,6 +3970,132 @@ class macro():
             raise macro.StopMacroException()
         return True
     
+    def other_device_loop(self):
+        def inner_device_loop():
+            status_code, parsed_body = None, None
+            log.debug("Multi instance: polling manual resume status.")
+            try:
+                with urllib.request.urlopen(urllib.request.Request(url=f"https://dark-sol-dual-login.bored-developments.workers.dev/api/status?id={urllib.parse.quote(str(confirmation_id))}&token={urllib.parse.quote(token)}", headers=headers, method="GET")) as response:
+                    status_code = response.status
+                    parsed_body = json.loads(response.read().decode("utf-8"))
+                current_status = parsed_body[("status")]
+            except Exception as e:
+                raise Exception("Error checking multi instance manual resume status: ", e)
+
+            if  status_code != 200 or not isinstance(parsed_body, dict):
+                log.debug(f"Multi instance: unexpected status response. status_code={status_code} parsed_body={parsed_body}")
+                raise Exception(f"Error checking multi instance manual resume status. status code: {status_code}, parsed body: {parsed_body}")
+            
+            if current_status == "resuming":
+                log.info("Multi instance: Macro Resuming.")
+                helper_functions.send_discord_webhook("Macro Resuming.", color="green")
+                dark_sol.update_status("Resuming macro...", what_to_update="both")
+                status_code, parsed_body = None, None
+                try:
+                    with urllib.request.urlopen(urllib.request.Request(url="https://dark-sol-dual-login.bored-developments.workers.dev/api/ack", data=json.dumps({'id': confirmation_id, 'token': token, 'status': 'resumed'}).encode("utf-8"), headers=headers, method="POST")) as response:
+                        status_code = response.status
+                        parsed_body = json.loads(response.read().decode("utf-8"))
+                except Exception as e:
+                    raise Exception("Error acknowledging multi instance confirmation: ", e)
+
+                if status_code != 200 or not isinstance(parsed_body, dict):
+                    log.debug(f"Multi instance: unexpected acknowledgement response. status_code={status_code} parsed_body={parsed_body}")
+                    raise Exception(f"Error acknowledging multi instance confirmation. status code: {status_code}, parsed body: {parsed_body}")
+
+                log.debug(f"Multi instance: acknowledgement completed.")
+                macro.wait_for_fresh_join_after_dual_login = True
+                macro.other_device_pause = False
+                dark_sol.update_status("Running", what_to_update="both")
+                return True
+            
+            if current_status != "pending":
+                log.debug(f"Multi instance: unexpected confirmation status. status_code={status_code} parsed_body={parsed_body}")
+                raise Exception(f"Unexpected multi instance status: {current_status}")
+            else:
+                return False
+                    
+        while macro.run_event.is_set():
+            if macro.wait_for_fresh_join_after_dual_login:
+                if helper_functions.is_sols_open():
+                    macro.wait_for_fresh_join_after_dual_login = False
+                    log.info("Multi instance: Auto Reconnect Restarted, re-enabling multi instance detection.")
+                else:
+                    time.sleep(0.2)
+                    continue
+
+            if helper_functions.is_sols_open(other_device_mode=True):
+                log.info("Multi instance: another instance detected, pausing macro.")
+                helper_functions.close_roblox()
+                macro.start_other_device_process = False
+                macro.other_device_pause = True
+
+                log.info("Multi instance: waiting for main macro loop to pause.")
+                while not macro.start_other_device_process:
+                    if not macro.run_event.is_set():
+                        log.info("Multi instance: macro stopped before multi instance pause completed.")
+                        macro.other_device_pause = False
+                        return
+
+                log.info("Multi instance: main macro loop paused.")
+                dark_sol.update_status("Paused, Multi Instance Detected", what_to_update="both")
+                
+                expires_in_seconds = config["durations"]["dual login confirmation timeout"]
+                log.debug(f"Multi instance: confirmation timeout is {expires_in_seconds} seconds.")
+                
+                headers = {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json, text/plain, */*",
+                        "Origin": "https://dual-login-bored-developments.pages.dev",
+                        "Referer": "https://dual-login-bored-developments.pages.dev/",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+                    }
+                
+                try:
+                    log.debug("Multi instance: requesting manual resume data from API.")
+                    with urllib.request.urlopen(urllib.request.Request(url="https://dark-sol-dual-login.bored-developments.workers.dev/api/create", data=json.dumps({"expires_in_seconds": expires_in_seconds}).encode("utf-8"), headers=headers, method="POST")) as response:
+                        status_code = response.status
+                        parsed_body = json.loads(response.read().decode("utf-8"))
+                
+                    if status_code != 200 or not isinstance(parsed_body, dict):
+                        raise Exception(f"An error has occured with the retrieved data from the multi instance API, status code: {status_code}, parsed body: {parsed_body}")
+                        
+                    confirmation_id = parsed_body["id"]
+                    token = parsed_body["token"]
+                    confirm_url = parsed_body["confirm_url"]
+                    log.debug(f"Multi instance: manual resume data successfully retrieved. id={confirmation_id} confirm_url={confirm_url}")
+                    helper_functions.send_discord_webhook(f"Multi instance detected, Macro paused", color="white", buttons={"Resume Auto Reconnect": confirm_url})
+                    dual_id = True
+                except Exception as e:
+                    log.error("Multi instance: failed to create confirmation: ", e)
+                    helper_functions.send_discord_webhook("Error creating multi instance confirmation, please check logs for more details", "Macro will resume normally and attempt to resend manual resume link before timeout",color="orange")
+                    dual_id = False
+                try:
+                    start_time = int(time.time())
+                    log.debug("Multi instance: entering manual resume poll loop.")
+                    while macro.run_event.is_set() and int(time.time()) - start_time < expires_in_seconds:
+                        dark_sol.update_status(f"Resuming in {(expires_in_seconds - (int(time.time()) - start_time)) // 60} minutes {(expires_in_seconds - (int(time.time()) - start_time)) % 60} seconds")
+                        if dual_id and inner_device_loop():
+                            log.info("Multi instance: flow completed successfully.")
+                            break
+                        time.sleep(1)
+                    else:
+                        if macro.run_event.is_set() and dual_id:
+                            log.warning("Multi instance: confirmation timed out.")
+                            helper_functions.send_discord_webhook("Multi instance confirmation timed out, Resuming macro", color="green")
+                    if not macro.run_event.is_set():
+                        log.info("Multi instance: stopping multi instance flow due to macro being stopped.")
+                except Exception as e:
+                    log.error("Error in multi instance confirmation process: ", e)
+                    helper_functions.send_discord_webhook("Error in multi instance confirmation process, please check logs for more details", color="orange")
+                finally:
+                    log.debug("Multi instance: resetting pause flags and ending current multi instance cycle.")
+                    if macro.run_event.is_set():
+                        macro.wait_for_fresh_join_after_dual_login = True
+                    macro.start_other_device_process = False
+                    macro.other_device_pause = False
+            else:
+                time.sleep(0.2)
+            
     def macro_loop(self):
         def add_to_button(button_to_add_to):
             log.debug("Adding to:", button_to_add_to)
@@ -3885,16 +4242,21 @@ class macro():
             log.debug(f"first_conf={(first*100):.0f} second_conf={(second*100):.0f} more_green={more_green}")
             thread_controller.auto_add_check_latch = False
             dark_sol.thread_controller.start_auto_add_check_timer_signal.emit()
-
+                    
         def potion_loop_iteration(item):
-            if not helper_functions.is_roblox_open():
-                other_functions.reload_potion_gui()
-            else:
+            if macro.other_device_pause == False:
                 if not helper_functions.is_potion_gui_open():
                     if not helper_functions.is_sols_open():
                         other_functions.reload_potion_gui()
                     else:
                         other_functions.path_to_potion_gui()
+            else:
+                macro.start_other_device_process = True
+                log.debug("Reset other device process flag to True")
+                while macro.other_device_pause:
+                    macro.check_macro_run_event()
+                    time.sleep(1)
+                other_functions.reload_potion_gui()
                         
             helper_functions.focus_roblox()
             if item not in macro.auto_add_waitlist and macro.current_auto_add_potion != item:
@@ -3993,8 +4355,9 @@ def run_main_script():
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     if skip_loading:
-        run_main_script()
+        pass
     else:
         loader = loading_screen()
         loader.show()
+    run_main_script()
     sys.exit(app.exec())
